@@ -8,7 +8,6 @@ import shutil
 import struct
 import subprocess
 import tempfile
-import threading
 import time
 import unittest
 from unittest import mock
@@ -17,8 +16,9 @@ from tvcast import app as appmod
 from tvcast import burn
 from tvcast.library import scan_library
 
-# BurnCase patches these; the tests that need the real ones use them.
-REAL_POPEN, REAL_THREAD, REAL_PREPARE = subprocess.Popen, threading.Thread, burn.prepare
+REAL_POPEN = subprocess.Popen  # the playback tests patch Popen; the burn-job tests run real shells
+REAL_PREPARE = burn.prepare  # the playback tests patch prepare and Thread; one test needs both for real
+REAL_THREAD = __import__("threading").Thread
 SRT = "1\n00:01:17,936 --> 00:01:21,212\nHi.\n"
 
 
