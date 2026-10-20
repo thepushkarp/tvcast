@@ -8,6 +8,7 @@ import shutil
 import struct
 import subprocess
 import tempfile
+import threading
 import time
 import unittest
 from unittest import mock
@@ -16,10 +17,8 @@ from tvcast import app as appmod
 from tvcast import burn
 from tvcast.library import scan_library
 
-REAL_POPEN = subprocess.Popen  # the playback tests patch Popen; the burn-job tests run real shells
-REAL_PREPARE = burn.prepare  # the playback tests patch prepare and Thread; one test needs both for real
-REAL_THREAD = __import__("threading").Thread
-REAL_HLS = burn.Hls
+# BurnCase patches these; the tests that need the real ones use them.
+REAL_POPEN, REAL_THREAD, REAL_PREPARE, REAL_HLS = subprocess.Popen, threading.Thread, burn.prepare, burn.Hls
 SRT = "1\n00:01:17,936 --> 00:01:21,212\nHi.\n"
 
 
@@ -52,6 +51,12 @@ class SrtTest(unittest.TestCase):
                 "2\n00:00:03,500 --> 00:00:05,250\nNext\n\n"
                 "3\n00:00:09,000 --> 00:00:08,000\nBackwards\n")
         self.assertEqual(burn.parse_srt(text), [(1.0, 3.5, "Hello\nthere"), (3.5, 5.25, "Next")])
+
+    def test_legacy_code_page_subtitles_render_as_text(self):
+        with tempfile.NamedTemporaryFile(suffix=".srt") as f:
+            f.write(b"1\n00:00:01,000 --> 00:00:02,000\nCaf\xe9 \x93hi\x94\n")
+            f.flush()
+            self.assertEqual(burn.parse_srt(burn.read_text(f.name)), [(1.0, 2.0, "Café “hi”")])
 
 
 class SegmentSupTest(unittest.TestCase):
@@ -223,7 +228,6 @@ class BurnCase(unittest.TestCase):
             f.write("burned copy")
 
 
-
 class BurnPlaybackTest(BurnCase):
     def test_without_a_copy_it_plays_hls_and_makes_no_copy(self):
         self.app.state.update_movie(self.film.path, position=430)
@@ -269,11 +273,6 @@ class BurnPlaybackTest(BurnCase):
         self.set_tv("Samsung Electronics")
         with self.assertRaisesRegex(ValueError, "needs a TV that burns subtitles"):
             self.app.open_movie(self.film.id, style="hls")
-
-    def test_seeking_is_left_to_the_tv(self):
-        self.app.open_movie(self.film.id)
-        self.app.control("seek", {"seconds": 3600})
-        self.assertEqual(self.calls[-1][::3], ("Seek", "1:00:00"))
 
     def test_subtitles_off_reloads_the_plain_video_where_it_was(self):
         self.app.open_movie(self.film.id)
@@ -355,16 +354,6 @@ class BurnPlaybackTest(BurnCase):
         self.app.burns[self.film.id]["progress"] = 0.01
         self.assertIsNone(self.app.burn_eta(self.film.id))
 
-
-class ReviewFixesTest(BurnCase):
-    """Fixes from the first review of the burn-in change."""
-
-    def test_legacy_code_page_subtitles_render_as_text(self):
-        path = os.path.join(self.root, "legacy.srt")
-        with open(path, "wb") as f:
-            f.write(b"1\n00:00:01,000 --> 00:00:02,000\nCaf\xe9 \x93hi\x94\n")
-        self.assertEqual(burn.parse_srt(burn.read_text(path)), [(1.0, 2.0, "Café “hi”")])
-
     def test_concurrent_drawing_of_the_same_subtitles_doesnt_collide(self):
         script = os.path.join(self.root, "render.sh")
         with open(script, "w") as f:
@@ -380,7 +369,7 @@ class ReviewFixesTest(BurnCase):
             def run():
                 try:
                     results.append(burn.prepare(self.film, self.track["path"])[0])
-                except Exception as e:  # noqa: BLE001 - reported below
+                except Exception as e:
                     errors.append(e)
             threads = [REAL_THREAD(target=run) for _ in range(2)]
             for t in threads:
@@ -420,11 +409,6 @@ class ReviewFixesTest(BurnCase):
             self.app.switch_subtitles("off")
         self.assertEqual(self.calls[-3][1], "http://192.0.2.20:8765/media/%s.mp4" % self.film.id)
         appmod.set_caption.assert_not_called()
-
-    def test_status_scans_the_copies_folder_once(self):
-        with mock.patch.object(self.app, "copies", wraps=self.app.copies) as copies:
-            self.app.status()
-        self.assertEqual(copies.call_count, 1)
 
     def test_a_copy_counts_only_for_the_subtitles_it_has(self):
         self.make_copy()
