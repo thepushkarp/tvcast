@@ -84,6 +84,12 @@ class HlsTest(unittest.TestCase):
         self.assertIn("#EXTINF:2.000,", lines)
         self.assertEqual(lines[-1], "#EXT-X-ENDLIST")
 
+    def test_segments_encode_their_audio_so_it_starts_where_the_video_does(self):
+        info = {"ten_bit": True, "primaries": "bt2020", "transfer": "smpte2084", "space": "bt2020nc"}
+        cmd = burn.segment_command("film.mp4", "s.sup", 330.0, 6.0, dict(info, audio="eac3"), "55.ts")
+        self.assertEqual(cmd[cmd.index("-c:a") + 1], "eac3")
+        self.assertEqual(cmd[cmd.index("-output_ts_offset") + 1], "340.000")
+
     def test_copies_keep_audio_mp4_and_tvs_take_and_convert_the_rest(self):
         info = {"ten_bit": False}
         for codec, want in (("eac3", "copy"), ("aac", "copy"), ("ac3", "copy"), ("truehd", "eac3"), ("dts", "eac3")):
