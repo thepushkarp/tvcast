@@ -618,6 +618,7 @@ async function refresh() {
   st = next; online = true;
   show('globalmsg', errors.globalmsg);
   renderTvs(); renderRemote(); renderStatus(); renderLibrary(); renderQueue(); renderServer();
+  continueCast();
 }
 async function poll() { if (isTV()) await refresh(); setTimeout(poll, document.hidden ? 10000 : 2000); }
 function togglePlay() { if (ownsPlayback()) act(st.tv.state === 'PLAYING' ? 'pause' : 'play'); }
