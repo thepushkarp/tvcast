@@ -13,6 +13,10 @@ from .upnp import DLNA_FEATURES, log
 CHUNK = 256 * 1024
 RATE_WINDOW = 10  # seconds of history behind the panel's transfer-rate figure
 PANEL_HTML = os.path.join(os.path.dirname(os.path.realpath(__file__)), "panel.html")
+PANEL_ASSETS = {"/" + name: os.path.join(os.path.dirname(PANEL_HTML), name) for name in (
+    "catalogue.js", "library.js", "library.css", "tmdb.svg", "icons.svg",
+    "people-picker.js", "people-picker.css", "themed-select.js", "themed-select.css",
+)}
 
 
 class Stats:
@@ -216,8 +220,8 @@ class PanelHandler(BaseHTTPRequestHandler):
                     self.send_error(404)  # artwork was removed by a concurrent metadata refresh
                 else:
                     self._send(200, "image/jpeg", body)
-        elif self.path in ("/catalogue.js", "/library.js", "/library.css", "/tmdb.svg", "/icons.svg", "/people-picker.js", "/people-picker.css", "/themed-select.js", "/themed-select.css"):
-            with open(os.path.join(os.path.dirname(PANEL_HTML), self.path[1:]), "rb") as f:
+        elif self.path in PANEL_ASSETS:
+            with open(PANEL_ASSETS[self.path], "rb") as f:
                 self._send(200, "text/javascript" if self.path.endswith(".js") else "image/svg+xml" if self.path.endswith(".svg") else "text/css", f.read())
         else:
             self.send_error(404)

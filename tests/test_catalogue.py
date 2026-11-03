@@ -128,10 +128,17 @@ class CatalogueTest(unittest.TestCase):
             for route in ('health', 'library', 'movies/' + self.movie.id):
                 with urllib.request.urlopen(base + '/api/' + route) as r:
                     self.assertEqual(r.status, 200)
+            for path, content_type in (('/library.js', 'text/javascript'), ('/library.css', 'text/css'),
+                                       ('/icons.svg', 'image/svg+xml')):
+                with urllib.request.urlopen(base + path) as r:
+                    self.assertEqual(r.headers.get_content_type(), content_type)
+                    self.assertTrue(r.read())
         for path, headers, body in [('/api/' + action, {}, b'{}') for action in
                                     ('watched', 'open_local', 'reveal', 'metadata_configure',
                                      'metadata_match', 'metadata_refresh_all')] + [
                                     ('/api/health', {'Host': 'attacker.invalid'}, None),
+                                    ('/library.js/../state.py', {}, None),
+                                    ('/%2e%2e/state.py', {}, None),
                                     ('/api/posters/../credentials.json', {}, None)]:
             with self.assertRaises(urllib.error.HTTPError) as caught:
                 urllib.request.urlopen(urllib.request.Request(base + path, data=body, headers=headers))
