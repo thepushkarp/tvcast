@@ -129,6 +129,37 @@ class ScanLibraryTest(LibraryTest):
         movies, _, _ = scan_library([self.root])
         self.assertEqual([m.title for m in movies], ["First", "Second", "Loose Film"])
 
+    def test_logical_collections_collapse_releases_and_preserve_nested_groups(self):
+        loose = touch(self.root, "Loose Film (1990).mp4")
+        release = touch(self.root, "Single Film (2000)", "film.mp4")
+        touch(self.root, "Single Film (2000)", "Featurettes", "making-of.mkv")
+        touch(self.root, "Single Film (2000)", "Artwork", "poster.jpg")
+        nested = touch(self.root, "Saga", "Trilogy", "Part One (2001)", "part-one.mp4")
+        another = touch(self.root, "Saga", "Trilogy", "Part Two (2002)", "part-two.mp4")
+        movies, _, _ = scan_library([self.root])
+        by_path = {m.path: m for m in movies}
+        self.assertEqual(set(by_path), {loose, release, nested, another})
+        self.assertEqual(by_path[loose].collection_path, self.root)
+        self.assertEqual(by_path[release].collection_path, self.root)
+        self.assertEqual(by_path[nested].collection_path, os.path.join(self.root, "Saga", "Trilogy"))
+        self.assertEqual(by_path[nested].group, os.path.join(self.root, "Saga"))
+
+    def test_group_with_one_loose_movie_and_nested_releases_is_not_collapsed(self):
+        loose = touch(self.root, "Saga", "Standalone Film (2000).mp4")
+        child = touch(self.root, "Saga", "Part One (2001)", "part-one.mp4")
+        movies, _, _ = scan_library([self.root])
+        by_path = {m.path: m for m in movies}
+        self.assertEqual((by_path[loose].title, by_path[loose].year), ("Standalone Film", 2000))
+        self.assertEqual(by_path[loose].collection_path, os.path.join(self.root, "Saga"))
+        self.assertEqual(by_path[child].collection_path, os.path.join(self.root, "Saga"))
+
+    def test_folder_of_multiple_loose_movies_remains_a_collection(self):
+        touch(self.root, "Collection", "One (2000).mp4")
+        touch(self.root, "Collection", "Two (2001).mp4")
+        movies, _, _ = scan_library([self.root])
+        self.assertEqual([m.title for m in movies], ["One", "Two"])
+        self.assertEqual({m.collection_path for m in movies}, {os.path.join(self.root, "Collection")})
+
     def test_missing_folder_is_a_problem(self):
         missing = os.path.join(self.root, "unplugged drive")
         movies, problems, _ = scan_library([missing])

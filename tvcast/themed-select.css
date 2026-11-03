@@ -1,0 +1,24 @@
+.themed-select { position: relative; min-width: 0; }
+.themed-select > button {
+  display: flex; align-items: center; gap: 12px; justify-content: space-between;
+  width: 100%; height: 44px; padding: 10px 14px; border-radius: 10px;
+  background: var(--surface); color: var(--text); border: 1px solid var(--line);
+  font-size: 13px; line-height: 22px; font-weight: 400; text-align: left;
+}
+.themed-select-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.themed-select svg { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.themed-select > button > svg { color: var(--muted); }
+.themed-select-options {
+  position: fixed; z-index: 35; box-sizing: border-box; overflow-y: auto; overscroll-behavior: contain;
+  list-style: none; margin: 0; padding: 5px; border: 1px solid var(--line); border-radius: 8px;
+  color: var(--text); background: var(--surface); box-shadow: 0 8px 24px rgb(0 0 0 / .16);
+  font-size: 13px; line-height: 1.4;
+}
+.themed-select-options[hidden] { display: none; }
+.themed-select-options [role=option] {
+  display: flex; align-items: center; gap: 10px; min-height: 38px; box-sizing: border-box;
+  padding: 8px 10px; border-radius: 5px; cursor: pointer; overflow-wrap: anywhere;
+}
+.themed-select-options [role=option] > svg { visibility: hidden; color: var(--accent); }
+.themed-select-options [role=option][aria-selected=true] > svg { visibility: visible; }
+.themed-select-options [role=option].is-active { background: var(--control); color: var(--accent); }

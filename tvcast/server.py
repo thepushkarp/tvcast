@@ -13,6 +13,10 @@ from .upnp import DLNA_FEATURES, log
 CHUNK = 256 * 1024
 RATE_WINDOW = 10  # seconds of history behind the panel's transfer-rate figure
 PANEL_HTML = os.path.join(os.path.dirname(os.path.realpath(__file__)), "panel.html")
+PANEL_ASSETS = {"/" + name: os.path.join(os.path.dirname(PANEL_HTML), name) for name in (
+    "catalogue.js", "library.js", "library.css", "tmdb.svg", "icons.svg",
+    "people-picker.js", "people-picker.css", "themed-select.js", "themed-select.css",
+)}
 
 
 class Stats:
@@ -194,6 +198,31 @@ class PanelHandler(BaseHTTPRequestHandler):
                 self._send(200, "text/html; charset=utf-8", f.read())
         elif self.path == "/api/status":
             self._send_json(200, self.app.status())
+        elif self.path == "/api/health":
+            self._send_json(200, {"ok": True})
+        elif self.path == "/api/library":
+            self._send_json(200, self.app.catalogue())
+        elif self.path.startswith("/api/movies/"):
+            try:
+                movie = self.app.library_movie(self.path[len("/api/movies/"):])
+                self._send_json(200, self.app.catalogue_movie(movie))
+            except ValueError as e:
+                self._send_json(404, {"error": str(e)})
+        elif self.path.startswith("/api/posters/"):
+            poster = self.app.metadata.poster(self.path[len("/api/posters/"):].split("?", 1)[0])
+            if poster is None:
+                self.send_error(404)
+            else:
+                try:
+                    with open(poster, "rb") as f:
+                        body = f.read()
+                except FileNotFoundError:
+                    self.send_error(404)  # artwork was removed by a concurrent metadata refresh
+                else:
+                    self._send(200, "image/jpeg", body)
+        elif self.path in PANEL_ASSETS:
+            with open(PANEL_ASSETS[self.path], "rb") as f:
+                self._send(200, "text/javascript" if self.path.endswith(".js") else "image/svg+xml" if self.path.endswith(".svg") else "text/css", f.read())
         else:
             self.send_error(404)
 
@@ -205,9 +234,15 @@ class PanelHandler(BaseHTTPRequestHandler):
         if self.headers.get("X-TVCast") != "1":
             self.send_error(403, "missing X-TVCast header")
             return
-        body = self.rfile.read(int(self.headers.get("Content-Length") or 0))
         try:
-            result = self.app.control(self.path[len("/api/"):], json.loads(body or b"{}"))
+            length = int(self.headers.get("Content-Length") or 0)
+            if not 0 <= length <= 65536:
+                raise ValueError("request body must be at most 64 KB")
+            body = self.rfile.read(length)
+            body = json.loads(body or b"{}")
+            if not isinstance(body, dict):
+                raise ValueError("request body must be a JSON object")
+            result = self.app.control(self.path[len("/api/"):], body)
         except RuntimeError as e:  # the TV (or the Mac) refused or could not be reached
             self._send_json(502, {"error": str(e)})
             return
