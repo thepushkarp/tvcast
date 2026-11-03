@@ -1,8 +1,9 @@
 # TV Cast
 
-Cast videos from your Mac to DLNA TVs, with web and CLI controls, resume, and queues.
+Browse your movie library, open files in your default Mac player, or cast to DLNA TVs.
+TV casting includes web and CLI controls, resume, and queues.
 Samsung TVs also support remote buttons, text input, and app launching.
-No app on the TV, no cloud, no converting.
+No app on the TV. Optional TMDB metadata adds posters, synopses, cast, and ratings.
 
 ![TV Cast with playback controls, a queue and removable folder tags](https://raw.githubusercontent.com/thepushkarp/tvcast/main/docs/images/demo-dark.jpg)
 
@@ -13,7 +14,7 @@ No app on the TV, no cloud, no converting.
 
 </details>
 
-Screenshots use a demo library and simulated TV.
+Screenshots show the TV controls with a demo library and simulated TV.
 
 ## Quick start
 
@@ -28,7 +29,7 @@ tv ui                      # open the control panel
 ```
 
 `pipx install tvcast` also works. The package has no runtime dependencies.
-Optional: `brew install ffmpeg` so TV Cast can flag videos the TV can't play.
+Optional: `brew install ffmpeg` for measured file runtimes and TV compatibility checks.
 
 <details>
 <summary>Run from source</summary>
@@ -45,16 +46,29 @@ there. To use `tv` from any folder, symlink it into a directory on your `PATH`.
 
 </details>
 
-In the panel:
+The panel opens to **Library** in grid view. Browse collection folders or turn off
+**Show subfolders as collections** to see their movies together. Search, switch to list view, and sort by title,
+runtime, year or TMDB score. Genre and actor/director filters are available above the movies;
+select a person or genre on a movie's detail page to browse related films in your library. New
+files and due metadata retries are checked automatically every minute.
 
-1. Turn the TV on and pick it at the top (**Find TVs** if it isn't listed).
-   If macOS asks to find devices on your local network, allow it.
-2. Samsung only: **Remote → Pair with TV**, then press Allow on the TV.
-3. Hit **Play** on any movie.
+Sort defaults are title A–Z, shortest runtime, newest year and highest score. The arrow reverses
+the direction. The theme button cycles through **Auto**, **Light** and **Dark**; Auto follows
+the Mac's appearance setting.
 
-The panel shows the TV's volume, mute state and current supported app. Use **Apps** to switch;
-**Open on TV** appears only after the TV confirms it. Search your library or choose
-**Continue watching** to find unfinished movies. Add movies to **Queue** to play them in order.
+- **Play icon:** open the file in its default Mac application (IINA if configured in Finder).
+- **Cast icon:** switch to **TV** and play on the selected TV. If none is selected, choose one
+  there or use **Find TVs**. Allow local-network access if macOS asks.
+- **Settings:** manage folders and add a [TMDB API Read Access Token](https://www.themoviedb.org/settings/api)
+  for movie information. Browsing and local playback work without TMDB or a connected TV.
+- **Refresh metadata**, beside Rescan in the Library heading: update library information and
+  posters while preserving manual matches and movies explicitly left unmatched. A movie's
+  detail page also has its own refresh action.
+
+The **TV** tab holds volume, playback, subtitles, queue and remote controls. On Samsung TVs,
+use **Remote → Pair with TV**, then press Allow on the TV. **Apps** switches supported TV apps;
+**Open on TV** appears only after the TV confirms it. Add movies using **Add to TV queue** on
+the movie detail page; adding does not start playback.
 
 ## Everyday commands
 
@@ -100,3 +114,7 @@ Before removing the package, run `tv uninstall`, then `uv tool uninstall tvcast`
 - [Releasing](https://github.com/thepushkarp/tvcast/blob/main/docs/releasing.md)
 
 MIT licensed. Bundled icons retain their [Lucide and Feather notices](https://github.com/thepushkarp/tvcast/blob/main/LICENSE-ICONS).
+
+TMDB data and artwork are attributed in Library Settings. The bundled TMDB logo comes from
+[TMDB’s documentation](https://developer.themoviedb.org/docs/faq) and remains subject to its
+[branding requirements](https://www.themoviedb.org/about/logos-attribution).

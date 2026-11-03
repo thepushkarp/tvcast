@@ -38,7 +38,7 @@ class NotRunning(SystemExit):
 
 
 def api(port, action, body=None):
-    """GET /api/status when body is None, else POST body to /api/<action>; the decoded reply."""
+    """GET /api/<action> when body is None, else POST body; the decoded reply."""
     req = urllib.request.Request("http://127.0.0.1:%d/api/%s" % (port, action))
     if body is not None:
         req.data = json.dumps(body).encode()
@@ -376,7 +376,7 @@ def main():
     elif args.cmd == "status":
         show_status(args.panel_port)
     elif args.cmd == "ui":
-        api(args.panel_port, "status")  # exits with the usual message when the daemon isn't running
+        api(args.panel_port, "health")  # service availability does not depend on a TV answering
         subprocess.run(["/usr/bin/open", "http://127.0.0.1:%d" % args.panel_port], check=True)
     elif args.cmd == "tvs":
         list_tvs(args.panel_port, args.find)

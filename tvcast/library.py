@@ -53,6 +53,9 @@ class Movie:
         # A collection is a root subfolder of release folders (root/Star Wars/A New Hope (1977)/…);
         # videos in the root or in a root-level release folder belong to the root itself.
         self.group = os.path.join(root, parts[0]) if len(parts) >= 2 else root
+        # Single-film release folders are presentation details, not navigable collections.
+        # The scanner only marks a video alone when no other main video lives below it.
+        self.collection_path = os.path.dirname(folder) if folder != root and alone_in_folder else folder
         # A release folder holding one video carries the clean name; otherwise (loose files,
         # season folders) only the file name tells videos apart.
         if folder != root and alone_in_folder:
@@ -92,7 +95,8 @@ def scan_library(roots):
             else:
                 issues.append(str(e))
 
-        found = []
+        directories = []
+        parents_with_movies = set()
         for dirpath, dirnames, filenames in os.walk(root, onerror=onerror):
             subdirs = list(dirnames)
             dirnames[:] = sorted(
@@ -106,11 +110,25 @@ def scan_library(roots):
                 if not f.startswith(".") and os.path.splitext(f)[1].lower() in VIDEO_TYPES
                 and not SAMPLE.search(os.path.splitext(f)[0])
             ]
+            directories.append((dirpath, filenames, subdirs, videos))
+            if videos:
+                parent = os.path.dirname(os.path.abspath(dirpath))
+                while parent not in parents_with_movies:
+                    parents_with_movies.add(parent)
+                    next_parent = os.path.dirname(parent)
+                    if next_parent == parent:
+                        break
+                    parent = next_parent
+        found = []
+        for dirpath, filenames, subdirs, videos in directories:
+            # A grouping folder can contain one loose film alongside child release folders.
+            # It must retain its identity, and its loose film must keep its filename title.
+            alone = len(videos) == 1 and os.path.abspath(dirpath) not in parents_with_movies
             for name in videos:
                 try:
                     siblings = [os.path.splitext(v)[0] for v in videos if v != name]
                     subs = find_subtitles(dirpath, filenames, subdirs, os.path.splitext(name)[0], siblings)
-                    found.append(Movie(root, os.path.join(dirpath, name), subs, len(videos) == 1))
+                    found.append(Movie(root, os.path.join(dirpath, name), subs, alone))
                 except OSError as e:
                     issues.append(str(e))
         # Collections first (alphabetically), then loose videos; each in release order.

@@ -43,6 +43,16 @@ class State:
             self.data["movies"].setdefault(path, {}).update(fields)
             self._write()
 
+    def save_progress(self, path, position, duration, finished, updated):
+        """Merge playback observations without overwriting a concurrent manual watched edit."""
+        with self.lock:
+            movie = self.data["movies"].setdefault(path, {})
+            movie.update(position=0 if finished else position,
+                         duration=duration or movie.get("duration"), updated=updated)
+            if finished:
+                movie["watched"] = True
+            self._write()
+
     def probe(self, path):
         with self.lock:
             return self.data["probes"].get(path)

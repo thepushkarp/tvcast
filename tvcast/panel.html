@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <title>TV Cast</title>
+<script>
+// Apply the preference before first paint; Auto follows the system media query.
+try { const theme = localStorage.getItem('tvcast.theme.v1'); if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme; } catch { /* Storage may be unavailable. */ }
+</script>
 <!-- Lucide "tv". A favicon has no page CSS, so it carries the accent colours itself. -->
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23315f9f%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cstyle%3E%40media%20%28prefers-color-scheme%3A%20dark%29%20%7B%20svg%20%7B%20stroke%3A%20%239bbdf2%3B%20%7D%20%7D%3C%2Fstyle%3E%3Crect%20width%3D%2220%22%20height%3D%2215%22%20x%3D%222%22%20y%3D%227%22%20rx%3D%222%22%20ry%3D%222%22%20%2F%3E%3Cpolyline%20points%3D%2217%202%2012%207%207%202%22%20%2F%3E%3C%2Fsvg%3E">
 <style>
@@ -115,24 +119,8 @@
   .subtitles { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 13px; }
   .subtitles .select-wrap { flex: 0 1 280px; }
   .subtitles button { min-height: 40px; padding: 8px 14px; }
-  .library-tools { display: flex; gap: 10px; margin-top: 18px; }
-  .library-tools input { flex: 1; }
-  .library-tools .select-wrap { width: 186px; max-width: 100%; flex: none; }
-  .library-settings { margin-top: 12px; padding-top: 0; border-top: none; }
-  .lib { list-style: none; margin: 0; padding: 0; }
-  .lib li { display: flex; align-items: center; gap: 16px; border-bottom: 1px solid var(--line); padding: 14px 0; }
-  .lib .info { flex: 1; min-width: 0; }
-  .lib .name { font-weight: 500; font-size: 15px; overflow-wrap: anywhere; }
-  .lib .current .name { color: var(--accent); }
-  .meta { display: flex; flex-wrap: wrap; gap: 3px 12px; margin-top: 4px; font-size: 12px; color: var(--muted); }
   .actions { display: flex; gap: 6px; flex: none; }
   .actions button { min-width: 58px; }
-  .lib .actions { max-width: 100%; flex-wrap: wrap; }
-  [data-open]:not([data-from-start]) { width: 100px; flex: none; white-space: nowrap; }
-  [data-queue] { width: 80px; flex: none; white-space: nowrap; }
-  .tag { display: inline-block; color: var(--accent); font-size: 11px; margin-left: 8px; }
-  .bar { height: 3px; margin-top: 8px; background: var(--control); border-radius: 3px; overflow: hidden; }
-  .bar span { display: block; height: 100%; background: var(--accent); }
   .empty { color: var(--muted); padding: 30px 0; }
   .folders { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 0; }
   .folder { display: inline-flex; align-items: center; gap: 4px; padding-left: 12px; border: 1px solid var(--line); background: var(--surface); border-radius: 24px; font-size: 13px; max-width: 100%; }
@@ -167,10 +155,6 @@
     main { padding: 20px; }
     .workspace { grid-template-columns: 280px minmax(0, 1fr); gap: 24px; }
     .remote-panel { padding: 18px; }
-    .library-tools { flex-direction: column; }
-    .library-tools .select-wrap { width: 100%; }
-    .lib li { flex-wrap: wrap; gap: 10px; }
-    .lib .info { flex-basis: 100%; }
   }
   @media (max-width: 640px) {
     main { padding: 18px 16px 28px; }
@@ -189,13 +173,10 @@
     .dpad { grid-template-rows: repeat(3, 52px); margin-block: 18px; }
     .controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .controls .primary { min-width: 0; }
-    .lib .info { flex-basis: auto; }
-    .lib .actions { flex-wrap: wrap; }
   }
   @media (max-width: 380px) {
     .picker { flex-basis: 100%; }
     .picker .select-wrap { max-width: none; }
-    .lib .info { flex-basis: 100%; }
   }
   @media (max-height: 850px) { .remote-panel { position: static; } }
   @media (prefers-reduced-motion: reduce) { button:active:not(:disabled) { transform: none; } }
@@ -245,16 +226,40 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 -->
+<link rel="stylesheet" href="/library.css">
+<link rel="stylesheet" href="/people-picker.css">
+<link rel="stylesheet" href="/themed-select.css">
 </head>
 <body>
 <main>
   <header>
     <div class="brand"><h1>TV Cast</h1><time class="local-time" id="localTime"></time></div>
+    <nav class="tabs" aria-label="Main"><a href="#/library" id="libraryTab">Library</a><a href="#/tv" id="tvTab">TV</a></nav><button id="themeButton" class="toolbar-icon theme-button" data-tooltip="Theme: Auto" aria-label="Theme: Auto">Auto</button>
+  </header>
+  <section id="libraryPage" aria-labelledby="libraryTitle">
+    <div class="catalogue-heading"><h2 id="libraryTitle">Your library <span class="count" id="libraryCount"></span></h2><div class="heading-tools"><button class="toolbar-icon" id="rescan" data-tooltip="Rescan library" aria-label="Rescan library">Rescan</button><button class="toolbar-icon" id="refreshMetadata" data-tooltip="Refresh metadata" aria-label="Refresh metadata">Refresh metadata</button><button class="toolbar-icon" id="settingsButton" data-tooltip="Library settings" aria-label="Library settings">Settings</button></div></div>
+    <div class="catalogue-tools">
+      <input type="search" id="search" aria-label="Search library" placeholder="Search your movies">
+      <div class="sort-control" role="group" aria-label="Movie sorting"><div class="themed-select sort-wrap"><button type="button" id="sort" aria-label="Sort movies">Title</button><ul id="sortOptions" hidden></ul></div><button class="toolbar-icon" id="sortDirection" aria-label="Sort descending" data-tooltip="Sort descending">↑</button></div>
+      <div class="view-toggle" role="group" aria-label="Library view"><button class="toolbar-icon" id="listView" data-tooltip="List view" aria-label="List view" aria-pressed="false">List</button><button class="toolbar-icon" id="gridView" data-tooltip="Grid view" aria-label="Grid view" aria-pressed="true">Grid</button></div>
+    </div>
+    <div class="discovery-tools">
+      <div class="themed-select genre-picker"><button type="button" id="genre" aria-label="Genre">All genres</button><ul id="genreOptions" hidden></ul></div>
+      <div id="personPicker"><input type="text" id="person" aria-label="Filter by actor or director" placeholder="Actor or director"><button type="button" id="clearPerson" class="person-clear" data-tooltip="Clear person filter" aria-label="Clear person filter" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><use href="/icons.svg#x"></use></svg></button><ul id="peopleOptions" hidden></ul></div>
+      <div class="themed-select watched-picker"><button type="button" id="filter" aria-label="Watched status">All movies</button><ul id="watchedOptions" hidden></ul></div>
+      <label class="collections-toggle"><input type="checkbox" id="showCollections" checked>Show subfolders as collections</label>
+      <button id="attentionFilter" aria-pressed="false" hidden>Needs attention <span id="attentionCount"></span></button><button class="link-button" id="clearFilters" hidden>Clear filters</button>
+    </div>
+    <p class="note" id="libraryNote" role="status"></p><p class="msg" id="libmsg" role="status"></p>
+    <div class="location-tools"><nav id="breadcrumbs" aria-label="Library folders"></nav></div><div id="folderbody"></div><div id="libbody"></div>
+  </section>
+  <section id="moviePage" hidden><a href="#/library" class="back-link" id="backToLibrary">‹ Back to library</a><div id="movieContent"></div><p class="msg" id="moviemsg" role="status"></p></section>
+  <section id="tvPage" hidden>
     <div class="picker">
       <span class="select-wrap"><select id="tv" aria-label="TV" hidden></select></span>
       <button id="find">Find TVs</button>
     </div>
-  </header>
+  <div id="castRequest" class="cast-request" hidden><p id="castMessage" role="status"></p><div><button id="retryCast" hidden>Retry</button><button id="cancelCast">Cancel</button><a href="#/library" class="back-link">Back to library</a></div></div>
   <div class="statusbar">
     <h2 id="screen">Connecting…</h2>
     <span class="connection" id="connection">Checking TV</span>
@@ -322,18 +327,23 @@ SOFTWARE.
         <p class="note queue-empty" id="queueEmpty">Add movies from your library.</p>
         <p class="msg" id="queuemsg" role="status"></p>
       </section>
-      <section aria-labelledby="libraryTitle">
-        <div class="row"><h2 id="libraryTitle">Your library<span class="count" id="libraryCount"></span></h2><button class="link-button" id="rescan">Rescan</button></div>
-        <div class="library-tools"><input type="search" id="search" aria-label="Search library" placeholder="Search your movies"><span class="select-wrap"><select id="filter" aria-label="Filter library"><option value="all">All movies</option><option value="continue">Continue watching</option><option value="unwatched">Unwatched</option></select></span></div>
-        <p class="note" id="libraryNote"></p>
-        <details id="librarySettings" class="library-settings"><summary>Folders</summary><div class="folders"><div class="folders" id="folders"></div><button id="addFolder">Add folder</button></div><div class="folder-notes" id="folderNotes"></div></details>
-        <p class="msg" id="libmsg" role="status"></p>
-        <div id="libbody"></div>
-      </section>
+
 
     </div>
   </div>
   <footer><span id="powerBrief"></span><span><kbd>M</kbd> mute &nbsp; <kbd>Space</kbd> cast play/pause &nbsp; Arrow keys navigate the remote when focused</span></footer>
+  </section>
+  <div id="watchedNotice" class="watched-notice" hidden><p id="watchedNoticeText" role="status"></p><button id="undoWatched" aria-keyshortcuts="Meta+Z Control+Z" data-tooltip="Undo watched change (⌘Z)">Undo</button></div>
+  <dialog id="librarySettings" aria-labelledby="settingsTitle">
+    <div class="row"><h2 id="settingsTitle">Library settings</h2><button data-close="librarySettings" data-tooltip="Close settings" aria-label="Close settings">×</button></div>
+    <div class="settings-folder-heading"><h3>Folders</h3><button id="addFolder">Add folder</button></div><div class="folders settings-folder-list" id="folders" role="region" aria-label="Added folders" tabindex="0"></div><div class="folder-notes" id="folderNotes"></div>
+    <h3>Movie information</h3><p class="note">Connect TMDB for posters, synopses, cast and ratings. Only movie titles and years are sent for matching.</p>
+    <p class="note"><a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noreferrer">Get a TMDB API Read Access Token</a></p>
+    <form id="metadataSetup"><label for="tmdbToken">API Read Access Token</label><input type="password" id="tmdbToken" autocomplete="off" spellcheck="false" placeholder="Paste your token"><div class="controls"><button type="submit" id="saveToken">Save token</button><button type="button" id="cancelTokenEdit" hidden>Cancel</button><button type="button" id="removeToken">Remove token</button></div></form>
+    <p id="metadataStatus" class="note"></p><p id="settingsmsg" class="msg" role="status"></p>
+    <div class="attribution"><a href="https://www.themoviedb.org" target="_blank" rel="noreferrer"><img src="/tmdb.svg" alt="TMDB" width="90" height="12"></a><p>This product uses the TMDB API but is not endorsed or certified by TMDB.</p></div>
+  </dialog>
+  <dialog id="matchDialog" aria-labelledby="matchTitle"><div class="row"><h2 id="matchTitle">Correct match</h2><button data-close="matchDialog" data-tooltip="Close match search" aria-label="Close match search">×</button></div><form id="matchSearch"><label>Title<input id="matchQuery" type="text" required maxlength="300"></label><label>Year<input id="matchYear" type="number" min="1800" max="2200"></label><button type="submit">Search TMDB</button></form><p id="matchmsg" class="msg" role="status"></p><div id="matchResults"></div><button id="leaveUnmatched">Leave unmatched</button></dialog>
 </main>
 <script>
 const $ = id => document.getElementById(id);
@@ -358,10 +368,10 @@ const ago = s => s == null ? 'No requests yet' : s < 2 ? 'Just now' : s < 120 ? 
 const STATES = {PLAYING:'Playing from your Mac', PAUSED_PLAYBACK:'Paused', STOPPED:'Stopped', TRANSITIONING:'Loading…', NO_MEDIA_PRESENT:'No media loaded'};
 const RESUME_MIN = 30;
 let st = null, online = false, selecting = false, finding = false, pairing = false;
-let opening = null, choosingFolder = false, choosingSubs = false, seeking = false, volDragging = false, queueBusy = false;
+let opening = null, choosingSubs = false, seeking = false, volDragging = false, queueBusy = false;
 let apps = null, appsLoading = false, appsAt = 0, appsNext = 0, appsGeneration = 0, appsSig = '';
 let remoteTv = null, launching = null, powerArmed = false, powerTimer;
-let tvSig = '', libSig = '', folderSig = '', queueSig = '', subSig = '', refreshId = 0;
+let tvSig = '', queueSig = '', subSig = '', refreshId = 0;
 const errors = {};
 const show = (id, text, info = false) => { $(id).textContent = text || ''; $(id).className = 'msg' + (info ? ' info' : ''); };
 const canControl = () => online && !selecting && !!st?.selected;
@@ -389,7 +399,7 @@ async function act(action, body = {}, area = 'msg') {
   let result = null;
   try { result = await api(action, body); if (tv === st?.selected) delete errors[area]; }
   catch (e) { if (tv === st?.selected) errors[area] = e.message; }
-  await refresh();
+  if (isTV()) await refresh();
   return result;
 }
 
@@ -491,59 +501,13 @@ function showTimes(pos, dur) {
   $('left').textContent = dur ? `${clock(dur - (pos || 0))} left` : '';
   $('seek').setAttribute('aria-valuetext', `${clock(pos)} of ${clock(dur)}`);
 }
-function movieRow(m) {
-  const current = st.now?.id === m.id;
-  const partial = m.position >= RESUME_MIN;
-  const meta = [m.year, runtime(m.duration), m.subs.count ? ['Subtitles', ...m.subs.languages.map(l => l.toUpperCase())].join(' ') : '', m.copy ? 'Copy ready' : '', !current && partial ? `Resume at ${clock(m.position)}` : m.watched ? 'Watched' : ''];
-  const queued = st.queue.some(item => item.id === m.id);
-  const tag = current ? 'Casting' : '';
-  let actions = '';
-  if (!current) {
-    const disabled = !canControl() || !st.tv || opening || queueBusy ? 'disabled' : '';
-    const label = opening === m.id ? 'Opening…' : m.problem ? 'Try anyway' : partial ? 'Resume' : 'Play';
-    actions = `<button ${partial ? 'class="primary"' : ''} data-open="${m.id}" aria-label="${esc(label + ' ' + m.title)}" ${disabled}>${label}</button>`;
-    if (partial || m.watched) actions += `<button data-open="${m.id}" data-from-start="1" aria-label="${esc('Start ' + m.title + ' over')}" ${disabled}>Start over</button>`;
-    actions += `<button data-queue="${m.id}" aria-label="${esc((queued ? 'Queued: ' : 'Queue ') + m.title)}" ${!online || queueBusy || queued || opening === m.id ? 'disabled' : ''}>${queued ? 'Queued' : 'Queue'}</button>`;
-  }
-  const bar = !current && partial && m.duration ? `<div class="bar"><span style="width:${Math.min(100, m.position / m.duration * 100)}%"></span></div>` : '';
-  return `<li class="${current ? 'current' : ''}"><div class="info"><div class="name">${esc(m.title)}${tag ? `<span class="tag">${tag}</span>` : ''}</div><div class="meta">${meta.filter(Boolean).map(t => `<span>${esc(t)}</span>`).join('')}${m.problem ? `<span class="warn">${esc(m.problem)}</span>` : m.checking ? '<span>Checking format…</span>' : ''}</div>${bar}</div><div class="actions">${actions}</div></li>`;
-}
-function renderLibrary() {
-  if (!st) return;
-  const query = $('search').value.trim().toLocaleLowerCase(), filter = $('filter').value;
-  const sig = JSON.stringify([st.library, st.groups, st.libraries, st.scanning, st.now, st.queue, queueBusy, opening, canControl(), !!st.tv, query, filter]);
-  if (sig !== libSig) {
-    libSig = sig;
-    const movies = st.library.filter(m => `${m.title} ${m.year || ''}`.toLocaleLowerCase().includes(query) && (filter === 'all' || (filter === 'continue' ? m.position >= RESUME_MIN : !m.watched)));
-    $('libraryCount').textContent = movies.length === st.library.length ? ` ${movies.length} ${movies.length === 1 ? 'movie' : 'movies'}` : ` ${movies.length} of ${st.library.length}`;
-    let out = '';
-    for (const g of st.groups) {
-      const group = movies.filter(m => m.group === g.id);
-      if (group.length) out += `<h3>${esc(g.name)}<span class="count"> ${group.length}</span></h3><ul class="lib">${group.map(movieRow).join('')}</ul>`;
-    }
-    $('libbody').innerHTML = out || `<p class="empty">${st.scanning ? 'Finding your movies…' : query || filter !== 'all' ? 'No matching movies. Try another search or filter.' : st.libraries.length ? 'No videos found. Add another folder below.' : 'Add a folder below to find your movies.'}</p>`;
-  }
-  $('rescan').disabled = !online || st.scanning;
-  $('rescan').textContent = st.scanning ? 'Scanning…' : 'Rescan';
-  const problems = st.libraries.reduce((n, l) => n + l.problems.length, 0);
-  $('libraryNote').textContent = problems ? 'Some folders are unavailable. See Folders.' : st.checking ? `Checking video formats (${st.checking} left)…` : '';
-  const folders = JSON.stringify(st.libraries);
-  if (folders !== folderSig) {
-    folderSig = folders;
-    $('folders').innerHTML = st.libraries.map(l => `<span class="folder"><span title="${esc(l.path)}">${esc(l.name)}</span><button class="icon-button" data-remove="${esc(l.path)}" title="Remove folder" aria-label="Remove ${esc(l.name)} from library"><span class="icon icon-x" aria-hidden="true"></span></button></span>`).join('');
-    $('folderNotes').innerHTML = st.libraries.map(l => l.problems.map(p => `<p class="msg">${esc(l.name)}: ${esc(p)}</p>`).join('') + l.private.map(p => `<p class="note" title="macOS denied access to this subfolder. Other folders are still scanned.">Skipped ${esc(l.name + '/' + p)} — macOS restricted access.</p>`).join('')).join('');
-  }
-  $('addFolder').disabled = choosingFolder || !online;
-  document.querySelectorAll('[data-remove]').forEach(b => b.disabled = !online);
-  $('addFolder').textContent = choosingFolder ? 'Choosing…' : 'Add folder';
-  show('libmsg', errors.libmsg);
-}
 function renderQueue() {
+  if (!st) return;
   const items = st.queue, disabled = !online || queueBusy;
   const sig = JSON.stringify([items, disabled]);
   if (sig !== queueSig) {
     queueSig = sig;
-    $('queueList').innerHTML = items.map((item, i) => `<li><span class="queue-index">${i + 1}</span><div class="queue-title">${esc(item.title)}${item.year ? `<span class="count">${item.year}</span>` : ''}${!item.available ? '<p class="note">Unavailable</p>' : ''}</div><div class="actions">${[-1, 1].map(direction => `<button class="icon-button" data-queue-action="move" data-id="${esc(item.id)}" data-direction="${direction}" title="Move ${direction < 0 ? 'up' : 'down'}" aria-label="${esc('Move ' + item.title + (direction < 0 ? ' up' : ' down'))}" ${disabled || i + direction < 0 || i + direction >= items.length ? 'disabled' : ''}><span class="icon icon-${direction < 0 ? 'up' : 'down'}" aria-hidden="true"></span></button>`).join('')}<button class="icon-button" data-queue-action="remove" data-id="${esc(item.id)}" title="Remove from queue" aria-label="${esc('Remove ' + item.title + ' from queue')}" ${disabled ? 'disabled' : ''}><span class="icon icon-x" aria-hidden="true"></span></button></div></li>`).join('');
+    $('queueList').innerHTML = items.map((item, i) => `<li><span class="queue-index">${i + 1}</span><div class="queue-title">${esc(item.title)}${item.year ? `<span class="count">${item.year}</span>` : ''}${!item.available ? '<p class="note">Unavailable</p>' : ''}</div><div class="actions">${[-1, 1].map(direction => `<button class="icon-button" data-queue-action="move" data-id="${esc(item.id)}" data-direction="${direction}" data-tooltip="Move ${direction < 0 ? 'up' : 'down'}" aria-label="${esc('Move ' + item.title + (direction < 0 ? ' up' : ' down'))}" ${disabled || i + direction < 0 || i + direction >= items.length ? 'disabled' : ''}><span class="icon icon-${direction < 0 ? 'up' : 'down'}" aria-hidden="true"></span></button>`).join('')}<button class="icon-button" data-queue-action="remove" data-id="${esc(item.id)}" data-tooltip="Remove from queue" aria-label="${esc('Remove ' + item.title + ' from queue')}" ${disabled ? 'disabled' : ''}><span class="icon icon-x" aria-hidden="true"></span></button></div></li>`).join('');
   }
   $('queueCount').textContent = items.length;
   $('queueEmpty').hidden = !!items.length;
@@ -599,7 +563,7 @@ function renderRemote() {
   $('refreshApps').textContent = appsLoading ? 'Checking…' : 'Refresh';
   show('remotemsg', errors.remotemsg);
   show('appmsg', errors.appmsg || (launching ? 'Opening the app on your TV…' : ''), !errors.appmsg);
-  if (enabled && !appsLoading && !launching && Date.now() >= appsNext) loadApps();
+  if (isTV() && enabled && !appsLoading && !launching && Date.now() >= appsNext) loadApps();
 }
 async function loadApps() {
   const generation = appsGeneration;
@@ -632,6 +596,7 @@ function renderServer() {
   $('powerBrief').classList.toggle('warn', !!p.on_battery && p.percent < 30);
 }
 async function refresh() {
+  if (!isTV()) return;
   const id = ++refreshId;
   let next;
   try {
@@ -654,7 +619,7 @@ async function refresh() {
   show('globalmsg', errors.globalmsg);
   renderTvs(); renderRemote(); renderStatus(); renderLibrary(); renderQueue(); renderServer();
 }
-async function poll() { await refresh(); setTimeout(poll, document.hidden ? 10000 : 2000); }
+async function poll() { if (isTV()) await refresh(); setTimeout(poll, document.hidden ? 10000 : 2000); }
 function togglePlay() { if (ownsPlayback()) act(st.tv.state === 'PLAYING' ? 'pause' : 'play'); }
 function skip(delta) { if (ownsPlayback() && st.tv.duration) act('seek', {seconds:Math.min(Math.max(0, (st.tv.position || 0) + delta), st.tv.duration - 1)}); }
 function remoteKey(key) { if (canUseRemote() && !launching) act('keys', {keys:[key]}, 'remotemsg'); }
@@ -663,11 +628,12 @@ $('tv').onchange = async e => {
   selecting = true; appsGeneration++; refreshId++;
   appsLoading = false; launching = null; appsAt = 0; appsNext = 0;
   renderTvs(); renderRemote(); renderStatus(); renderLibrary(); renderQueue();
-  await act('select', {id}, 'globalmsg');
+  const result = await act('select', {id}, 'globalmsg');
   selecting = false; tvSig = ''; await refresh();
   show('globalmsg', errors.globalmsg);
+  if (result) continueCast();
 };
-$('find').onclick = async () => { finding = true; renderTvs(); await act('discover', {}, 'globalmsg'); finding = false; tvSig = ''; renderTvs(); show('globalmsg', errors.globalmsg); };
+$('find').onclick = async () => { finding = true; renderTvs(); await act('discover', {}, 'globalmsg'); finding = false; tvSig = ''; renderTvs(); show('globalmsg', errors.globalmsg); continueCast(); };
 $('mute').onclick = () => { if (canControl() && st.tv?.muted != null) act('mute', {on:!st.tv.muted}, 'remotemsg'); };
 $('volume').oninput = e => { volDragging = true; $('volnum').textContent = e.target.value; };
 $('volume').onchange = async e => { await act('volume', {level:+e.target.value}, 'remotemsg'); volDragging = false; renderStatus(); };
@@ -683,19 +649,6 @@ $('deleteCopy').onclick = () => { if (confirm('Delete the copy with burned-in su
 $('submode').onchange = e => act('subtitle_mode', {mode:e.target.value});
 $('subAdd').onclick = async () => { choosingSubs = true; renderStatus(); await act('add_subtitles'); choosingSubs = false; renderStatus(); };
 $('subRemove').onclick = () => act('remove_subtitles', {track:$('subsel').value});
-$('search').oninput = $('filter').onchange = renderLibrary;
-$('rescan').onclick = () => act('rescan', {}, 'libmsg');
-$('addFolder').onclick = async () => { choosingFolder = true; renderLibrary(); await act('add_folder', {}, 'libmsg'); choosingFolder = false; renderLibrary(); };
-$('folders').onclick = e => { const b = e.target.closest('[data-remove]'); if (b) act('remove_folder', {path:b.dataset.remove}, 'libmsg'); };
-$('libbody').onclick = async e => {
-  const queueButton = e.target.closest('[data-queue]');
-  if (queueButton) { await queueAction('add', {id:queueButton.dataset.queue}); return; }
-  const b = e.target.closest('[data-open]');
-  if (!b || opening || !canControl()) return;
-  opening = b.dataset.open; renderLibrary(); renderStatus(); renderQueue();
-  await act('open', {id:opening, from_start:b.dataset.fromStart === '1'});
-  opening = null; await refresh();
-};
 $('queueList').onclick = e => {
   const b = e.target.closest('[data-queue-action]');
   if (b) queueAction(b.dataset.queueAction, {id:b.dataset.id, direction:+b.dataset.direction});
@@ -736,7 +689,7 @@ $('tvoff').onclick = () => {
   clearTimeout(powerTimer); powerArmed = false; remoteKey('KEY_POWER'); renderRemote();
 };
 document.addEventListener('keydown', e => {
-  if (e.metaKey || e.ctrlKey || e.altKey || e.repeat || e.target.closest('input, select, textarea, [contenteditable=true]')) return;
+  if (!isTV() || document.querySelector('dialog[open]') || e.metaKey || e.ctrlKey || e.altKey || e.repeat || e.target.closest('input, select, textarea, [contenteditable=true]')) return;
   const navigation = {ArrowUp:'KEY_UP', ArrowDown:'KEY_DOWN', ArrowLeft:'KEY_LEFT', ArrowRight:'KEY_RIGHT'};
   if (e.target.closest('#remote') && navigation[e.key]) { e.preventDefault(); remoteKey(navigation[e.key]); }
   else if (e.key.toLowerCase() === 'm') { e.preventDefault(); $('mute').click(); }
@@ -745,7 +698,10 @@ document.addEventListener('keydown', e => {
   else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { if (ownsPlayback()) { e.preventDefault(); skip(e.key === 'ArrowLeft' ? -10 : 10); } }
   else if (e.key.toLowerCase() === 'c' && ownsPlayback() && st.now.subtitles.tracks.length) act('subtitles', {track:shownSubtitle(st.now.subtitles) === 'off' ? 'on' : 'off'});
 });
-poll();
 </script>
+<script src="/catalogue.js"></script>
+<script src="/people-picker.js"></script>
+<script src="/themed-select.js"></script>
+<script src="/library.js"></script>
 </body>
 </html>

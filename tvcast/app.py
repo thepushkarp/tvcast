@@ -16,6 +16,7 @@ from xml.sax.saxutils import escape
 
 from . import burn, discovery, samsung
 from .library import FFPROBE, VIDEO_TYPES, choose_folder, choose_subtitle_file, playability, probe, scan_library
+from .metadata import Metadata
 from .server import PANEL_HTML, PanelHandler, Stats, StreamHandler
 from .state import State
 from .subtitles import (
@@ -29,6 +30,7 @@ STATUS_TIMEOUT = 2  # panel status polls; an off TV would otherwise stall the pa
 POLL_INTERVAL = 2  # seconds between playback checks while a movie is loaded
 IDLE_POLL_INTERVAL = 10  # seconds between checks for a movie to pick back up after a restart
 SAVE_INTERVAL = 10  # seconds between resume-point writes during playback
+LIBRARY_SCAN_INTERVAL = 60  # seconds between checks for new files and due metadata retries
 STOP_CONFIRM = 2  # consecutive non-playing polls before playback counts as over
 RESUME_MIN = 30  # resume points earlier than this start the movie from the top
 RESUME_REWIND = 5  # replay a few seconds of context when resuming
@@ -166,6 +168,7 @@ class App:
     def __init__(self, args):
         self.port = args.port
         self.state = State(args.state)
+        self.metadata = Metadata(self.state)
         if self.state.get("libraries") is None:
             seeds = args.library or ["~/Movies"]
             self.state.set("libraries", [os.path.abspath(os.path.expanduser(r)) for r in seeds])
@@ -210,11 +213,14 @@ class App:
             t.start()
         threading.Thread(target=self.monitor, daemon=True).start()
         threading.Thread(target=self.discover_at_start, daemon=True).start()
+        for _ in range(3):
+            threading.Thread(target=self.metadata.run, daemon=True).start()
         if FFPROBE:
             threading.Thread(target=self.prober, daemon=True).start()
         else:
             log("warning: ffprobe not found; videos won't be checked for TV-compatible codecs")
         self.request_scan()
+        threading.Thread(target=self.watch_library, daemon=True).start()
         log("panel at http://127.0.0.1:%d; library: %s"
             % (self.panel.server_address[1], ", ".join(self.state.get("libraries")) or "no folders yet"))
         for t in servers:
@@ -299,6 +305,11 @@ class App:
 
     # Library
 
+    def watch_library(self):
+        while True:
+            time.sleep(LIBRARY_SCAN_INTERVAL)
+            self.request_scan()
+
     def request_scan(self):
         """Rescan the library folders in the background; repeated requests coalesce."""
         with self.lock:
@@ -312,6 +323,8 @@ class App:
         try:
             while True:
                 movies, problems, private = scan_library(self.state.get("libraries"))
+                for movie in movies:
+                    self.metadata.enqueue(movie)
                 with self.lock:
                     changed = problems != self.library_problems
                     self.movies, self.by_id = movies, {m.id: m for m in movies}
@@ -1070,15 +1083,8 @@ class App:
     def save_progress(self, pb):
         if pb.position is None:
             return
-        saved = self.state.movie(pb.movie.path)
         finished = bool(pb.duration) and pb.position >= pb.duration * WATCHED_FRACTION
-        self.state.update_movie(
-            pb.movie.path,
-            position=0 if finished else round(pb.position, 1),
-            duration=pb.duration or saved.get("duration"),
-            watched=finished or saved.get("watched", False),
-            updated=round(time.time()),
-        )
+        self.state.save_progress(pb.movie.path, round(pb.position, 1), pb.duration, finished, round(time.time()))
         pb.last_saved = time.time()
 
     def finish(self, pb, advance=True):
@@ -1100,6 +1106,69 @@ class App:
                 log("queue paused: %s" % e)  # play_next also exposes this error in the panel
 
     # Panel API
+
+    def library_movie(self, movie_id, require_file=False):
+        movie = self.lookup(movie_id)
+        if movie is None or movie.root not in self.state.get("libraries"):
+            raise ValueError("Movie is no longer in the library; rescan and choose it again")
+        if require_file and not os.path.isfile(movie.path):
+            raise ValueError("%s is unavailable; reconnect its folder or rescan" % movie.title)
+        return movie
+
+    def catalogue_movie(self, movie):
+        saved = self.state.movie(movie.path)
+        probe_data = self.probe_info(movie) or {}
+        match, data = self.metadata.info(movie)
+        tmdb_id = data.get("tmdb_id")
+        poster = self.metadata.poster(tmdb_id) if tmdb_id else None
+        try:
+            poster_url = "/api/posters/%s?v=%s" % (tmdb_id, os.stat(poster).st_mtime_ns) if poster else None
+        except FileNotFoundError:
+            poster_url = None  # a refresh can remove artwork between the lookup and stat
+        return dict(data, id=movie.id, root=movie.root, collection_path=movie.collection_path,
+                    title=data.get("title") or movie.title,
+                    year=data.get("year") or movie.year, file_title=movie.title,
+                    filename=os.path.basename(movie.path), file_runtime_s=probe_data.get("duration"),
+                    watched=saved.get("watched", False), position=saved.get("position", 0),
+                    saved_duration=saved.get("duration"), size=movie.size,
+                    problem=playability(probe_data) if probe_data else None,
+                    match=match, poster=poster_url)
+
+    def catalogue(self):
+        """Local state only: browsing must never wait for TV status or metadata requests."""
+        libraries = self.state.get("libraries")
+        with self.lock:
+            movies = [m for m in self.movies if m.root in libraries]
+            problems, private = dict(self.library_problems), dict(self.library_private)
+            scanning, checking = self.scanning, len(self.probing)
+        folders = {}
+        for movie in movies:
+            path = movie.collection_path
+            while path != movie.root and path not in folders:
+                parent = os.path.dirname(path)
+                if parent == path:
+                    break
+                folders[path] = {"id": path, "name": os.path.basename(path), "parent": parent, "root": movie.root}
+                path = parent
+        return {
+            "library": [self.catalogue_movie(m) for m in movies],
+            "folders": sorted(folders.values(), key=lambda folder: folder["name"].casefold()),
+            "libraries": [{"path": p, "name": os.path.basename(p), "problems": problems.get(p, []),
+                           "private": private.get(p, [])} for p in libraries],
+            "scanning": scanning, "checking": checking, "ffprobe": bool(FFPROBE),
+            "metadata": self.metadata.status(), "selected": self.state.get("tv"),
+            "queue": self.state.get("queue"),
+        }
+
+    def open_local(self, movie, reveal=False):
+        command = ["/usr/bin/open"] + (["-R"] if reveal else []) + [movie.path]
+        try:
+            result = subprocess.run(command, capture_output=True, text=True, timeout=15)
+        except (OSError, subprocess.TimeoutExpired) as e:
+            raise RuntimeError("Cannot %s %s: %s" % ("reveal" if reveal else "open", movie.title, e)) from e
+        if result.returncode:
+            raise RuntimeError("Cannot %s %s: %s" % ("reveal" if reveal else "open", movie.title,
+                               result.stderr.strip() or "choose a default player in Finder’s Get Info"))
 
     def movie_info(self, movie, copied=None):
         """The panel's record of movie; copied is the set of movie ids with copies (status() scans
@@ -1188,7 +1257,38 @@ class App:
         return out
 
     def control(self, action, body):
-        if action == "open":
+        if action in ("open_local", "reveal"):
+            self.open_local(self.library_movie(str(body["id"]), require_file=True), reveal=action == "reveal")
+        elif action == "watched":
+            if type(body.get("watched")) is not bool:
+                raise ValueError("watched must be true or false")
+            self.state.update_movie(self.library_movie(str(body["id"])).path, watched=body["watched"])
+        elif action == "metadata_configure":
+            self.metadata.configure(body["token"])
+            with self.lock:
+                movies = list(self.movies)
+            self.metadata.retry_missing(movies)
+        elif action == "metadata_refresh_all":
+            if not self.metadata.status()["configured"]:
+                raise ValueError("Add a TMDB Read Access Token in Settings first")
+            with self.lock:
+                movies = list(self.movies)
+            with self.metadata.lock:
+                self.metadata.paused = False
+            for movie in movies:
+                self.metadata.enqueue(movie, refresh=True)
+        elif action == "metadata_search":
+            return self.metadata.search(body.get("title"), body.get("year"))
+        elif action == "metadata_match":
+            self.metadata.correct(self.library_movie(str(body["id"])), body["tmdb_id"])
+        elif action == "metadata_refresh":
+            movie = self.library_movie(str(body["id"]))
+            if self.state.movie(movie.path).get("match", {}).get("source") == "none":
+                raise ValueError("This movie is set to Leave unmatched; use Correct match first")
+            with self.metadata.lock:
+                self.metadata.paused = False
+            self.metadata.enqueue(movie, refresh=True)
+        elif action == "open":
             subtitle, style = body.get("subtitle"), body.get("burn")
             if style not in (None, "hls", "copy"):
                 raise ValueError("burn must be hls or copy")

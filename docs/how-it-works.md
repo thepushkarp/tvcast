@@ -30,12 +30,52 @@ so they never disagree.
 | `tvcast/discovery.py` | Finds TVs (SSDP) and reads their device descriptions. |
 | `tvcast/upnp.py` | SOAP calls to the TV: play, pause, seek, volume, Samsung subtitles. |
 | `tvcast/samsung.py` | Samsung remote: pairing, keys, typing, apps. |
-| `tvcast/library.py` | Folder scanning, titles, codec and subtitle-track checks (ffprobe), native pickers. |
+| `tvcast/library.py` | Folder scanning, logical collection paths, titles, codec and subtitle-track checks (ffprobe), native pickers. |
 | `tvcast/subtitles.py` | Subtitle files: finding and labelling them, converting `.ass/.ssa/.vtt` and UTF-16 to SubRip. |
 | `tvcast/state.py` | The JSON state file, including the ordered playback queue. |
-| `tvcast/panel.html` | One HTML file, plain JavaScript. Status polls every 2 s (10 s in a background tab); app checks every 15 s. |
+| `tvcast/panel.html` | Shared page and TV controls; TV status polls every 2 s while the TV tab is visible (10 s when the browser tab is backgrounded). |
+| `tvcast/library.js`, `catalogue.js`, `library.css` | Shared Library UI, pure filtering/sorting, hash navigation and styling. Catalogue polls every 2.5 s outside the TV tab (10 s in the background). |
+| `tvcast/people-picker.js`, `people-picker.css` | Searchable actor/director combobox with keyboard navigation and theme-aware suggestions. |
+| `tvcast/metadata.py` | Three bounded background TMDB workers, conservative matching and local metadata/poster cache. |
 
-## Playing a movie
+## Local catalogue and playback
+
+`GET /api/health` checks the daemon without a TV request; `tv ui` uses it before opening the panel.
+`GET /api/library` and `/api/movies/<id>` read local state, cached metadata and ffprobe results.
+They do not probe files or contact TMDB or a TV. Existing `/api/status` remains the TV/CLI API.
+
+A separate worker rescans the library every minute and queues due metadata retries. The scanner
+indexes readable main movies recursively. Each movie has a logical `collection_path`:
+single-film release directories collapse into their movie, while grouping directories remain
+browseable. Show subfolders as collections is on by default and shows immediate collection folders
+and movies. Turning it off flattens movies beneath the selected location. Folder navigation and filters operate on the local
+catalogue without moving files or triggering a network request.
+
+Hash routes retain the library location and filters. Selecting a person or genre on a detail page
+starts a fresh matching browse. Grid is the initial view; view, sorting and Auto/Light/Dark theme
+preferences are stored in the browser. Theme selection is applied before the first paint. Bundled
+Lucide SVGs supply the toolbar and playback icons.
+
+Library mutations use the same protected POST convention as TV controls. `open_local` and
+`reveal` resolve known movie IDs server-side and call macOS `open` with an argument list.
+`watched` changes only the shared watched flag; playback progress merges under the state lock.
+
+Metadata matching is stored per file in `state.json`. `metadata/` beside that file holds
+`credentials.json` (mode 0600), movie JSON keyed by TMDB ID, and cached JPEG posters. The browser
+receives only whether a credential is configured; its read-only mask is not the saved token. Manual
+matches win over in-flight automatic lookups. Three workers run separately from probing and
+playback, with per-TMDB-ID locks deduplicating concurrent editions. Provider-wide failures pause
+fetching with a retry deadline. Cached refresh requests retain their retry intent while queued.
+Authentication failures wait for a replacement credential; transient failures resume automatically
+through periodic scans. Negative matches carry a matcher version and retry timestamp. Automatic
+matching enumerates at most 25 search pages, deduplicates IDs and leaves truncated searches
+unmatched. It accepts exact titles or provider aliases, cleans explicit edition suffixes on a
+fallback query, and verifies adjacent years against provider release dates. Library-wide
+and per-movie refreshes preserve manual matches and explicit Leave unmatched choices. Posters are
+served by validated numeric IDs, never by arbitrary paths. The bundled TMDB SVG is sourced from the
+[official documentation logo](https://files.readme.io/29c6fee-blue_short.svg).
+
+## Playing a movie on TV
 
 ```
 open → SetAVTransportURI (video URL + title + the chosen subtitle file)
@@ -120,8 +160,9 @@ the selected TV's IP address can download library videos. Traffic on the LAN is 
 ## Development
 
 ```sh
-/usr/bin/python3 -m unittest discover -s tests -t .      # no TV or network needed
-./tv daemon --port 18765 --panel-port 18766 --state /tmp/tvcast-test.json --library ~/some/videos
+/usr/bin/python3 -m unittest discover -s tests -t .      # no TV or external network needed
+node --test tests/test_catalogue.cjs                      # pure catalogue filtering/sorting
+./tv daemon --port 18765 --panel-port 18766 --state /tmp/tvcast-dev/state.json --library ~/some/videos
 ./tv status --panel-port 18766                            # talk to that test daemon
 ```
 
