@@ -2,6 +2,7 @@
 and the actions behind the control panel's API."""
 import collections
 import contextlib
+import errno
 import os
 import queue
 import re
@@ -63,6 +64,20 @@ def lan_ip_towards(ip):
             return s.getsockname()[0]
     except OSError as e:
         raise RuntimeError("no network route to TV at %s: %s" % (ip, e))
+
+
+def listen(role, address, handler):
+    """An HTTP server on address, or an exit naming the port when another program holds it.
+    The message points at that program, not a port flag: the login service always starts on the
+    default ports."""
+    try:
+        return ThreadingHTTPServer(address, handler)
+    except OSError as e:
+        if e.errno != errno.EADDRINUSE:
+            raise
+        port = address[1]
+        raise SystemExit("TV Cast can't start: %s port %d is already in use.\n"
+                         "Find what's using it with: lsof -nP -iTCP:%d -sTCP:LISTEN" % (role, port, port))
 
 
 def move_refused(known, ip):
@@ -202,8 +217,8 @@ class App:
         PanelHandler.app = self
         # Listening on every interface keeps working when the Mac's LAN address changes;
         # StreamHandler refuses everyone but the selected TV.
-        self.stream = ThreadingHTTPServer(("", args.port), StreamHandler)
-        self.panel = ThreadingHTTPServer(("127.0.0.1", args.panel_port), PanelHandler)
+        self.stream = listen("stream", ("", args.port), StreamHandler)
+        self.panel = listen("panel", ("127.0.0.1", args.panel_port), PanelHandler)
 
     def run(self):
         for note in burn.clean_up():  # nothing can be burning yet

@@ -34,6 +34,7 @@ try { const theme = localStorage.getItem('tvcast.theme.v1'); if (theme === 'ligh
   header, .row { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
   header { padding-bottom: 24px; border-bottom: 1px solid var(--line); }
   h1 { margin: 0; font-size: 21px; font-weight: 700; letter-spacing: -.6px; white-space: nowrap; }
+  .brand h1 a { color: inherit; text-decoration: none; }
   .local-time { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; white-space: nowrap; }
   h2 { margin: 0; font-size: 20px; line-height: 1.3; font-weight: 650; letter-spacing: -.35px; }
   h3 { margin: 26px 0 4px; font-size: 14px; font-weight: 650; }
@@ -233,7 +234,7 @@ SOFTWARE.
 <body>
 <main>
   <header>
-    <div class="brand"><h1>TV Cast</h1><time class="local-time" id="localTime"></time></div>
+    <div class="brand"><h1><a href="#/library">TV Cast</a></h1><time class="local-time" id="localTime"></time></div>
     <nav class="tabs" aria-label="Main"><a href="#/library" id="libraryTab">Library</a><a href="#/tv" id="tvTab">TV</a></nav><button id="themeButton" class="toolbar-icon theme-button" data-tooltip="Theme: Auto" aria-label="Theme: Auto">Auto</button>
   </header>
   <section id="libraryPage" aria-labelledby="libraryTitle">

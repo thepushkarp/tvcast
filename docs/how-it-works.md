@@ -6,11 +6,11 @@ For developers. Details live in the module docstrings and comments; this page is
 
 ```
  tv (terminal) ─┐
-                ├─ HTTP ─▶ daemon on 127.0.0.1:8766 (login service local.tvcast)
+                ├─ HTTP ─▶ daemon on 127.0.0.1:8827 (login service local.tvcast)
  web panel ─────┘            │
                              ├─ 1. SSDP search ─────────────▶ any DLNA TV on the network
                              ├─ 2. UPnP SOAP: play, seek… ──▶ the selected TV
-                             ├◀ 3. the TV downloads the video from the stream server (:8765)
+                             ├◀ 3. the TV downloads the video from the stream server (:8828)
                              ├─ 4. WebSocket (:8002) ───────▶ Samsung only: keys, typing
                              └─ 5. REST (:8001) ───────────▶ Samsung only: app status and launch
 ```
@@ -162,8 +162,8 @@ the selected TV's IP address can download library videos. Traffic on the LAN is 
 ```sh
 /usr/bin/python3 -m unittest discover -s tests -t .      # no TV or external network needed
 node --test tests/test_catalogue.cjs                      # pure catalogue filtering/sorting
-./tv daemon --port 18765 --panel-port 18766 --state /tmp/tvcast-dev/state.json --library ~/some/videos
-./tv status --panel-port 18766                            # talk to that test daemon
+./tv daemon --port 18828 --panel-port 18827 --state /tmp/tvcast-dev/state.json --library ~/some/videos
+./tv status --panel-port 18827                            # talk to that test daemon
 ```
 
 A test daemon picks the real TV automatically if it's the only one on the network, so don't play

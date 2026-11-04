@@ -1,7 +1,9 @@
 import argparse
 import contextlib
+import errno
 import io
 import os
+import socket
 import tempfile
 import unittest
 from unittest import mock
@@ -14,6 +16,24 @@ TV = {
     "model": "", "ip": OLD, "location": "http://%s:9197/dmr" % OLD, "services": {},
 }
 MOVED = dict(TV, ip=NEW, location="http://%s:9197/dmr" % NEW)
+
+
+class ListenTest(unittest.TestCase):
+    def test_a_port_held_by_another_program_exits_naming_it(self):
+        with socket.socket() as holder:
+            holder.bind(("127.0.0.1", 0))
+            holder.listen()
+            port = holder.getsockname()[1]
+            with self.assertRaises(SystemExit) as caught:
+                appmod.listen("panel", ("127.0.0.1", port), None)
+        self.assertIn("panel port %d is already in use" % port, str(caught.exception))
+        self.assertIn("lsof -nP -iTCP:%d -sTCP:LISTEN" % port, str(caught.exception))
+
+    def test_other_bind_failures_stay_visible(self):
+        denied = PermissionError(errno.EACCES, "denied")
+        with mock.patch.object(appmod, "ThreadingHTTPServer", side_effect=denied), \
+                self.assertRaises(PermissionError):
+            appmod.listen("panel", ("127.0.0.1", 0), None)
 
 
 class DiscoverTest(unittest.TestCase):

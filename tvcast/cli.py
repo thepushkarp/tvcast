@@ -18,8 +18,8 @@ from .app import App
 from .state import DEFAULT_STATE
 from .upnp import hms, seconds_of
 
-PANEL_PORT = 8766
-STREAM_PORT = 8765
+PANEL_PORT = 8827
+STREAM_PORT = 8828
 TIMEOUT = 120  # opening a movie waits on the TV's player, and pairing on someone pressing Allow
 SCAN_WAIT = 30  # seconds `tv open` waits for the library rescan before matching what is listed
 NOT_RUNNING = ("TV Cast isn't running (nothing on 127.0.0.1:%d); start it with \"tv install\""

@@ -94,8 +94,8 @@ a { color: var(--accent); }
 .movie-detail h2 { font-size: 32px; line-height: 1.2; letter-spacing: -.7px; font-weight: 600; }
 .movie-detail .movie-meta { margin: 14px 0 22px; font-size: 14px; }
 .movie-detail .synopsis { max-width: 65ch; line-height: 1.75; margin: 24px 0; }
-.movie-detail dl { display: grid; grid-template-columns: 85px 1fr; gap: 12px 18px; font-size: 13px; line-height: 1.6; }
-.movie-detail dt { color: var(--muted); padding-top: 6px; }
+.movie-detail dl { display: grid; grid-template-columns: 85px minmax(0, 1fr); align-items: first baseline; gap: 12px 18px; font-size: 13px; line-height: 1.6; }
+.movie-detail dt { color: var(--muted); }
 .movie-detail dd { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
 .metadata-link { border: 0; padding: 4px 0; min-height: 32px; font-size: 13px; font-weight: 400; color: var(--accent); text-align: left; }
 .metadata-link:hover { text-decoration: underline; background: none !important; }
