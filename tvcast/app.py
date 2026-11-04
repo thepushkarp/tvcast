@@ -39,6 +39,7 @@ END_SLACK = 30  # stopping within this many seconds of the end means the movie r
 WATCHED_FRACTION = 0.95  # stopping past this point (end credits) counts as watched
 OFFLINE_GRACE = 30  # seconds the TV may be unreachable before playback is written off
 NO_TV = "No TV selected"  # the panel's status shows exactly this
+NOT_READY = ("Transition not available", "Illegal seek target")  # TV replies that when_ready retries
 
 
 def mac_power():
@@ -144,6 +145,7 @@ class Playback:
         self.position = None
         self.duration = None
         self.last_saved = 0.0
+        self.saving = False  # whether readings may replace the saved position; see App.save_progress
         self.unreachable_since = None
 
     @property
@@ -919,6 +921,7 @@ class App:
             pb = self.drawn_playback(movie, tv, base, track, named=subtitle is not None, style=style)
         if pb is None:
             pb = Playback(movie, tv, base, track)
+        pb.saving = from_start
         with self.lock:
             if self.state.get("tv") != tv["id"]:
                 raise RuntimeError("another TV was selected while opening %s; open it again" % movie.title)
@@ -992,13 +995,15 @@ class App:
 
     def when_ready(self, tv, action, **args):
         # The TV opens a newly set stream asynchronously and rejects transport actions with
-        # UPnP error 701 "Transition not available" until the player is ready for them.
+        # UPnP error 701 "Transition not available" until the player is ready for them. A Samsung
+        # (AU7500) can also answer a Seek with 711 "Illegal seek target" just after playback
+        # starts, even for a target it accepts on the next load.
         deadline = time.time() + 30
         while True:
             try:
                 return transport(tv, action, **args)
             except RuntimeError as e:
-                if "Transition not available" not in str(e) or time.time() > deadline:
+                if not any(reply in str(e) for reply in NOT_READY) or time.time() > deadline:
                     raise
             time.sleep(0.5)
 
@@ -1099,6 +1104,12 @@ class App:
         if pb.position is None:
             return
         finished = bool(pb.duration) and pb.position >= pb.duration * WATCHED_FRACTION
+        # A reading under RESUME_MIN can't be a resume point, but it can be the TV still near 0
+        # before it applies the resume Seek, and saving it would erase the point being resumed.
+        # Past RESUME_MIN every reading counts, so a later rewind to the start is kept.
+        pb.saving = pb.saving or finished or pb.position >= RESUME_MIN
+        if not pb.saving:
+            return
         self.state.save_progress(pb.movie.path, round(pb.position, 1), pb.duration, finished, round(time.time()))
         pb.last_saved = time.time()
 
@@ -1205,6 +1216,7 @@ class App:
             "position": saved.get("position", 0),
             "duration": saved.get("duration") or (info or {}).get("duration"),
             "watched": saved.get("watched", False),
+            "updated": saved.get("updated"),
             "problem": playability(info),
             "checking": checking,
         }

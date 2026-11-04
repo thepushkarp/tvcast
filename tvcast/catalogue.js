@@ -32,6 +32,9 @@ function browseCollection(movies, folders, {folder = '', recursive = false, quer
     .filter(f => f.movies.length).sort((a, b) => a.name.localeCompare(b.name));
   return {movies:scoped.filter(m => m.collection_path === (folder || m.root)), folders:children};
 }
+function playHistory(movies, playingId, limit = 8) {
+  return movies.filter(m => m.updated && m.id !== playingId).sort((a, b) => b.updated - a.updated).slice(0, limit);
+}
 function movieLinks(movie) {
   const query = encodeURIComponent([movie.title || movie.file_title, movie.year].filter(Boolean).join(' '));
   const imdb = typeof movie.imdb_id === 'string' && /^tt\d+$/.test(movie.imdb_id) ? movie.imdb_id : null;
@@ -41,4 +44,4 @@ function movieLinks(movie) {
     {site:'letterboxd', label:tmdb || imdb ? 'Letterboxd' : 'Search Letterboxd', href:tmdb ? `https://letterboxd.com/tmdb/${tmdb}/` : imdb ? `https://letterboxd.com/imdb/${imdb}/` : `https://letterboxd.com/search/films/${query}/`},
   ];
 }
-if (typeof module !== 'undefined') module.exports = {selectMovies, defaultSortDescending, browseCollection, movieLinks, movieAttention};
+if (typeof module !== 'undefined') module.exports = {selectMovies, defaultSortDescending, browseCollection, playHistory, movieLinks, movieAttention};
