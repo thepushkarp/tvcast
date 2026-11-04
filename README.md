@@ -85,6 +85,7 @@ the movie detail page; adding does not start playback.
 | `tv key home` · `tv key down down enter` | press remote buttons (Samsung) |
 | `tv status` | what's playing, and where |
 | `tv tvs --find` · `tv use 2` | find TVs, switch to another TV |
+| `tv shortcut on` · `tv shortcut off` | add or remove a TV Cast app, so Spotlight opens the panel with no address to remember |
 
 `tv --help` lists everything. To remove TV Cast: `tv uninstall`.
 

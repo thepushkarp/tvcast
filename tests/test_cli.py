@@ -27,6 +27,49 @@ class PickTest(unittest.TestCase):
             pick("arrival", VIDEOS, "video")
 
 
+class ShortcutTest(unittest.TestCase):
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.app = os.path.join(tmp.name, "Applications", "TV Cast.app")
+        patcher = mock.patch.object(cli, "SHORTCUT", self.app)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_on_makes_an_app_that_opens_the_panel_and_off_removes_it(self):
+        cli.set_shortcut(True)
+        cli.set_shortcut(True)
+        with open(os.path.join(self.app, "Contents", "Info.plist"), "rb") as f:
+            info = plistlib.load(f)
+        executable = os.path.join(self.app, "Contents", "MacOS", info["CFBundleExecutable"])
+        self.assertTrue(os.access(executable, os.X_OK))
+        self.assertTrue(os.path.getsize(os.path.join(self.app, "Contents", "Resources", info["CFBundleIconFile"])))
+        with open(executable) as f:
+            self.assertIn("/usr/bin/open http://127.0.0.1:%d" % cli.PANEL_PORT, f.read())
+
+        cli.set_shortcut(False)
+        cli.set_shortcut(False)
+        self.assertFalse(os.path.exists(self.app))
+
+    def test_an_app_it_did_not_make_is_left_alone(self):
+        info = os.path.join(self.app, "Contents", "Info.plist")
+        os.makedirs(os.path.dirname(info))
+        with open(info, "wb") as f:
+            plistlib.dump({"CFBundleIdentifier": "com.example.other"}, f)
+        for on in (True, False):
+            with self.assertRaisesRegex(SystemExit, "left alone"):
+                cli.set_shortcut(on)
+        with open(info, "rb") as f:
+            self.assertEqual(plistlib.load(f), {"CFBundleIdentifier": "com.example.other"})
+
+    def test_uninstall_removes_it_with_the_service(self):
+        cli.set_shortcut(True)
+        with mock.patch.object(cli, "bootout"), mock.patch.object(cli, "PLIST", self.app + ".plist"), \
+                contextlib.redirect_stdout(io.StringIO()):
+            cli.uninstall()
+        self.assertFalse(os.path.exists(self.app))
+
+
 class InstallTest(unittest.TestCase):
     def test_login_service_waits_for_unload_and_uses_the_packaged_launcher(self):
         with tempfile.TemporaryDirectory(prefix="tvcast install ") as tmp:
