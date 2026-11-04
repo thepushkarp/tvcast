@@ -259,10 +259,17 @@ def launchctl(*args):
 
 
 def bootout():
-    """Stop and unload the login service if it is loaded."""
+    """Stop the login service and wait until launchd has removed its registration."""
     target = "gui/%d/%s" % (os.getuid(), LABEL)
     if subprocess.run(["/bin/launchctl", "print", target], capture_output=True).returncode == 0:
         launchctl("bootout", target)
+        # bootout can return before removal completes; bootstrap during that window fails
+        # with an I/O error and leaves the service stopped.
+        deadline = time.monotonic() + 10
+        while subprocess.run(["/bin/launchctl", "print", target], capture_output=True).returncode == 0:
+            if time.monotonic() >= deadline:
+                raise SystemExit("Timed out waiting for launchctl to unload %s; retry tv install once it stops" % target)
+            time.sleep(0.1)
 
 
 def install():
