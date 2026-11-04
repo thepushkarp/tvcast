@@ -28,20 +28,34 @@ class PickTest(unittest.TestCase):
 
 
 class InstallTest(unittest.TestCase):
-    def test_login_service_uses_the_packaged_launcher(self):
+    def test_login_service_waits_for_unload_and_uses_the_packaged_launcher(self):
         with tempfile.TemporaryDirectory(prefix="tvcast install ") as tmp:
             plist = os.path.join(tmp, "agent.plist")
             with mock.patch.object(cli, "PLIST", plist), \
                     mock.patch.object(cli, "api", return_value={"now": None}), \
+                    mock.patch.object(cli.time, "sleep"), \
                     mock.patch.object(cli.subprocess, "run", side_effect=[
-                        subprocess.CompletedProcess([], 1),
+                        subprocess.CompletedProcess([], 0),
+                        subprocess.CompletedProcess([], 0),
+                        subprocess.CompletedProcess([], 0),
+                        subprocess.CompletedProcess([], 113),
                         subprocess.CompletedProcess([], 0),
                     ]) as run, contextlib.redirect_stdout(io.StringIO()):
                 cli.install()
             with open(plist, "rb") as f:
                 args = plistlib.load(f)["ProgramArguments"]
             self.assertEqual(args, ["/usr/bin/python3", "-I", launcher.__file__, "daemon"])
+            self.assertEqual([call.args[0][1] for call in run.call_args_list],
+                             ["print", "bootout", "print", "print", "bootstrap"])
             self.assertEqual(run.call_args.args[0][-1], plist)
+
+    def test_unload_timeout_prevents_bootstrap(self):
+        with mock.patch.object(cli, "api", return_value={"now": None}), \
+                mock.patch.object(cli.subprocess, "run", return_value=subprocess.CompletedProcess([], 0)) as run, \
+                mock.patch.object(cli.time, "monotonic", side_effect=[0, 11]), \
+                self.assertRaisesRegex(SystemExit, "Timed out.*unload"):
+            cli.install()
+        self.assertNotIn("bootstrap", [call.args[0][1] for call in run.call_args_list])
 
     def test_install_refuses_to_interrupt_playback(self):
         with mock.patch.object(cli, "api", return_value={"now": {"title": "Movie", "year": None}}), \
