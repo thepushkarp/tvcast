@@ -337,7 +337,8 @@ function continueCast() {
   if (pendingCast && !pendingCast.error && st?.selected) sendCast();
 }
 async function startCast(id, fromStart = false) {
-  const movie = catalogue?.library.find(m => m.id === id) || detailMovie;
+  // The catalogue isn't loaded until the Library opens, and the TV tab casts from its status.
+  const movie = catalogue?.library.find(m => m.id === id) || st?.library.find(m => m.id === id) || detailMovie;
   if (!movie) return;
   if (movie.problem && !confirm(`TV compatibility: ${movie.problem}. Try playing anyway?`)) return;
   if (currentRoute === 'library') saveBrowsing();

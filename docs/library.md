@@ -212,6 +212,10 @@ In the panel, **Make copy** and **Delete copy** sit under the subtitles while a 
 
 - A movie resumes a few seconds before where you stopped. Use **Start over on TV** on the detail
   page or `tv open … --from-start` to begin again.
+- While nothing is casting, the TV tab shows the last played movie with **Resume** and
+  **Start over**. **History** under the queue lists the other recently played movies, one row each.
+- Progress is saved once a movie plays past 30 seconds, so a brief open neither joins History nor
+  replaces a resume point. **Start over** replaces it at once.
 - Past 95% counts as watched.
 - **Add to TV queue** on the detail page adds a movie without starting it. Use **Play queue** to
   start, **Play next** to skip, the arrows to reorder, or the cross to remove an entry. **Clear**

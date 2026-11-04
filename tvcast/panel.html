@@ -144,6 +144,9 @@ try { const theme = localStorage.getItem('tvcast.theme.v1'); if (theme === 'ligh
   .queue-list .actions { gap: 0; }
   .queue-list .actions button { min-width: 36px; }
   .queue-empty { margin-top: 10px; }
+  .history-list li { grid-template-columns: minmax(0, 1fr) auto; }
+  .history-list .note { margin: 2px 0 0; }
+  progress { display: block; width: 100%; height: 6px; margin-bottom: 6px; accent-color: var(--accent); }
   .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0; }
   .stats dt { color: var(--muted); font-size: 12px; }
   .stats dd { margin: 3px 0 0; font-size: 13px; overflow-wrap: anywhere; }
@@ -311,6 +314,7 @@ SOFTWARE.
       </details>
     </aside>
     <div class="content">
+      <section class="now" id="lastPlayed" aria-label="Last played" hidden></section>
       <section class="now" id="now" aria-label="Cast playback" hidden>
         <span class="caption" id="state"></span><h2 id="title"></h2>
         <input type="range" id="seek" min="0" max="1" value="0" aria-label="Seek" disabled>
@@ -328,8 +332,10 @@ SOFTWARE.
         <p class="note queue-empty" id="queueEmpty">Add movies from your library.</p>
         <p class="msg" id="queuemsg" role="status"></p>
       </section>
-
-
+      <section class="queue" id="history" aria-labelledby="historyTitle" hidden>
+        <h2 id="historyTitle">History</h2>
+        <ol class="queue-list history-list" id="historyList"></ol>
+      </section>
     </div>
   </div>
   <footer><span id="powerBrief"></span><span><kbd>M</kbd> mute &nbsp; <kbd>Space</kbd> cast play/pause &nbsp; Arrow keys navigate the remote when focused</span></footer>
@@ -372,7 +378,7 @@ let st = null, online = false, selecting = false, finding = false, pairing = fal
 let opening = null, choosingSubs = false, seeking = false, volDragging = false, queueBusy = false;
 let apps = null, appsLoading = false, appsAt = 0, appsNext = 0, appsGeneration = 0, appsSig = '';
 let remoteTv = null, launching = null, powerArmed = false, powerTimer;
-let tvSig = '', queueSig = '', subSig = '', refreshId = 0;
+let tvSig = '', queueSig = '', subSig = '', historySig = '', refreshId = 0;
 const errors = {};
 const show = (id, text, info = false) => { $(id).textContent = text || ''; $(id).className = 'msg' + (info ? ' info' : ''); };
 const canControl = () => online && !selecting && !!st?.selected;
@@ -448,6 +454,7 @@ function renderStatus() {
   const next = st.queue[0];
   $('upnext').textContent = next ? 'Up next: ' + next.title : '';
   show('msg', errors.msg || (st.now && st.tv_error));
+  renderHistory();
 }
 // The track shown, or 'off'; the TV's own report wins, since its remote can switch them off too.
 const shownSubtitle = subs => subs.selected && st.tv?.subtitles !== false ? subs.selected : 'off';
@@ -517,6 +524,32 @@ function renderQueue() {
   $('playQueue').disabled = disabled || !canControl() || !st.tv || !!opening || !items[0]?.available;
   $('playQueue').textContent = queueBusy && opening ? 'Opening…' : st.now ? 'Play next' : 'Play queue';
   show('queuemsg', errors.queuemsg || st.queue_error);
+}
+// Keyed on position, not watched: a rewatch stopped partway is both watched and resumable.
+const resumable = m => m.position >= RESUME_MIN;
+const playedOn = m => new Date(m.updated * 1000).toLocaleDateString(undefined, {month:'short', day:'numeric'});
+const yearTag = m => m.year ? `<span class="count">${m.year}</span>` : '';
+const playedSoFar = m => resumable(m) ? clock(m.position) + (m.duration ? ` of ${clock(m.duration)}` : '') : m.watched ? 'Watched' : 'Played';
+function lastPlayedCard(m, off) {
+  const left = resumable(m) && m.duration > m.position ? runtime(m.duration - m.position) + ' left' : '';
+  const bar = resumable(m) && m.duration ? `<progress max="${m.duration}" value="${m.position}" aria-label="Watched so far"></progress>` : '';
+  const start = resumable(m) ? `<button data-cast="${esc(m.id)}" data-from-start="true"${off}>Start over</button>` : '';
+  return `<span class="caption">Last played ${esc(playedOn(m))}</span><h2>${esc(m.title)}${yearTag(m)}</h2>${bar}<div class="times"><span>${esc(playedSoFar(m))}</span><span>${esc(left)}</span></div><div class="controls"><button class="primary" data-cast="${esc(m.id)}"${off}>${resumable(m) ? 'Resume' : 'Play again'}</button>${start}</div>`;
+}
+// While nothing casts, the newest played movie takes the Now Playing slot.
+function renderHistory() {
+  const playing = opening || st.now?.id, disabled = !online || !!opening;
+  const items = playHistory(st.library, playing);
+  const last = playing ? null : items.shift();
+  const sig = JSON.stringify([last, items, disabled]);
+  if (sig !== historySig) {  // polling must not rebuild the buttons, which would drop their focus
+    historySig = sig;
+    const off = disabled ? ' disabled' : '';
+    $('lastPlayed').innerHTML = last ? lastPlayedCard(last, off) : '';
+    $('historyList').innerHTML = items.map(m => `<li><div class="queue-title">${esc(m.title)}${yearTag(m)}<p class="note">${esc(playedSoFar(m))} · ${esc(playedOn(m))}</p></div><button data-cast="${esc(m.id)}"${off}>${resumable(m) ? 'Resume' : 'Play again'}</button></li>`).join('');
+  }
+  $('lastPlayed').hidden = !last;
+  $('history').hidden = !items.length;
 }
 async function queueAction(action, body = {}) {
   if (queueBusy || !online) return;

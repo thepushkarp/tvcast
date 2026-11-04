@@ -19,7 +19,9 @@ class State:
             self.data = {}
         except ValueError as e:
             raise SystemExit("tvcast state file %s is not valid JSON (%s); fix or delete it" % (path, e))
-        self.data.setdefault("movies", {})  # resume points, keyed by absolute video path
+        # Resume points, keyed by absolute video path. Only save_progress sets "updated", so it is
+        # the time the movie last played; the panel's history is ordered by it.
+        self.data.setdefault("movies", {})
         self.data.setdefault("probes", {})  # ffprobe summaries, keyed by absolute video path
         self.data.setdefault("tvs", {})  # every TV ever found, keyed by its UPnP device id
         self.data.pop("autoplay", None)

@@ -83,7 +83,7 @@ open → SetAVTransportURI (video URL + title + the chosen subtitle file)
      → Play            retried while the TV answers "701: not ready"
      → Seek            to the resume point
      → subtitles on    Samsung only; X_ControlCaption also switches files later
-then every 2 s: ask the TV where it is; save the position every 10 s
+then every 2 s: ask the TV where it is; past 30 s, save the position every 10 s
 when it ends: mark progress, then play the next queued movie if there is one
 ```
 
@@ -104,8 +104,14 @@ doesn't lose the TV or its pairing.
   need no restart.
 - **Not in Documents, Desktop or Downloads.** macOS silently blocks login services from those
   folders, so `tv install` refuses them.
-- **Retrying Play/Seek on error 701.** TVs load a new video in the background and reject commands
-  until ready.
+- **Nothing is saved under 30 s.** The TV may still report a position near 0 before it applies the
+  resume Seek, and a rejected Seek leaves it playing from the top. Those readings can't be resume
+  points, and saving one would erase the point being resumed. Start over, finishing a short clip
+  or passing 30 s lifts this for the rest of that load. The panel's History follows the same rule:
+  it is ordered by the time of the last save, so a brief open doesn't appear there.
+- **Retrying Play/Seek on errors 701 and 711.** TVs load a new video in the background and reject
+  commands until ready. A Samsung can also call a resume target "Illegal seek target" (711) just
+  after playback starts, even one it accepts on the next load.
 - **Queue consumption after loading.** Entries leave the queue only after playback loads, so
   failed requests can be retried. A playback lock serializes starts, stops and TV selection with
   the monitor's queue advancement; status and queue edits remain responsive during TV requests.

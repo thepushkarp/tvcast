@@ -1,6 +1,6 @@
 const assert = require('node:assert/strict');
 const {test} = require('node:test');
-const {selectMovies, defaultSortDescending, browseCollection, movieLinks, movieAttention} = require('../tvcast/catalogue.js');
+const {selectMovies, defaultSortDescending, browseCollection, playHistory, movieLinks, movieAttention} = require('../tvcast/catalogue.js');
 const movies = [
   {id:'a', title:'Éxample', file_title:'Original title', year:2001, file_runtime_s:7200, score:8, genres:['Drama'], watched:false},
   {id:'b', title:'Another', year:2002, file_runtime_s:5400, score:7, genres:['Comedy'], watched:true},
@@ -104,4 +104,10 @@ test('attention combines actionable metadata issues with filters and respects ex
   assert.deepEqual(attention.map(m => m.id), ['b', 'a', 'c']);
   assert.deepEqual(browseCollection(attention, [], {attention:true}).movies, attention);
   assert.deepEqual(selectMovies(entries, {attention:true, genre:'Drama', watched:'unwatched', person:'Actor', query:'original'}).map(m => m.id), ['a']);
+});
+test('play history lists played movies newest first, without the one playing', () => {
+  const played = [{id:'a', updated:10}, {id:'b', updated:30}, {id:'c', updated:20}, {id:'d', updated:null}];
+  assert.deepEqual(playHistory(played).map(m => m.id), ['b', 'c', 'a']);
+  assert.deepEqual(playHistory(played, 'b').map(m => m.id), ['c', 'a']);
+  assert.deepEqual(playHistory(played, null, 2).map(m => m.id), ['b', 'c']);
 });

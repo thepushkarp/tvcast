@@ -49,6 +49,14 @@ class QueueTest(unittest.TestCase):
         pb.seen_playing, pb.position, pb.duration = True, 998, 1000
         return pb
 
+    def reading(self, pb, position, duration=1000):
+        reply = {"state": "PLAYING", "uri": pb.media_url, "position": position, "duration": duration}
+        with mock.patch.object(appmod, "transport_status", return_value=reply):
+            self.app.poll(pb)
+
+    def saved(self):
+        return self.app.state.movie(self.a.path)
+
     def test_edits_preserve_order_and_persist_without_starting_playback(self):
         self.enqueue(self.a, self.b, self.a, self.c)
         self.assertEqual(self.ids(), [self.a.id, self.b.id, self.c.id])
@@ -137,3 +145,57 @@ class QueueTest(unittest.TestCase):
         self.app.finish(pb)
         self.assertIsNone(self.app.current)
         self.assertEqual(self.ids(), [])
+
+    def test_readings_before_the_resume_seek_keep_the_resume_point(self):
+        self.app.state.save_progress(self.a.path, 400, 1000, False, 1)
+        self.app.open_movie(self.a.id)
+        pb = self.app.current
+        self.reading(pb, 2)
+        self.app.finish(pb, advance=False)
+        self.assertEqual(self.saved()["position"], 400)
+
+    def test_start_over_replaces_the_resume_point_at_once(self):
+        self.app.state.save_progress(self.a.path, 400, 1000, False, 1)
+        self.app.open_movie(self.a.id, from_start=True)
+        self.reading(self.app.current, 2)
+        self.assertEqual(self.saved()["position"], 2)
+
+    def test_rewinding_after_passing_the_threshold_is_saved(self):
+        self.app.open_movie(self.a.id)
+        pb = self.app.current
+        self.reading(pb, 40)
+        self.reading(pb, 10)
+        self.app.finish(pb, advance=False)
+        self.assertEqual(self.saved()["position"], 10)
+
+    def test_a_clip_shorter_than_the_threshold_still_counts_as_watched(self):
+        self.app.open_movie(self.a.id)
+        self.reading(self.app.current, 20, duration=20)
+        self.assertTrue(self.saved()["watched"])
+
+    def test_panel_status_reports_when_a_movie_last_played(self):
+        self.app.state.save_progress(self.a.path, 400, 1000, False, 1234)
+        self.assertEqual(self.app.movie_info(self.a, set())["updated"], 1234)
+        self.assertIsNone(self.app.movie_info(self.b, set())["updated"])
+
+    def seek_replies(self, *replies):
+        """Open the movie from a resume point, with the TV giving these replies to each Seek."""
+        replies = list(replies)
+
+        def answer(tv, action, **args):
+            if action == "Seek" and replies:
+                raise RuntimeError("Seek on TV Test TV failed: HTTP 500: " + replies.pop(0))
+            return ""
+
+        self.app.state.save_progress(self.a.path, 400, 1000, False, 1)
+        with mock.patch.object(appmod, "transport", side_effect=answer), mock.patch.object(appmod.time, "sleep"):
+            self.app.open_movie(self.a.id)
+
+    def test_resume_retries_a_seek_the_tv_is_not_ready_for(self):
+        self.seek_replies("Illegal seek target", "Transition not available")
+        self.assertEqual(self.app.current.movie.id, self.a.id)
+
+    def test_resume_gives_up_at_once_on_any_other_seek_error(self):
+        with self.assertRaisesRegex(RuntimeError, "Seek mode not supported"):
+            self.seek_replies("Seek mode not supported")
+        self.assertIsNone(self.app.current)
