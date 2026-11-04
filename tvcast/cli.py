@@ -1,12 +1,13 @@
 """The tv command: control TV Cast from the terminal, run its daemon, or install it as a login service.
 
-Every command except daemon, install and uninstall is a thin client of the running daemon's
-panel API on 127.0.0.1, so the terminal and the panel always act on the same state.
+Every command except daemon, install, uninstall and shortcut is a thin client of the running
+daemon's panel API on 127.0.0.1, so the terminal and the panel always act on the same state.
 """
 import argparse
 import json
 import os
 import plistlib
+import shutil
 import subprocess
 import sys
 import time
@@ -28,6 +29,9 @@ LABEL = "local.tvcast"
 PLIST = os.path.expanduser("~/Library/LaunchAgents/%s.plist" % LABEL)
 LOG = os.path.expanduser("~/Library/Logs/tvcast.log")
 SCRIPT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "launcher.py")
+SHORTCUT = os.path.expanduser("~/Applications/TV Cast.app")
+SHORTCUT_ID = "local.tvcast.shortcut"
+SHORTCUT_ICON = os.path.join(os.path.dirname(SCRIPT), "shortcut.icns")
 # macOS privacy protection (TCC) keeps launchd agents out of these folders, so a login service
 # couldn't even load its code from there.
 PRIVATE_FOLDERS = ("~/Desktop", "~/Documents", "~/Downloads")
@@ -306,7 +310,49 @@ def uninstall():
     bootout()
     if os.path.exists(PLIST):
         os.remove(PLIST)
+    if shortcut_is_ours():
+        shutil.rmtree(SHORTCUT)
     print("Uninstalled %s" % LABEL)
+
+
+def shortcut_is_ours():
+    """Whether the app at SHORTCUT is the one tv shortcut made. Removing it deletes that path, so
+    an app someone else put there has to be recognised and left alone."""
+    try:
+        with open(os.path.join(SHORTCUT, "Contents", "Info.plist"), "rb") as f:
+            return plistlib.load(f).get("CFBundleIdentifier") == SHORTCUT_ID
+    except (OSError, plistlib.InvalidFileException):
+        return False
+
+
+def set_shortcut(on):
+    """Add or remove an app that opens the panel, so Spotlight can find it with no port to remember.
+    It is an app because a typed address can only drop the port by using port 80, which an
+    ordinary user can bind on every interface but not on 127.0.0.1 alone."""
+    ours = shortcut_is_ours()
+    if os.path.exists(SHORTCUT) and not ours:
+        raise SystemExit("%s isn't TV Cast's shortcut, so it was left alone; move it elsewhere first" % SHORTCUT)
+    if not on:
+        if ours:
+            shutil.rmtree(SHORTCUT)
+        return
+    executable = os.path.join(SHORTCUT, "Contents", "MacOS", "TV Cast")
+    resources = os.path.join(SHORTCUT, "Contents", "Resources")
+    os.makedirs(os.path.dirname(executable), exist_ok=True)
+    os.makedirs(resources, exist_ok=True)
+    shutil.copyfile(SHORTCUT_ICON, os.path.join(resources, "TV Cast.icns"))
+    with open(os.path.join(SHORTCUT, "Contents", "Info.plist"), "wb") as f:
+        plistlib.dump({
+            "CFBundleExecutable": "TV Cast",
+            "CFBundleIconFile": "TV Cast.icns",
+            "CFBundleIdentifier": SHORTCUT_ID,
+            "CFBundleName": "TV Cast",
+            "CFBundlePackageType": "APPL",
+            "LSUIElement": True,  # it quits at once, so a Dock icon would only flash
+        }, f)
+    with open(executable, "w") as f:
+        f.write("#!/bin/sh\nexec /usr/bin/open http://127.0.0.1:%d\n" % PANEL_PORT)
+    os.chmod(executable, 0o755)
 
 
 def main():
@@ -321,6 +367,9 @@ def main():
 
     command("status", "show the selected TV, what it plays, the position and the volume")
     command("ui", "open the control panel in your browser")
+    c = command("shortcut", "add a TV Cast app that opens the panel from Spotlight, remove it, or show"
+                            " whether it's there", parents=())
+    c.add_argument("on", nargs="?", choices=["on", "off"])
     c = command("tvs", "list known TVs; * marks the selected one")
     c.add_argument("--find", action="store_true", help="search the network first")
     c = command("use", "select a TV by its number in tv tvs or part of its name")
@@ -385,6 +434,11 @@ def main():
     elif args.cmd == "ui":
         api(args.panel_port, "health")  # service availability does not depend on a TV answering
         subprocess.run(["/usr/bin/open", "http://127.0.0.1:%d" % args.panel_port], check=True)
+    elif args.cmd == "shortcut":
+        if args.on:
+            set_shortcut(args.on == "on")
+        print("Open TV Cast from Spotlight, or from %s" % SHORTCUT if shortcut_is_ours()
+              else "The TV Cast app is off; tv shortcut on adds it")
     elif args.cmd == "tvs":
         list_tvs(args.panel_port, args.find)
     elif args.cmd == "use":

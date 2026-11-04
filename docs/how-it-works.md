@@ -24,7 +24,7 @@ so they never disagree.
 |---|---|
 | `tv` | Entry script. Adds the repo to `sys.path` and calls `cli.main()`. |
 | `tvcast/launcher.py` | Installed `tv` entry point and login-service bootstrap, using Apple's isolated Python. |
-| `tvcast/cli.py` | The `tv` command: API client, plus `daemon`, `install` and `uninstall`. |
+| `tvcast/cli.py` | The `tv` command: API client, plus `daemon`, `install`, `uninstall` and `shortcut`. |
 | `tvcast/app.py` | The daemon: TV selection, playback tracking, resume points, API actions. |
 | `tvcast/server.py` | HTTP handlers: the stream server and the panel API. |
 | `tvcast/discovery.py` | Finds TVs (SSDP) and reads their device descriptions. |
@@ -37,6 +37,7 @@ so they never disagree.
 | `tvcast/library.js`, `catalogue.js`, `library.css` | Shared Library UI, pure filtering/sorting, hash navigation and styling. Catalogue polls every 2.5 s outside the TV tab (10 s in the background). |
 | `tvcast/people-picker.js`, `people-picker.css` | Searchable actor/director combobox with keyboard navigation and theme-aware suggestions. |
 | `tvcast/metadata.py` | Three bounded background TMDB workers, conservative matching and local metadata/poster cache. |
+| `tvcast/shortcut.icns` | Icon of the `tv shortcut` app, built from `docs/images/shortcut-icon.svg` with `rsvg-convert` and `iconutil`. |
 
 ## Local catalogue and playback
 
