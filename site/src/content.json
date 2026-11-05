@@ -1,0 +1,193 @@
+{
+  "seoTitle": "TV Cast — Play and Cast Movies from Your Mac",
+  "socialImageAlt": "TV Cast. Your Mac is the projectionist. tvcast.thepushkarp.com",
+  "operatingSystem": "macOS",
+  "name": "TV Cast",
+  "shortName": "TV Cast",
+  "tagline": "Your movies. Your screen.",
+  "description": "Browse your movie library on your Mac. Play locally or cast to a DLNA TV, with a web panel, CLI, resume, and queues.",
+  "headline": "Your Mac is\nthe projectionist.",
+  "intro": "Browse movies on your Mac and cast them to your TV. No TV app or video uploads.",
+  "category": "A local movie library for macOS",
+  "cta": "Install TV Cast",
+  "requirements": [
+    "macOS",
+    "DLNA-compatible TV for casting",
+    "Free & open source"
+  ],
+  "repo": "https://github.com/thepushkarp/tvcast",
+  "demoCaption": "Actual TV Cast UI with staged open-film data and licensed Blender Studio posters. Runtime values in the sample catalogue are illustrative.",
+  "benefits": [
+    {
+      "title": "A library worth browsing.",
+      "body": "Browse folders as collections. Search your movies, switch views, and add optional TMDB posters, cast, and ratings."
+    },
+    {
+      "title": "Pick up where you left off.",
+      "body": "Resume a cast, manage the queue, and adjust playback from the web panel or your terminal."
+    },
+    {
+      "title": "Your Mac is the server.",
+      "body": "No app to install on the TV. Video travels across your local network, without transcoding."
+    }
+  ],
+  "workflowTitle": "From a folder to the sofa.",
+  "workflowIntro": "Add your movie folders in Settings. Play a file in your default Mac player, or find a TV on the same network and start casting.",
+  "examples": [
+    {
+      "title": "Open the library",
+      "code": "tv ui",
+      "body": "Browse your collection and choose where to watch."
+    },
+    {
+      "title": "Find your TV",
+      "code": "tv tvs --find",
+      "body": "Discover DLNA TVs on your local network."
+    },
+    {
+      "title": "Take control",
+      "code": "tv pause\ntv seek 1:05:00\ntv volume 20",
+      "body": "Control a cast without leaving your terminal."
+    }
+  ],
+  "tableTitle": "Know what your TV can do.",
+  "tableIntro": "Your TV must support the video and audio formats in the file. TV Cast sends the original file; it does not convert it.",
+  "columns": [
+    "Capability",
+    "DLNA TVs",
+    "Samsung 2016+"
+  ],
+  "rows": [
+    [
+      "Play, pause, seek, volume, resume",
+      "Supported",
+      "Supported"
+    ],
+    [
+      "External subtitles",
+      "Depends on the TV",
+      "Switch while playing"
+    ],
+    [
+      "Embedded subtitles",
+      "Depends on the TV",
+      "Use the TV menu"
+    ],
+    [
+      "Remote buttons, typing, app launching",
+      "Unavailable",
+      "Supported"
+    ]
+  ],
+  "installIntro": "Requires macOS, Python 3.9+, uv, and Apple Command Line Tools.",
+  "installSteps": [
+    {
+      "title": "Install and open",
+      "body": "Starts the service at login and opens the web panel.",
+      "code": "uv tool install tvcast\ntv install\ntv ui"
+    },
+    {
+      "title": "Add your movie folders",
+      "body": "In Settings, add your movie folders. TMDB artwork and details are optional.",
+      "code": ""
+    },
+    {
+      "title": "Choose your screen",
+      "body": "Choose Find TVs in the TV tab and allow local-network access. Open a film and select Play on TV.",
+      "code": ""
+    }
+  ],
+  "installLinks": [
+    {
+      "label": "Install uv",
+      "url": "https://docs.astral.sh/uv/getting-started/installation/"
+    },
+    {
+      "label": "Apple Command Line Tools",
+      "url": "https://developer.apple.com/documentation/xcode/installing-the-command-line-tools/"
+    }
+  ],
+  "faqs": [
+    {
+      "q": "Do I need a Samsung TV?",
+      "a": "No. Casting works with DLNA TVs. Samsung-specific features add remote buttons, text input, and app launching; the base playback controls work over DLNA."
+    },
+    {
+      "q": "Can I use it without a TV?",
+      "a": "Yes. Browse the library and open files in your default Mac player. Local playback does not update TV Cast’s TV resume point or interrupt an active cast."
+    },
+    {
+      "q": "Does it upload my movies?",
+      "a": "Video is served from your Mac to your TV over your network. If enabled, TMDB metadata lookups make requests to TMDB for movie information and artwork."
+    },
+    {
+      "q": "How do I update or remove it?",
+      "a": "Stop any active cast first. Run uv tool upgrade tvcast, then tv install to restart the service. To remove it, run tv uninstall before uv tool uninstall tvcast. Settings and playback history are retained."
+    },
+    {
+      "q": "What if the TV cannot play a file?",
+      "a": "TV Cast does not transcode. Install ffmpeg for optional runtime and compatibility checks, and use the troubleshooting guide for discovery, codecs, and subtitle issues."
+    }
+  ],
+  "docs": [
+    {
+      "label": "Library guide",
+      "url": "https://github.com/thepushkarp/tvcast/blob/main/docs/library.md"
+    },
+    {
+      "label": "Troubleshooting",
+      "url": "https://github.com/thepushkarp/tvcast/blob/main/docs/troubleshooting.md"
+    }
+  ],
+  "agentIntro": "Use the installed local tv CLI to inspect and control TV Cast. This public website is documentation, not a remote control endpoint.",
+  "slug": "tvcast",
+  "url": "https://tvcast.thepushkarp.com",
+  "screenshots": [
+    {
+      "src": "/screenshots/details-light.png",
+      "label": "Movie details",
+      "alt": "Spring movie details in TV Cast, with Open in default player and Play on TV, synopsis, director, genres, and watched status.",
+      "width": 740,
+      "height": 820,
+      "darkSrc": "/screenshots/details.png"
+    },
+    {
+      "src": "/screenshots/library-light.png",
+      "label": "Library",
+      "alt": "TV Cast library with Spring, Charge, and Sprite Fright posters; search, genre, people and watched filters; local-playback and TV-casting controls.",
+      "width": 740,
+      "height": 820,
+      "darkSrc": "/screenshots/library.png"
+    }
+  ],
+  "artwork": [
+    {
+      "title": "Spring — Pillar poster",
+      "creator": "Blender Studio",
+      "url": "https://studio.blender.org/projects/spring/",
+      "source": "https://studio.blender.org/projects/api/assets/909/?site_context=featured_artwork",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "file": "/artwork/spring.jpg"
+    },
+    {
+      "title": "Charge — official movie poster",
+      "creator": "Blender Studio",
+      "url": "https://studio.blender.org/projects/charge/",
+      "source": "https://studio.blender.org/projects/api/assets/6234/?site_context=featured_artwork",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "file": "/artwork/charge.jpg"
+    },
+    {
+      "title": "Sprite Fright — simple poster",
+      "creator": "Blender Studio",
+      "url": "https://studio.blender.org/projects/sprite-fright/",
+      "source": "https://studio.blender.org/projects/api/assets/5448/?site_context=featured_artwork",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "file": "/artwork/sprite-fright.jpg"
+    }
+  ],
+  "interactiveDemo": "The preview places the real TV Cast panel inside a Mac browser window. Open a film locally to launch a separate mock IINA player, or cast it to the paired Samsung TV. Local playback and TV playback have independent position and play/pause state. Both use poster artwork, without video or audio streaming. The browser never accesses real devices or local files. Reset clears the app, local player, and TV."
+}

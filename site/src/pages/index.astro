@@ -1,0 +1,17 @@
+---
+import data from '../content.json';
+import PageHead from '../components/PageHead.astro';
+import ThemeControl from '../components/ThemeControl.astro';
+import Demo from '../components/Demo.astro';
+import Install from '../components/Install.astro';
+import Footer from '../components/Footer.astro';
+import '../styles/site.css';
+---
+<!doctype html><html lang="en"><head><PageHead /></head><body class="tvcast">
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header shell"><a class="wordmark" href="/"><img src="/app-icon.svg" width="36" height="36" alt="" />TV Cast</a><nav aria-label="Main navigation"><a href="#library">The library</a><a href="#install">Install</a><a href={data.repo}>GitHub</a></nav><ThemeControl /></header>
+<main id="main" class="shell">
+<section class="cinema-intro" aria-labelledby="hero-title"><div><h1 id="hero-title">Your Mac is<br />the projectionist.</h1><p class="lead">Browse movies on your Mac and cast them to your TV. No TV app or video uploads.</p><div class="actions"><a class="button" href="#install">Set up TV Cast</a><a href="#library">See the app</a></div><p class="requirements">Free & open source · macOS · DLNA TV for casting</p></div><div class="poster-programme" role="group" aria-label="Open films in the sample library">{data.artwork.map(art => <a href={art.url} aria-label={art.title}><img src={art.file} width="764" height="1080" alt={art.title} fetchpriority="high" /></a>)}<p><a href="#artwork-credits">Films by Blender Studio</a></p></div></section>
+<section class="library-feature section" id="library" aria-labelledby="library-title"><div class="library-notes"><h2 id="library-title">Pick a film.<br />Pick a screen.</h2><p>Browse by title, genre, or cast. Play on your Mac or TV, resume where you stopped, and queue the next film.</p><p class="requirements">Casting needs a DLNA-compatible TV on the same network. Your TV must support the original file’s codecs; TV Cast doesn’t convert the video.</p></div><figure class="demo-figure" id="demo"><Demo /></figure></section>
+<Install />
+</main><Footer /></body></html>
