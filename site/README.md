@@ -50,6 +50,12 @@ One icon button cycles System (default) → Light → Dark → System. Its icon 
 
 The product layouts are independent. Shared utilities cover metadata, theme selection, copy controls and attribution. Keep user-facing product copy and the Markdown content in `src/content.json` consistent when changing the page.
 
+## Mobile preview
+
+Screens up to 900px wide and touch devices without hover show a static desktop capture. The image keeps its original proportions and follows System, Light, or Dark appearance. Interactive demo initialization is deferred until a larger, hover-capable viewport is available.
+
+`src/components/MobilePreview.astro` selects `public/screenshots/demo-desktop-light.png` or `demo-desktop-dark.png`. Capture the complete desktop demo with staged data after artwork loads, and keep both images at the same dimensions. The image dimensions in `Demo.astro` must match the PNGs; `verify` checks this contract. The TV Cast capture uses list view at 50% browser zoom inside the laptop so the complete library is visible, with Spring paused on the TV.
+
 ## Interactive preview
 
 The preview places the real TV Cast panel inside a Mac browser window. Open a film locally to launch a separate mock IINA player, or cast it to the paired Samsung TV. Local playback and TV playback have independent position and play/pause state. Both use poster artwork, without video or audio streaming. The browser never accesses real devices or local files. Reset clears the app, local player, and TV.
