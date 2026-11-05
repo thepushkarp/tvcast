@@ -103,6 +103,13 @@
     // credentials or imply that this page can choose folders on the visitor's Mac.
     document.querySelector('#settingsButton').hidden=true;
     document.querySelector('#themeButton').hidden=true;
+    const filters=document.querySelector('.discovery-tools');
+    filters.id='demo-filters';
+    const filterToggle=document.createElement('button');
+    filterToggle.type='button';filterToggle.className='mobile-filter-toggle';filterToggle.textContent='Filters';
+    filterToggle.setAttribute('aria-controls',filters.id);filterToggle.setAttribute('aria-expanded','false');
+    filterToggle.addEventListener('click',()=>filterToggle.setAttribute('aria-expanded',String(filterToggle.getAttribute('aria-expanded')!=='true')));
+    filters.before(filterToggle);
     document.querySelectorAll('a[target="_blank"]').forEach(link=>link.removeAttribute('target'));
     parent.postMessage({type:'demo-ready'},'*');
     publishScreen();
@@ -603,6 +610,8 @@ main { padding:20px; }
 #localTime,#settingsButton,#themeButton,#pairing,#rstate,#submodeRow,#submodeNote,#subctl,#diagnostics,#librarySettings,#moreRemote,.app-heading,#apps,#appmsg,#powerBrief { display:none!important; }
 #remoteControls > .keys + .keys { display:none; }
 button,a,input,select { touch-action:manipulation; }
+header { grid-template-columns:1fr auto; }
+.mobile-filter-toggle { display:none; }
 .workspace { grid-template-columns:210px minmax(0,1fr);gap:24px; }
 .remote-panel { padding:16px;position:static; }
 .remote-panel h2 { font-size:14px; }
@@ -621,11 +630,21 @@ button,a,input,select { touch-action:manipulation; }
 .statusbar h2 { font-size:21px; }
 footer { font-size:11px;margin-top:20px; }
 @media(max-width:559px) {
-  main { padding:16px; }
+  main { padding:12px; }
+  .catalogue-heading { padding-top:12px;align-items:center; }
+  .catalogue-heading h2 { font-size:20px; }
+  .catalogue-heading .count { display:inline;font-size:12px; }
+  .catalogue-tools { margin-top:10px; }
+  input { font-size:16px; }
+  .sort-control { min-width:0; }
+  .mobile-filter-toggle { display:block;margin-bottom:12px; }
+  .mobile-filter-toggle[aria-expanded=false] + .discovery-tools { display:none; }
+  .discovery-tools > .genre-picker,.discovery-tools > .watched-picker { min-width:0; }
   .workspace { display:flex;flex-direction:column;gap:24px; }
   .content { order:-1;width:100%; }
   .remote-panel { width:100%;max-width:280px;align-self:center; }
   .statusbar { flex-wrap:wrap; }
+  #stop { min-height:44px; }
 }
 @media(min-width:560px) {
   .workspace { display:grid; }

@@ -101,6 +101,13 @@
     // credentials or imply that this page can choose folders on the visitor's Mac.
     document.querySelector('#settingsButton').hidden=true;
     document.querySelector('#themeButton').hidden=true;
+    const filters=document.querySelector('.discovery-tools');
+    filters.id='demo-filters';
+    const filterToggle=document.createElement('button');
+    filterToggle.type='button';filterToggle.className='mobile-filter-toggle';filterToggle.textContent='Filters';
+    filterToggle.setAttribute('aria-controls',filters.id);filterToggle.setAttribute('aria-expanded','false');
+    filterToggle.addEventListener('click',()=>filterToggle.setAttribute('aria-expanded',String(filterToggle.getAttribute('aria-expanded')!=='true')));
+    filters.before(filterToggle);
     document.querySelectorAll('a[target="_blank"]').forEach(link=>link.removeAttribute('target'));
     parent.postMessage({type:'demo-ready'},'*');
     publishScreen();

@@ -160,7 +160,7 @@ const first=data.screenshots[0];
   .tv-choices button:focus-visible { outline:2px solid white;outline-offset:2px; }
   .tv-choices img { width:100%;height:64px;object-fit:cover;object-position:center 25%;margin-bottom:5px; }
   @media(max-width:950px) { .demo-live { grid-template-columns:minmax(0,1fr);gap:16px; }.tv-simulation { order:-1;width:min(300px,100%); } }
-  @media(max-width:760px) { .mac-desktop { aspect-ratio:auto;height:560px; }.laptop { padding-inline:8px; }.laptop::after { margin-inline:-8px; } }
+  @media(max-width:760px) { .mac-desktop { aspect-ratio:auto;height:620px; }.laptop { padding-inline:8px; }.laptop::after { margin-inline:-8px; }.demo-toolbar button,.local-buttons button { min-height:44px; }#local-close { width:44px;height:44px;flex:none;background:radial-gradient(circle,#ff6058 11px,transparent 12px); }.local-timeline input { min-height:44px; } }
   @media(max-width:480px) { .mac-desktop { padding:0 5px 8px;border-width:4px; }.mac-menubar { gap:12px; }.mac-menubar span:last-child { display:none; }.demo-toolbar { gap:8px;padding-inline:8px; }.browser-address { padding-inline:5px;font-size:10px; }.local-player { width:94%; }.local-titlebar span { max-width:160px; }.traffic-lights { gap:4px; }.traffic-lights i { width:8px;height:8px; } }
   @media(prefers-reduced-motion:reduce) { #tv-artwork { transition:none; } }
   [hidden] { display:none!important; }
