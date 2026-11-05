@@ -1,0 +1,167 @@
+---
+import data from '../content.json';
+const first=data.screenshots[0];
+---
+<div class="interactive-preview">
+  <div class="demo-live" hidden>
+    <div class="laptop"><div class="mac-desktop">
+      <div class="mac-menubar"><strong>Safari</strong><span>File</span><span>Edit</span><span>View</span><span>History</span><span>Window</span></div>
+      <div class="app-pane">
+      <div class="demo-toolbar"><span class="traffic-lights" aria-hidden="true"><i></i><i></i><i></i></span><span class="browser-address">127.0.0.1:8827</span><button id="reset-demo" type="button">Reset</button></div>
+      <div class="browser-tab"><img src="/app-icon.svg" alt="" width="16" height="16" />TV Cast</div>
+      <iframe id="app-demo" title="TV Cast interactive sample" sandbox="allow-scripts allow-forms" loading="lazy" data-src="/demo/index.html"></iframe>
+      </div>
+      <section class="local-player" id="local-player" aria-label="IINA local player" hidden>
+        <div class="local-titlebar"><button id="local-close" type="button" aria-label="Close local player">×</button><strong>IINA</strong><span id="local-filename"></span></div>
+        <div class="local-picture"><img id="local-art" alt="" /><span id="local-title"></span></div>
+        <div class="local-controls"><div class="local-timeline"><span id="local-time">0:00</span><input id="local-seek" type="range" min="0" max="480" value="0" aria-label="Local playback position" /><span id="local-duration">8:00</span></div><div class="local-buttons"><button id="local-back" type="button" aria-label="Local player back 10 seconds">−10s</button><button id="local-play" type="button">Pause</button><button id="local-forward" type="button" aria-label="Local player forward 10 seconds">+10s</button><button id="local-mute" type="button" aria-pressed="false">Mute</button></div></div>
+      </section>
+    </div></div>
+    <aside class="tv-simulation" aria-label="Simulated living room TV">
+      <div class="tv-label"><span>Living room TV</span></div>
+      <div class="tv-bezel">
+        <div class="tv-screen" id="tv-screen">
+          <img id="tv-artwork" alt="" hidden />
+          <div class="screen-shade"></div>
+          <span class="screen-state" id="tv-playback-state" role="status">Not connected</span>
+          <div class="screen-content"><h3 id="tv-film-title">Ready for movie night.</h3><div class="screen-readout"><span id="tv-time">0:00 / 0:00</span><span id="tv-sound">Volume 35%</span></div><progress id="tv-progress" max="1" value="0" aria-label="Simulated playback progress"></progress></div>
+          <div class="tv-menu" id="tv-menu"><h3 id="tv-menu-title">Movie night</h3><div class="tv-choices">{data.artwork.map((art,index)=><button type="button" data-tv-choice={index}><img src={art.file} alt="" /><span>{['Spring','Charge','Sprite Fright'][index]}</span></button>)}</div></div>
+        </div>
+        <span class="tv-light" id="tv-light"></span>
+      </div>
+      <div class="tv-stand" aria-hidden="true"></div>
+    </aside>
+  </div>
+  <noscript><a href={first.src}><picture><source media="(prefers-color-scheme: dark)" srcset={first.darkSrc} /><img src={first.src} alt={first.alt} width={first.width} height={first.height} /></picture></a><p>Enable JavaScript to try the interactive demo.</p></noscript>
+</div>
+<script>
+  const frame=document.querySelector<HTMLIFrameElement>('#app-demo')!;
+  const preference=matchMedia('(prefers-color-scheme: dark)');
+  type TVState={connected:boolean;film:{title:string;year:number;slug:string}|null;state:string;position:number;duration:number;volume:number;muted:boolean;menu:string;cursor:number;input:string};
+  const initial:TVState={connected:true,film:null,state:'STOPPED',position:0,duration:0,volume:35,muted:false,menu:'home',cursor:0,input:'Mac'};
+  const clock=(seconds:number)=>`${Math.floor(seconds/60)}:${String(Math.floor(seconds%60)).padStart(2,'0')}`;
+  const localWindow=document.querySelector<HTMLElement>('#local-player')!;
+  const localSeek=document.querySelector<HTMLInputElement>('#local-seek')!;
+  const localPlay=document.querySelector<HTMLButtonElement>('#local-play')!;
+  let localPosition=0,localDuration=480,localPlaying=false;
+  function renderLocal(){localSeek.value=String(localPosition);document.querySelector('#local-time')!.textContent=clock(localPosition);localPlay.textContent=localPlaying?'Pause':'Play';}
+  function openLocal(film:{title:string;slug:string;filename:string;duration:number}) {
+    if(!['spring','charge','sprite-fright'].includes(film.slug))return;
+    localPosition=0;localDuration=film.duration;localPlaying=true;
+    document.querySelector('#local-title')!.textContent=film.title;
+    document.querySelector('#local-filename')!.textContent=film.filename;
+    document.querySelector<HTMLImageElement>('#local-art')!.src=`/artwork/${film.slug}.jpg`;
+    localSeek.max=String(localDuration);document.querySelector('#local-duration')!.textContent=clock(localDuration);
+    localWindow.hidden=false;renderLocal();document.querySelector<HTMLButtonElement>('#local-close')!.focus({preventScroll:true});
+    localWindow.scrollIntoView({block:'nearest',behavior:'instant'});
+  }
+  function closeLocal(){localWindow.hidden=true;localPlaying=false;frame.focus({preventScroll:true});}
+  document.querySelector('#local-close')!.addEventListener('click',closeLocal);
+  localWindow.addEventListener('keydown',event=>{if(event.key==='Escape')closeLocal();});
+  localPlay.addEventListener('click',()=>{if(localPosition===localDuration)localPosition=0;localPlaying=!localPlaying;renderLocal();});
+  localSeek.addEventListener('input',()=>{localPosition=Number(localSeek.value);renderLocal();});
+  document.querySelector('#local-back')!.addEventListener('click',()=>{localPosition=Math.max(0,localPosition-10);renderLocal();});
+  document.querySelector('#local-forward')!.addEventListener('click',()=>{localPosition=Math.min(localDuration,localPosition+10);renderLocal();});
+  const localMute=document.querySelector<HTMLButtonElement>('#local-mute')!;
+  localMute.addEventListener('click',()=>{const muted=localMute.getAttribute('aria-pressed')!=='true';localMute.setAttribute('aria-pressed',String(muted));localMute.textContent=muted?'Unmute':'Mute';});
+  setInterval(()=>{if(localPlaying&&!document.hidden){localPosition=Math.min(localDuration,localPosition+1);if(localPosition===localDuration)localPlaying=false;renderLocal();}},1000);
+  function renderTV(state:TVState) {
+    const playing=!!state.film&&state.state==='PLAYING';
+    const status=!state.connected?'Not connected':playing?'Playing':state.film?(state.state==='PAUSED_PLAYBACK'?'Paused':'Finished'):'Ready to cast';
+    const label=document.querySelector('#tv-playback-state')!;
+    if(label.textContent!==status)label.textContent=status;
+    document.querySelector('#tv-film-title')!.textContent=state.input!=='Mac'?`${state.input} · No signal`:state.film?.title||'Ready for movie night.';
+    const art=document.querySelector<HTMLImageElement>('#tv-artwork')!;
+    const knownFilm=state.film&&['spring','charge','sprite-fright'].includes(state.film.slug);
+    art.hidden=!knownFilm||state.input!=='Mac';
+    if(knownFilm) {
+      const path=`/artwork/${state.film!.slug}.jpg`;
+      if(art.getAttribute('src')!==path)art.src=path;
+      art.style.transform=`scale(1.08) translateX(${Math.sin(state.position/12)*3}%)`;
+    }
+    const position=state.film?state.position:0,duration=state.film?state.duration:0;
+    document.querySelector('#tv-time')!.textContent=`${clock(position)} / ${clock(duration)}`;
+    document.querySelector('#tv-sound')!.textContent=state.muted||state.volume===0?'Muted':`Volume ${state.volume}%`;
+    const progress=document.querySelector<HTMLProgressElement>('#tv-progress')!;
+    progress.max=duration||1;progress.value=position;
+    document.querySelector('#tv-light')!.classList.toggle('connected',state.connected);
+    const menu=document.querySelector<HTMLElement>('#tv-menu')!;
+    menu.hidden=!state.menu;
+    document.querySelector('#tv-menu-title')!.textContent=state.menu==='source'?'Source':'Movie night';
+    document.querySelector<HTMLElement>('.screen-content')!.hidden=!!state.menu;
+    document.querySelector<HTMLElement>('#tv-playback-state')!.hidden=!!state.menu||state.input!=='Mac';
+    document.querySelectorAll<HTMLButtonElement>('[data-tv-choice]').forEach((button,index)=>{
+      button.setAttribute('aria-pressed',String(index===state.cursor));
+      button.querySelector('img')!.hidden=state.menu==='source';
+      button.querySelector('span')!.textContent=(state.menu==='source'?['Mac','HDMI 1','HDMI 2']:['Spring','Charge','Sprite Fright'])[index];
+    });
+  }
+  function syncTheme() {
+    const theme=document.documentElement.dataset.theme || (preference.matches?'dark':'light');
+    frame.contentWindow?.postMessage({type:'landing-theme',theme},'*');
+  }
+  frame.addEventListener('load',syncTheme);
+  window.addEventListener('message',event=>{
+    if(event.source!==frame.contentWindow)return;
+    if(event.data?.type==='demo-ready')syncTheme();
+    else if(event.data?.type==='demo-tv-state')renderTV(event.data);
+    else if(event.data?.type==='demo-local-open')openLocal(event.data.film);
+  });
+  window.addEventListener('appearancechange',syncTheme);
+  preference.addEventListener('change',syncTheme);
+  document.querySelector('#reset-demo')!.addEventListener('click',()=>{renderTV(initial);localWindow.hidden=true;localPlaying=false;localMute.setAttribute('aria-pressed','false');localMute.textContent='Mute';frame.src=frame.dataset.src!;});
+  document.querySelectorAll<HTMLButtonElement>('[data-tv-choice]').forEach(button=>button.addEventListener('click',()=>frame.contentWindow?.postMessage({type:'demo-tv-choice',index:Number(button.dataset.tvChoice)},'*')));
+  renderTV(initial);
+  document.querySelector<HTMLElement>('.demo-live')!.hidden=false;
+  frame.src=frame.dataset.src!;
+</script>
+<style>
+  .demo-live { display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:24px;align-items:start; }
+  .laptop { min-width:0;padding-inline:20px; }
+  .laptop::after { content:'';display:block;height:16px;margin-inline:-20px;background:linear-gradient(#adb3b8,#6c747c);border-radius:2px 2px 50% 50% / 2px 2px 100% 100%; }
+  .app-pane { min-height:0;flex:1;display:flex;flex-direction:column;overflow:hidden; border:1px solid var(--line); border-radius:8px; background:var(--surface); }
+  /* The browser scrolls inside a laptop-sized viewport, independent of page length. */
+  .mac-desktop { min-width:0;position:relative;display:flex;flex-direction:column;aspect-ratio:16/10;padding:0 10px 14px;background:light-dark(#d8e2e5,#26383b);border:7px solid #303539;border-radius:16px 16px 5px 5px; }
+  .mac-menubar { display:flex;gap:16px;padding:7px 4px;font:11px/1.5 -apple-system,sans-serif;color:var(--ink); }
+  .traffic-lights { display:flex;gap:6px;flex:none; }.traffic-lights i { width:10px;height:10px;border-radius:50%;background:#ff6058; }.traffic-lights i:nth-child(2){background:#febc2e}.traffic-lights i:nth-child(3){background:#28c840}
+  .browser-address { display:flex;align-items:center;justify-content:center;gap:6px;flex:1;max-width:340px;background:var(--soft);padding:5px 12px;border-radius:5px;font-size:11px; }
+  .browser-tab { display:flex;align-items:center;justify-content:center;gap:7px;padding:7px;border-bottom:1px solid var(--line);font:11px/1.4 -apple-system,sans-serif; }.browser-tab img { width:16px;height:16px; }
+  .mac-menubar,.demo-toolbar,.browser-tab { flex-shrink:0; }
+  .local-player { position:absolute;z-index:2;top:80px;left:50%;transform:translateX(-50%);width:min(76%,620px);max-height:calc(100% - 96px);overflow:auto;border:1px solid #52606d;border-radius:10px;background:#15191e;color:#eef3f8;box-shadow:0 25px 65px #0009; }
+  .local-titlebar { display:flex;align-items:center;gap:10px;padding:8px 12px;font:12px/1.5 -apple-system,sans-serif;background:#282e35; }.local-titlebar span { margin-left:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:10px;color:#bdc8d3; }
+  #local-close { display:grid;place-items:center;border:0;border-radius:50%;width:22px;height:22px;padding:0;background:#ff6058;color:#24110f;cursor:pointer; }
+  .local-picture { position:relative;aspect-ratio:16/9;overflow:hidden; }.local-picture img { width:100%;height:100%;object-fit:cover;object-position:center 35%; }.local-picture span { position:absolute;left:18px;bottom:16px;font:600 24px/1.2 -apple-system,sans-serif;text-shadow:0 2px 8px #000;background:#0008;padding:3px 8px;border-radius:4px; }
+  .local-controls { padding:12px 16px; }.local-timeline { display:flex;gap:10px;align-items:center;font:11px/1.5 ui-monospace,monospace; }.local-timeline input { min-width:0;width:100%;accent-color:#9acafa; }.local-buttons { display:flex;gap:10px;justify-content:center;margin-top:10px; }.local-buttons button { min-height:34px;min-width:44px;padding:5px;border:0;border-radius:4px;background:#2c3540;color:#edf3fa;font:12px/1.5 -apple-system,sans-serif;cursor:pointer; }
+  .demo-toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:8px 12px; border-bottom:1px solid var(--line); font:12px/1.5 -apple-system,BlinkMacSystemFont,sans-serif; color:var(--muted); }
+  .demo-toolbar button { background:transparent; border:1px solid var(--line); border-radius:4px; min-height:32px; padding:4px 10px; color:var(--ink); }
+  iframe { display:block; width:100%; min-height:0;flex:1;height:100%; border:0; color-scheme:normal; }
+  img { display:block; width:100%; height:auto; }
+  .tv-simulation { justify-self:end;width:100%;min-width:0; }
+  .tv-label { display:flex;justify-content:space-between;gap:12px;font-size:13px;margin:0 0 14px;color:var(--muted); }
+  .tv-label span:first-child { color:var(--ink);font-weight:600; }
+  .tv-bezel { padding:8px 8px 13px;background:#252829;border:1px solid #51595c;border-radius:12px;box-shadow:0 14px 28px #0002; }
+  .tv-screen { position:relative;aspect-ratio:16/9;overflow:hidden;background:radial-gradient(ellipse at 30% 40%,#263b47,#0e1419 80%);border-radius:5px;color:#fff; }
+  #tv-artwork { position:absolute;width:100%;height:100%;object-fit:cover;object-position:center 40%;transition:transform 1s linear; }
+  .screen-shade { position:absolute;inset:0;background:linear-gradient(0deg,#000e,transparent 85%); }
+  .screen-state { position:absolute;top:12px;left:14px;padding:3px 8px;border-radius:4px;background:#000b;font-size:11px; }
+  .screen-content { position:absolute;bottom:15px;left:16px;right:16px; }
+  .screen-content h3 { font:600 clamp(18px,2vw,26px)/1.2 -apple-system,BlinkMacSystemFont,sans-serif;letter-spacing:-.5px; }
+  .screen-readout { display:flex;justify-content:space-between;gap:10px;margin-top:14px;color:#e1e7eb;font:11px/1.5 ui-monospace,monospace; }
+  progress { display:block;width:100%;height:3px;margin-top:7px;border:0;background:#ffffff40;appearance:none; }
+  progress::-webkit-progress-bar { background:#ffffff40; } progress::-webkit-progress-value { background:#e0c780; } progress::-moz-progress-bar { background:#e0c780; }
+  .tv-light { display:block;width:4px;height:4px;border-radius:50%;background:#b66b5c;margin:8px auto -6px; }
+  .tv-light.connected { background:#9bd0bc; }
+  .tv-stand { width:30%;height:20px;margin:0 auto;background:#373c3f;clip-path:polygon(35% 0,65% 0,70% 80%,100% 90%,100% 100%,0 100%,0 90%,30% 80%); }
+  .tv-menu { position:absolute;inset:0;background:#111d28ed;padding:18px;display:flex;flex-direction:column;justify-content:center;gap:12px; }
+  .tv-menu h3 { font:600 16px/1.2 -apple-system,sans-serif; }
+  .tv-choices { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px; }
+  .tv-choices button { min-width:0;border:2px solid transparent;border-radius:5px;background:#ffffff0a;color:white;padding:5px;font:12px/1.3 -apple-system,sans-serif;cursor:pointer; }
+  .tv-choices button[aria-pressed=true] { border-color:#e0c780;background:#ffffff20; }
+  .tv-choices button:focus-visible { outline:2px solid white;outline-offset:2px; }
+  .tv-choices img { width:100%;height:64px;object-fit:cover;object-position:center 25%;margin-bottom:5px; }
+  @media(max-width:950px) { .demo-live { grid-template-columns:minmax(0,1fr);gap:16px; }.tv-simulation { order:-1;width:min(300px,100%); } }
+  @media(max-width:760px) { .mac-desktop { aspect-ratio:auto;height:560px; }.laptop { padding-inline:8px; }.laptop::after { margin-inline:-8px; } }
+  @media(max-width:480px) { .mac-desktop { padding:0 5px 8px;border-width:4px; }.mac-menubar { gap:12px; }.mac-menubar span:last-child { display:none; }.demo-toolbar { gap:8px;padding-inline:8px; }.browser-address { padding-inline:5px;font-size:10px; }.local-player { width:94%; }.local-titlebar span { max-width:160px; }.traffic-lights { gap:4px; }.traffic-lights i { width:8px;height:8px; } }
+  @media(prefers-reduced-motion:reduce) { #tv-artwork { transition:none; } }
+  [hidden] { display:none!important; }
+</style>

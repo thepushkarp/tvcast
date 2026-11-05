@@ -1,0 +1,35 @@
+/* Keep the app's controls usable inside the narrower landing-page frame. */
+body { padding:0; }
+main { padding:20px; }
+#localTime,#settingsButton,#themeButton,#pairing,#rstate,#submodeRow,#submodeNote,#subctl,#diagnostics,#librarySettings,#moreRemote,.app-heading,#apps,#appmsg,#powerBrief { display:none!important; }
+#remoteControls > .keys + .keys { display:none; }
+button,a,input,select { touch-action:manipulation; }
+.workspace { grid-template-columns:210px minmax(0,1fr);gap:24px; }
+.remote-panel { padding:16px;position:static; }
+.remote-panel h2 { font-size:14px; }
+.volume-controls { gap:8px; }
+.volume-controls button { width:58px;padding:8px; }
+.dpad { grid-template:repeat(3,48px)/repeat(3,52px);gap:4px;margin:20px auto; }
+.dpad button { padding:0;font-size:20px; }
+.dpad .ok { font-size:13px; }
+.keys { gap:4px; }
+.keys button { font-size:12px; }
+#now .controls { display:grid;grid-template-columns:1fr 1fr 1.5fr 1fr 1fr;gap:5px; }
+#now .controls button { padding:10px 2px;min-width:0;font-size:12px; }
+#now .controls .primary { min-width:0; }
+#stop { grid-column:3;border-color:transparent;color:var(--muted);min-height:32px;padding:4px; }
+.statusbar { gap:12px; }
+.statusbar h2 { font-size:21px; }
+footer { font-size:11px;margin-top:20px; }
+@media(max-width:559px) {
+  main { padding:16px; }
+  .workspace { display:flex;flex-direction:column;gap:24px; }
+  .content { order:-1;width:100%; }
+  .remote-panel { width:100%;max-width:280px;align-self:center; }
+  .statusbar { flex-wrap:wrap; }
+}
+@media(min-width:560px) {
+  .workspace { display:grid; }
+  .remote-panel { width:auto; }
+  .movie-list.grid { grid-template-columns:repeat(3,minmax(0,1fr));gap:20px 14px; }
+}

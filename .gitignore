@@ -3,3 +3,6 @@ __pycache__/
 .DS_Store
 dist/
 .venv/
+
+# Keep landing source trackable when global MkDocs rules ignore /site.
+!/site/

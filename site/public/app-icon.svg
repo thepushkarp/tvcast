@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3f73bd"/>
+      <stop offset="1" stop-color="#274f87"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="125%">
+      <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#000" flood-opacity="0.28"/>
+    </filter>
+  </defs>
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#tile)" filter="url(#shadow)"/>
+  <!-- Lucide "tv", the same mark as the panel's favicon. -->
+  <g transform="translate(212 212) scale(25)" fill="none" stroke="#f4f6fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect width="20" height="15" x="2" y="7" rx="2" ry="2"/>
+    <polyline points="17 2 12 7 7 2"/>
+  </g>
+</svg>
