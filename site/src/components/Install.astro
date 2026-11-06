@@ -1,0 +1,5 @@
+---
+import data from '../content.json';
+import Code from './Code.astro';
+---
+<section class="install section" id="install" aria-labelledby="install-title"><div class="install-intro"><h2 id="install-title">{data.cta}</h2><p>{data.installIntro}</p><div class="resource-links">{data.installLinks.map(link => <a href={link.url}>{link.label}</a>)}</div></div><ol class="install-steps">{data.installSteps.map(step => <li><h3>{step.title}</h3><p>{step.body}</p>{step.code && <Code code={step.code} />}</li>)}</ol></section>
