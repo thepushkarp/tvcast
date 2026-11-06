@@ -55,6 +55,15 @@ class State:
                 movie["watched"] = True
             self._write()
 
+    def clear_history(self, path=None):
+        """Remove last-played timestamps, keeping resume points and watched flags."""
+        with self.lock:
+            movies = self.data["movies"]
+            entries = [movies.get(path, {})] if path is not None else movies.values()
+            for movie in entries:
+                movie.pop("updated", None)
+            self._write()
+
     def probe(self, path):
         with self.lock:
             return self.data["probes"].get(path)

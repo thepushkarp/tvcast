@@ -1290,6 +1290,10 @@ class App:
             if type(body.get("watched")) is not bool:
                 raise ValueError("watched must be true or false")
             self.state.update_movie(self.library_movie(str(body["id"])).path, watched=body["watched"])
+        elif action == "history_remove":
+            self.state.clear_history(self.library_movie(str(body["id"])).path)
+        elif action == "history_clear":
+            self.state.clear_history()
         elif action == "metadata_configure":
             self.metadata.configure(body["token"])
             with self.lock:

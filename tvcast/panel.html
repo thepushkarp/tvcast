@@ -48,41 +48,39 @@ try { const theme = localStorage.getItem('tvcast.theme.v1'); if (theme === 'ligh
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
   .primary { background: var(--accent); border-color: var(--accent); color: var(--bg); }
   .primary:hover:not(:disabled) { background: var(--accent); filter: brightness(.93); }
-  .picker { display: flex; align-items: center; gap: 10px; min-width: 0; }
-  .picker button { width: 108px; flex: none; white-space: nowrap; }
-  select { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); min-height: 44px; padding: 10px 34px 10px 14px; min-width: 0; max-width: 320px; text-overflow: ellipsis; font-size: 13px; line-height: 1.4; }
-
-  .select-wrap { position: relative; display: inline-grid; min-width: 0; }
-  .select-wrap:has(select[hidden]) { display: none; }
-  .select-wrap select { appearance: none; width: 100%; max-width: none; padding-right: 40px; }
-  .select-wrap:has(select:disabled)::after { opacity: .45; }
-  .select-wrap::after {
-    content: ""; position: absolute; right: 14px; top: 50%; width: 16px; height: 16px;
-    transform: translateY(-50%); pointer-events: none; background: var(--muted);
-    mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20%3E%20%3Cpath%20d%3D%22m6%209%206%206%206-6%22%20%2F%3E%20%3C%2Fsvg%3E") center / contain no-repeat;
-  }
-  .statusbar { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 24px 0; }
-  .statusbar h2 { font-size: 25px; overflow-wrap: anywhere; }
+  #submodePicker { width: 116px; flex: none; }
+  .statusbar { display: grid; grid-template-columns: auto minmax(0, 240px) 1fr; align-items: center; gap: 12px; padding: 24px 0; }
+  .statusbar h2 { grid-column: 1; margin: 0; font-size: 14px; font-weight: 500; letter-spacing: 0; color: var(--muted); overflow-wrap: anywhere; }
+  #tvPicker { grid-column: 2; }
+  #find { grid-column: 3; justify-self: end; }
+  #find { width: auto; padding: 10px 14px; }
+  #find svg { display: none; }
+  .statusbar .connection { grid-column: 1 / -1; }
   .caption, .note, .count { font-size: 13px; color: var(--muted); }
   .count { font-weight: 400; margin-left: 8px; }
   .connection { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; white-space: nowrap; }
   .connection::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
-  .connection.live { color: var(--accent); }
-  .workspace { display: grid; grid-template-columns: 310px minmax(0, 1fr); gap: 40px; align-items: start; }
-  .remote-panel { background: var(--surface); border-radius: 22px; padding: 22px; position: sticky; top: 22px; }
-  .remote-panel:has(details[open]) { position: static; }
+  .workspace { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 40px; align-items: start; }
+  .remote-panel { background: var(--surface); border-radius: 22px; padding: 18px; max-height: 100%; overflow-y: auto; overscroll-behavior: contain; }
   .remote-panel h2 { font-size: 16px; }
   .badge { display: inline-block; font-size: 12px; color: var(--muted); }
-  .sound-state { padding: 3px 8px; background: var(--control); border-radius: 6px; font-size: 12px; }
-  .sound-state.muted { background: var(--warning-bg); color: var(--warning); }
+  .remote-heading { display: flex; align-items: center; gap: 10px; }
+  .remote-heading .badge { margin-left: auto; }
+  .remote-icon { display: inline-grid; place-items: center; width: 44px; min-height: 44px; padding: 0; flex: none; }
+  .remote-icon svg, .transport svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  #mute[aria-pressed=true] { color: var(--error); border-color: currentColor; background: color-mix(in srgb, var(--error) 12%, var(--surface)); }
+  #powerHint { margin-top: 12px; }
   .volume { padding: 18px 0 20px; border-bottom: 1px solid var(--line); }
   .volume .row { margin-bottom: 8px; }
   .volume-controls { display: flex; align-items: center; gap: 12px; }
-  .volume-controls button { width: 84px; flex: none; }
+  #submodeRow { padding-top: 16px; gap: 10px; }
+  #submodeRow label { flex: 1; }
+  #submodeNote:not(:empty) { margin-top: 6px; font-size: 12px; }
   output { min-width: 3ch; text-align: right; font-size: 14px; font-variant-numeric: tabular-nums; }
   input[type=range] { flex: 1; min-width: 0; width: 100%; height: 30px; margin: 0; accent-color: var(--accent); cursor: pointer; }
-  .dpad { display: grid; grid-template: repeat(3, 58px) / repeat(3, 64px); gap: 4px; width: max-content; margin: 22px auto; }
-  .dpad button { border: none; background: var(--control); border-radius: 14px; color: var(--muted); }
+  .dpad { --key-size: 58px; display: grid; grid-template: repeat(3, var(--key-size)) / repeat(3, var(--key-size)); gap: 6px; width: max-content; margin: 22px auto; }
+  .dpad button { width: auto; border: none; background: var(--control); border-radius: 14px; color: var(--muted); }
+  .dpad svg { width: 24px; height: 24px; }
   .dpad button:hover:not(:disabled) { color: var(--text); background: var(--active); }
   .dpad .up { grid-area: 1 / 2; border-radius: 20px 20px 10px 10px; }
   .dpad .left { grid-area: 2 / 1; border-radius: 20px 10px 10px 20px; }
@@ -91,7 +89,7 @@ try { const theme = localStorage.getItem('tvcast.theme.v1'); if (theme === 'ligh
   .dpad .down { grid-area: 3 / 2; border-radius: 10px 10px 20px 20px; }
   .keys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
   .keys + .keys { margin-top: 8px; }
-  .keys button { padding-inline: 4px; }
+  .keys button { width: auto; padding-inline: 4px; }
   .apps { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
   .apps button { text-align: left; padding: 12px 14px; min-height: 60px; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
   .apps button small { display: block; color: var(--muted); font-size: 11px; font-weight: 400; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; }
@@ -100,26 +98,54 @@ try { const theme = localStorage.getItem('tvcast.theme.v1'); if (theme === 'ligh
   .link-button { border: none; padding: 8px; min-height: 40px; color: var(--accent); font-size: 12px; }
   #rescan, #refreshApps { width: 88px; flex: none; white-space: nowrap; }
   #pair, #addFolder, #playQueue { width: 112px; flex: none; white-space: nowrap; }
-  #tvoff { width: 148px; white-space: nowrap; }
-  details { border-top: 1px solid var(--line); margin-top: 20px; padding-top: 14px; }
-  summary { color: var(--muted); font-size: 13px; min-height: 40px; padding-block: 8px; }
-  details[open] > summary { margin-bottom: 12px; }
-  .typer { display: flex; gap: 8px; margin: 8px 0 18px; }
+  #tvoff { border-radius: 50%; }
+  #showDiagnostics { border: 0; color: var(--muted); }
   input[type=text], input[type=search] { min-width: 0; width: 100%; min-height: 44px; border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; background: var(--surface); line-height: 1.4; }
-  .typer input { font-size: 13px; }
   .danger { color: var(--error); }
   .danger.armed { border-color: var(--error); background: var(--surface); }
   .msg { font-size: 13px; color: var(--error); margin-top: 12px; overflow-wrap: anywhere; }
   .msg:empty { display: none; }
   .msg.info { color: var(--muted); }
   .now { border-bottom: 1px solid var(--line); padding-bottom: 24px; margin-bottom: 26px; }
-  .now h2 { margin: 8px 0 14px; }
+  .now h2 { margin: 0 0 18px; }
+  .now h2 { overflow-wrap: anywhere; }
+  #stop { grid-column: 3; justify-self: end; border-color: transparent; color: var(--muted); display: inline-flex; gap: 7px; width: auto; padding: 10px 12px; white-space: nowrap; font-size: 12px; }
+  #stop svg { width: 16px; height: 16px; }
+  .playback-bar { container-type: inline-size; padding: 14px 18px 18px; background: var(--surface); border-radius: 16px; }
+  .range-bar { position: relative; min-width: 0; }
+  .volume-controls .range-bar { flex: 1; }
+  .range-bar input { display: block; appearance: none; background: transparent; }
+  .range-bar input::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: linear-gradient(to right, var(--accent) var(--range-progress, 0%), var(--line) var(--range-progress, 0%)); }
+  .range-bar input::-moz-range-track { height: 4px; border-radius: 2px; background: linear-gradient(to right, var(--accent) var(--range-progress, 0%), var(--line) var(--range-progress, 0%)); }
+  .range-bar input::-webkit-slider-thumb { appearance: none; width: 14px; height: 14px; margin-top: -5px; border: none; border-radius: 50%; background: var(--accent); }
+  .range-bar input::-moz-range-thumb { width: 14px; height: 14px; border: none; border-radius: 50%; background: var(--accent); }
+  .range-preview { position: absolute; bottom: calc(100% + 4px); transform: translateX(-50%); padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--text); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; pointer-events: none; box-shadow: 0 3px 12px rgb(0 0 0 / .15); }
   .times { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .playback-actions { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 12px; margin-top: 18px; }
+  @container (max-width: 580px) {
+    .playback-actions { grid-template-columns: 1fr; gap: 8px; }
+    .playback-actions .transport, .playback-actions #stop { grid-column: 1; }
+  }
+  .transport { grid-column: 2; display: flex; justify-content: center; align-items: center; gap: 12px; }
+  .transport button { display: grid; place-items: center; width: 44px; min-height: 44px; padding: 6px; border: none; color: var(--muted); }
+  .transport .primary { width: 58px; height: 58px; margin-inline: 6px; border-radius: 50%; color: var(--bg); }
+  .transport .primary svg { width: 24px; height: 24px; fill: currentColor; }
+  .transport .skip { height: 58px; grid-template-rows: 24px 14px; gap: 4px; padding: 8px 4px; }
+  .transport .skip svg { width: 22px; height: 22px; }
+  .transport .skip span { font-size: 12px; line-height: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  @media (min-width: 641px) and (max-width: 960px), (max-width: 380px) {
+    .playback-bar { padding-inline: 12px; }
+    .transport { gap: 4px; }
+    .transport .primary { margin-inline: 0; }
+    .times { font-size: 11px; }
+  }
   .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; align-items: center; }
   .controls .primary { min-width: 84px; }
   .subtitles { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 13px; }
-  .subtitles .select-wrap { flex: 0 1 280px; }
   .subtitles button { min-height: 40px; padding: 8px 14px; }
+  #subctl { flex-wrap: nowrap; }
+  #subctl .themed-select { flex: 1; }
+  #subctl .remote-icon { min-height: 44px; padding: 0; }
   .actions { display: flex; gap: 6px; flex: none; }
   .actions button { min-width: 58px; }
   .empty { color: var(--muted); padding: 30px 0; }
@@ -146,6 +172,8 @@ try { const theme = localStorage.getItem('tvcast.theme.v1'); if (theme === 'ligh
   .queue-empty { margin-top: 10px; }
   .history-list li { grid-template-columns: minmax(0, 1fr) auto; }
   .history-list .note { margin: 2px 0 0; }
+  .history-actions { display: flex; align-items: center; gap: 6px; }
+  .history-actions [data-cast] { width: 104px; flex: none; }
   progress { display: block; width: 100%; height: 6px; margin-bottom: 6px; accent-color: var(--accent); }
   .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0; }
   .stats dt { color: var(--muted); font-size: 12px; }
@@ -155,6 +183,23 @@ try { const theme = localStorage.getItem('tvcast.theme.v1'); if (theme === 'ligh
   footer { border-top: 1px solid var(--line); margin-top: 30px; padding-top: 15px; display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; color: var(--muted); font-size: 12px; }
   kbd { font: inherit; color: var(--text); }
   .warn { color: var(--warning); }
+  @media (min-width: 641px) {
+    main:has(#tvPage:not([hidden])) { min-height: 100dvh; display: flex; flex-direction: column; padding-bottom: 20px; }
+    main:has(#tvPage:not([hidden])) > header { flex: none; }
+    #tvPage:not([hidden]) { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+    #tvPage > .statusbar { flex: none; }
+    .workspace { flex: 1; min-height: 0; }
+    .remote-panel { position: sticky; top: 20px; max-height: calc(100dvh - 40px); }
+    .content { display: flex; flex-direction: column; }
+    .content > :not(.queue) { flex: none; }
+    .content > .queue { display: flex; flex-direction: column; flex: none; padding-right: 20px; }
+    .content > .queue:has(.queue-list:empty) { flex: none; min-height: 0; }
+    .queue > :not(.queue-list) { flex: none; }
+    .queue-list { max-height: var(--list-window); overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; padding-inline: 8px 28px; margin-inline: -8px -28px; }
+    .queue-list:empty { display: none; }
+    .content > .queue > .row { padding-bottom: 6px; }
+    #tvPage > footer { flex: none; }
+  }
   @media (max-width: 820px) {
     main { padding: 20px; }
     .workspace { grid-template-columns: 280px minmax(0, 1fr); gap: 24px; }
@@ -164,25 +209,43 @@ try { const theme = localStorage.getItem('tvcast.theme.v1'); if (theme === 'ligh
     main { padding: 18px 16px 28px; }
     header { flex-wrap: wrap; padding-bottom: 18px; }
     .brand { flex-basis: 100%; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-    .picker { flex: 1 0 100%; }
-    .picker .select-wrap { flex: 1; }
-    .picker select { font-size: 12px; }
-    .picker button { flex: none; padding-inline: 9px; }
-    .statusbar { padding: 20px 0; align-items: flex-start; }
-    .statusbar h2 { font-size: 22px; }
+    .statusbar { grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 20px 0; }
+    .statusbar h2 { grid-column: 1 / -1; font-size: 13px; }
+    #tvPicker { grid-column: 1; }
+    #find { grid-column: 2; width: 44px; padding: 0; }
+    #find svg { display: block; }
+    #find span { display: none; }
     .connection { font-size: 12px; }
     .workspace { display: flex; flex-direction: column; gap: 28px; }
-    .remote-panel { position: static; width: 100%; padding: 20px; }
+    .remote-panel { position: static; width: 100%; padding: 20px; max-height: none; overflow: visible; }
     .content { width: 100%; }
-    .dpad { grid-template-rows: repeat(3, 52px); margin-block: 18px; }
+    .dpad { --key-size: 52px; margin-block: 18px; }
     .controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .controls .primary { min-width: 0; }
   }
-  @media (max-width: 380px) {
-    .picker { flex-basis: 100%; }
-    .picker .select-wrap { max-width: none; }
+  @media (min-width: 641px) and (max-height: 1000px) {
+    .remote-panel { padding: 18px; }
+    .volume { padding-block: 12px; }
+    .volume .row { margin-bottom: 4px; }
+    #submodeRow { padding-top: 10px; }
+    .dpad { --key-size: 52px; margin-block: 18px; }
+    .app-heading { margin-top: 12px; }
+    .apps { margin-top: 6px; }
+    .apps button { min-height: 44px; padding: 8px 10px; }
   }
-  @media (max-height: 850px) { .remote-panel { position: static; } }
+  @media (min-width: 821px) and (max-height: 850px) {
+    main { padding-top: 18px; }
+    header { padding-bottom: 16px; }
+    .statusbar { padding-block: 16px; }
+    .now { padding-bottom: 16px; margin-bottom: 16px; }
+    .queue { padding-bottom: 12px; margin-bottom: 12px; }
+    footer { margin-top: 20px; }
+    #remoteControls { display: grid; grid-template-columns: 156px minmax(0, 1fr); column-gap: 12px; }
+    .dpad { --key-size: 48px; grid-area: 1 / 1 / 3 / 2; }
+    #remoteControls > .keys { grid-column: 2; align-self: end; gap: 2px; margin: 0; }
+    #remoteControls > .keys + .keys { align-self: start; margin-top: 8px; }
+    #remoteControls > .app-heading, #remoteControls > .apps, #appmsg { grid-column: 1 / -1; }
+  }
   @media (prefers-reduced-motion: reduce) { button:active:not(:disabled) { transform: none; } }
 </style>
 <!-- Icons: https://lucide.dev (chevron-down, x, arrow-up, arrow-down, tv)
@@ -259,68 +322,60 @@ SOFTWARE.
   </section>
   <section id="moviePage" hidden><a href="#/library" class="back-link" id="backToLibrary">‹ Back to library</a><div id="movieContent"></div><p class="msg" id="moviemsg" role="status"></p></section>
   <section id="tvPage" hidden>
-    <div class="picker">
-      <span class="select-wrap"><select id="tv" aria-label="TV" hidden></select></span>
-      <button id="find">Find TVs</button>
-    </div>
   <div id="castRequest" class="cast-request" hidden><p id="castMessage" role="status"></p><div><button id="retryCast" hidden>Retry</button><button id="cancelCast">Cancel</button><a href="#/library" class="back-link">Back to library</a></div></div>
   <div class="statusbar">
-    <h2 id="screen">Connecting…</h2>
+    <h2 id="screen" tabindex="-1">Connecting…</h2>
+    <div class="themed-select" id="tvPicker" hidden><button id="tv" aria-label="TV">Choose a TV</button><ul id="tvOptions" hidden></ul></div>
+    <button id="find" class="remote-icon" aria-label="Find TVs" data-tooltip="Find TVs"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="/icons.svg#search"></use></svg><span>Find TVs</span></button>
     <span class="connection" id="connection">Checking TV</span>
   </div>
   <p class="msg" id="globalmsg" role="status"></p>
   <div class="workspace">
     <aside class="remote-panel" id="remote" aria-label="TV remote">
-      <div class="row"><h2>Remote</h2><span class="badge" id="rstate"></span></div>
+      <div class="remote-heading"><h2>Remote</h2><span class="badge" id="rstate"></span><button class="remote-icon" id="showDiagnostics" aria-label="Connection and stream details" aria-haspopup="dialog" data-tooltip="Connection &amp; stream details"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v6M12 7h.01"></path></svg></button><button class="remote-icon" id="tvoff" hidden disabled aria-label="Turn TV off" data-tooltip="Turn TV off"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="/icons.svg#power"></use></svg></button></div>
+      <p class="note danger" id="powerHint" role="status" hidden>Press power again to turn the TV off. Use its own remote to turn it back on.</p>
       <div class="volume">
-        <div class="row"><label class="caption" for="volume">Volume</label><span class="sound-state" id="sound">Checking sound</span></div>
+        <div class="row"><label class="caption" for="volume">Volume</label></div>
         <div class="volume-controls">
-          <button id="mute" aria-pressed="false" disabled>Mute</button>
-          <input type="range" id="volume" min="0" max="100" value="0" aria-label="TV volume" disabled>
+          <button class="remote-icon" id="mute" aria-pressed="false" disabled aria-label="Mute TV" data-tooltip="Mute TV"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="/icons.svg#volume-2"></use></svg></button>
+          <div class="range-bar"><input type="range" id="volume" min="0" max="100" value="0" aria-label="TV volume" disabled><span class="range-preview" id="volumePreview" aria-hidden="true" hidden></span></div>
           <output id="volnum" for="volume">—</output>
         </div>
       </div>
-      <div class="row" id="submodeRow" hidden><label class="caption" for="submode">Subtitles on this TV</label><span class="select-wrap"><select id="submode"><option value="auto">Auto</option><option value="file">As a file</option><option value="burn">Burned in</option></select></span></div>
+      <div class="row" id="submodeRow" hidden><label class="caption" for="submode">Subtitles on this TV</label><div class="themed-select" id="submodePicker"><button id="submode" aria-label="Subtitles on this TV">Auto</button><ul id="submodeOptions" hidden></ul></div></div>
       <p class="note" id="submodeNote"></p>
       <div id="pairing" hidden><p class="note" id="pairNote"></p><button id="pair" class="primary" hidden>Pair with TV</button></div>
       <div id="remoteControls" hidden>
         <div class="dpad" role="group" aria-label="Navigation">
-          <button class="up" data-key="KEY_UP" aria-label="Up">Up</button>
-          <button class="left" data-key="KEY_LEFT" aria-label="Left">Left</button>
-          <button class="ok" data-key="KEY_ENTER" aria-label="OK">OK</button>
-          <button class="right" data-key="KEY_RIGHT" aria-label="Right">Right</button>
-          <button class="down" data-key="KEY_DOWN" aria-label="Down">Down</button>
+          <button class="remote-icon up" data-key="KEY_UP" aria-label="Up" data-tooltip="Up"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="/icons.svg#chevron-up"></use></svg></button>
+          <button class="remote-icon left" data-key="KEY_LEFT" aria-label="Left" data-tooltip="Left"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="/icons.svg#chevron-left"></use></svg></button>
+          <button class="remote-icon ok" data-key="KEY_ENTER" aria-label="OK" data-tooltip="OK"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="/icons.svg#check"></use></svg></button>
+          <button class="remote-icon right" data-key="KEY_RIGHT" aria-label="Right" data-tooltip="Right"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="/icons.svg#chevron-right"></use></svg></button>
+          <button class="remote-icon down" data-key="KEY_DOWN" aria-label="Down" data-tooltip="Down"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="/icons.svg#chevron-down"></use></svg></button>
         </div>
-        <div class="keys"><button data-key="KEY_RETURN">Back</button><button data-key="KEY_HOME">Home</button><button data-key="KEY_SOURCE">Source</button></div>
-        <div class="keys"><button data-key="KEY_PLAY">Play</button><button data-key="KEY_PAUSE">Pause</button><button data-key="KEY_MENU">Settings</button></div>
+        <div class="keys"><button class="remote-icon" data-key="KEY_RETURN" aria-label="Back" data-tooltip="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="/icons.svg#corner-up-left"></use></svg></button><button class="remote-icon" data-key="KEY_HOME" aria-label="Home" data-tooltip="Home"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="/icons.svg#house"></use></svg></button><button class="remote-icon" data-key="KEY_SOURCE" aria-label="Source" data-tooltip="Source"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="/icons.svg#log-in"></use></svg></button></div>
+        <div class="keys"><button class="remote-icon" data-key="KEY_PLAY" aria-label="Play" data-tooltip="Play"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="/icons.svg#play"></use></svg></button><button class="remote-icon" data-key="KEY_PAUSE" aria-label="Pause" data-tooltip="Pause"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="/icons.svg#pause"></use></svg></button><button class="remote-icon" data-key="KEY_MENU" aria-label="Settings" data-tooltip="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="/icons.svg#settings"></use></svg></button></div>
         <div class="row app-heading"><h2>Apps</h2><button class="link-button" id="refreshApps">Refresh</button></div>
         <div class="apps" id="apps"></div>
         <p class="msg" id="appmsg" role="status"></p>
-        <details id="moreRemote">
-          <summary>Typing, inputs &amp; power</summary>
-          <label class="caption" for="typed">Type on the TV</label>
-          <p class="note">Open a search box on the TV first.</p>
-          <form class="typer" id="typer"><input type="text" id="typed" placeholder="Search or enter text" autocomplete="off"><button id="sendText">Send</button></form>
-          <div class="keys"><button data-key="KEY_HDMI1">HDMI 1</button><button data-key="KEY_HDMI2">HDMI 2</button><button data-key="KEY_HDMI3">HDMI 3</button></div>
-          <p class="note">Use Source to see the TV's available inputs.</p>
-          <div class="folders"><button class="danger" id="tvoff">Turn TV off</button></div>
-          <p class="note">Use the TV's own remote to turn it back on.</p>
-        </details>
       </div>
       <p class="msg" id="remotemsg" role="status"></p>
-      <details id="diagnostics"><summary>Connection &amp; stream details</summary>
-        <dl class="stats"><div><dt>TV</dt><dd id="device">—</dd></div><div><dt>Stream</dt><dd id="srv">—</dd></div><div><dt>Sending now</dt><dd id="rate">—</dd></div><div><dt>Sent since start</dt><dd id="sent">—</dd></div><div><dt>Last TV request</dt><dd id="last">—</dd></div><div><dt>Open transfers</dt><dd id="active">—</dd></div><div><dt>Running for</dt><dd id="uptime">—</dd></div><div><dt>Mac power</dt><dd id="power">—</dd></div></dl>
-        <p class="file" id="file"></p><p class="note">App status covers the supported apps listed above. The TV does not report the current HDMI input or titles playing inside apps here.</p>
-      </details>
     </aside>
     <div class="content">
       <section class="now" id="lastPlayed" aria-label="Last played" hidden></section>
       <section class="now" id="now" aria-label="Cast playback" hidden>
-        <span class="caption" id="state"></span><h2 id="title"></h2>
-        <input type="range" id="seek" min="0" max="1" value="0" aria-label="Seek" disabled>
-        <div class="times"><span id="pos"></span><span id="left"></span></div>
-        <div class="controls"><button data-skip="-30">−30s</button><button data-skip="-10">−10s</button><button class="primary" id="toggle" disabled>Play</button><button data-skip="10">+10s</button><button data-skip="30">+30s</button><button id="stop" disabled>Stop</button></div>
-        <div class="subtitles" id="subctl" hidden><label for="subsel">Subtitles</label><span class="select-wrap"><select id="subsel"></select></span><button id="subAdd">Add file…</button><button id="subRemove" class="link-button" hidden>Remove</button></div>
+        <h2 id="title"></h2>
+        <div class="playback-bar">
+          <div class="range-bar"><input type="range" id="seek" min="0" max="1" value="0" aria-label="Seek" disabled><span class="range-preview" id="seekPreview" aria-hidden="true" hidden></span></div>
+          <div class="times"><span id="pos"></span><span id="left" role="timer"></span></div>
+          <div class="playback-actions">
+          <div class="transport" role="group" aria-label="Playback controls">
+            <button class="skip" data-skip="-30" aria-label="Back 30 seconds" data-tooltip="Back 30 seconds"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="/icons.svg#rotate-ccw"></use></svg><span aria-hidden="true">30s</span></button><button class="skip" data-skip="-10" aria-label="Back 10 seconds" data-tooltip="Back 10 seconds"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="/icons.svg#rotate-ccw"></use></svg><span aria-hidden="true">10s</span></button><button class="primary" id="toggle" aria-label="Play" data-tooltip="Play" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><use href="/icons.svg#play"></use></svg></button><button class="skip" data-skip="10" aria-label="Forward 10 seconds" data-tooltip="Forward 10 seconds"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="/icons.svg#rotate-cw"></use></svg><span aria-hidden="true">10s</span></button><button class="skip" data-skip="30" aria-label="Forward 30 seconds" data-tooltip="Forward 30 seconds"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="/icons.svg#rotate-cw"></use></svg><span aria-hidden="true">30s</span></button>
+          </div>
+          <button class="remote-icon" id="stop" hidden disabled aria-label="Stop casting" data-tooltip="Stop casting"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="/icons.svg#square"></use></svg><span>Stop casting</span></button>
+          </div>
+        </div>
+        <div class="subtitles" id="subctl" hidden><label for="subsel">Subtitles</label><div class="themed-select"><button id="subsel" aria-label="Subtitles">Off</button><ul id="subselOptions" hidden></ul></div><button id="subAdd" class="remote-icon" aria-label="Add subtitle file" data-tooltip="Add subtitle file"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="/icons.svg#plus"></use></svg></button><button id="subRemove" class="remote-icon" aria-label="Remove subtitle file" data-tooltip="Remove subtitle file" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><use href="/icons.svg#x"></use></svg></button></div>
         <div class="subtitles" id="burnctl" hidden><span id="burnlabel"></span><button id="makeCopy">Make copy</button><button id="deleteCopy" class="link-button">Delete copy</button></div>
         <p class="note" id="subnote"></p>
         <p class="note" id="upnext"></p>
@@ -333,13 +388,19 @@ SOFTWARE.
         <p class="msg" id="queuemsg" role="status"></p>
       </section>
       <section class="queue" id="history" aria-labelledby="historyTitle" hidden>
-        <h2 id="historyTitle">History</h2>
+        <div class="row"><h2 id="historyTitle">History</h2><button class="link-button" id="clearHistory" data-history-clear>Clear history</button></div>
         <ol class="queue-list history-list" id="historyList"></ol>
       </section>
+      <p class="msg" id="historymsg" role="status"></p>
     </div>
   </div>
   <footer><span id="powerBrief"></span><span><kbd>M</kbd> mute &nbsp; <kbd>Space</kbd> cast play/pause &nbsp; Arrow keys navigate the remote when focused</span></footer>
   </section>
+  <dialog id="diagnostics" aria-labelledby="diagnosticsTitle">
+    <div class="row"><h2 id="diagnosticsTitle">Connection &amp; stream details</h2><button class="remote-icon" data-close="diagnostics" aria-label="Close connection details"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="/icons.svg#x"></use></svg></button></div>
+    <dl class="stats"><div><dt>TV</dt><dd id="device">—</dd></div><div><dt>Stream</dt><dd id="srv">—</dd></div><div><dt>Sending now</dt><dd id="rate">—</dd></div><div><dt>Sent since start</dt><dd id="sent">—</dd></div><div><dt>Last TV request</dt><dd id="last">—</dd></div><div><dt>Open transfers</dt><dd id="active">—</dd></div><div><dt>Running for</dt><dd id="uptime">—</dd></div><div><dt>Mac power</dt><dd id="power">—</dd></div></dl>
+    <p class="file" id="file"></p><p class="note">App status covers the supported apps listed above. The TV does not report the current HDMI input or titles playing inside apps here.</p>
+  </dialog>
   <div id="watchedNotice" class="watched-notice" hidden><p id="watchedNoticeText" role="status"></p><button id="undoWatched" aria-keyshortcuts="Meta+Z Control+Z" data-tooltip="Undo watched change (⌘Z)">Undo</button></div>
   <dialog id="librarySettings" aria-labelledby="settingsTitle">
     <div class="row"><h2 id="settingsTitle">Library settings</h2><button data-close="librarySettings" data-tooltip="Close settings" aria-label="Close settings">×</button></div>
@@ -352,8 +413,19 @@ SOFTWARE.
   </dialog>
   <dialog id="matchDialog" aria-labelledby="matchTitle"><div class="row"><h2 id="matchTitle">Correct match</h2><button data-close="matchDialog" data-tooltip="Close match search" aria-label="Close match search">×</button></div><form id="matchSearch"><label>Title<input id="matchQuery" type="text" required maxlength="300"></label><label>Year<input id="matchYear" type="number" min="1800" max="2200"></label><button type="submit">Search TMDB</button></form><p id="matchmsg" class="msg" role="status"></p><div id="matchResults"></div><button id="leaveUnmatched">Leave unmatched</button></dialog>
 </main>
+<script src="/themed-select.js"></script>
 <script>
 const $ = id => document.getElementById(id);
+$('showDiagnostics').onclick = () => $('diagnostics').showModal();
+function sizeListWindows() {
+  for (const id of ['queueList', 'historyList']) {
+    const list = $(id);
+    // Measure actual rows so wrapped titles remain fully visible in the three-item window.
+    const height = Array.from(list.children).slice(0, 3).reduce((sum, row) => sum + row.getBoundingClientRect().height, 0);
+    list.style.setProperty('--list-window', `${height}px`);
+  }
+}
+new ResizeObserver(sizeListWindows).observe(document.querySelector('.content'));
 const dateTimeFormat = new Intl.DateTimeFormat(undefined, {dateStyle:'medium', timeStyle:'short'});
 function updateDateTime() {
   const now = new Date();
@@ -372,10 +444,9 @@ const clock = s => {
 const runtime = s => { const m = Math.round(s / 60); return s ? `${Math.floor(m / 60)}h ${m % 60}m` : ''; };
 const size = n => n >= 1e9 ? (n / 1e9).toFixed(2) + ' GB' : (n / 1e6).toFixed(1) + ' MB';
 const ago = s => s == null ? 'No requests yet' : s < 2 ? 'Just now' : s < 120 ? `${Math.round(s)}s ago` : `${Math.round(s / 60)} min ago`;
-const STATES = {PLAYING:'Playing from your Mac', PAUSED_PLAYBACK:'Paused', STOPPED:'Stopped', TRANSITIONING:'Loading…', NO_MEDIA_PRESENT:'No media loaded'};
 const RESUME_MIN = 30;
 let st = null, online = false, selecting = false, finding = false, pairing = false;
-let opening = null, choosingSubs = false, seeking = false, volDragging = false, queueBusy = false;
+let opening = null, choosingSubs = false, seeking = false, volDragging = false, queueBusy = false, historyBusy = false;
 let apps = null, appsLoading = false, appsAt = 0, appsNext = 0, appsGeneration = 0, appsSig = '';
 let remoteTv = null, launching = null, powerArmed = false, powerTimer;
 let tvSig = '', queueSig = '', subSig = '', historySig = '', refreshId = 0;
@@ -414,40 +485,52 @@ function renderTvs() {
   const sig = JSON.stringify([st.tvs, st.selected, finding, selecting]);
   if (sig === tvSig) return;
   tvSig = sig;
-  $('tv').hidden = !st.tvs.length;
+  $('tvPicker').hidden = !st.tvs.length;
   $('tv').disabled = finding || selecting;
-  $('tv').innerHTML = (st.selected ? '' : '<option value="" disabled selected>Choose a TV</option>') + st.tvs.map(t => `<option value="${esc(t.id)}" ${t.id === st.selected ? 'selected' : ''}>${esc(t.name)}</option>`).join('');
+  tvPicker.setOptions(st.tvs.map(t => [t.id, t.name]), st.selected || '');
+  if (!st.selected) tvPicker.label.textContent = 'Choose a TV';
+  if ($('tv').disabled || $('tvPicker').hidden) tvPicker.close();
   $('find').disabled = finding || selecting;
-  $('find').textContent = finding ? 'Searching…' : 'Find TVs';
+  const findLabel = finding ? 'Searching…' : 'Find TVs';
+  $('find').querySelector('span').textContent = findLabel;
+  $('find').setAttribute('aria-label', findLabel);
+  $('find').dataset.tooltip = findLabel;
+}
+function setControlIcon(id, icon, label) {
+  const button = $(id);
+  button.querySelector('use').setAttribute('href', '/icons.svg#' + icon);
+  button.setAttribute('aria-label', label);
+  button.dataset.tooltip = label;
 }
 function renderStatus() {
   const tv = online ? st.tv : null;
   const visible = appsFresh() && apps?.find(a => a.visible === true);
   const ours = ownsPlayback();
   $('connection').textContent = !online ? 'Service offline' : !st.selected ? 'No TV selected' : tv ? 'TV connected' : 'Playback unavailable';
-  $('connection').className = 'connection ' + (online && tv ? 'live' : '');
+  $('connection').hidden = !!(online && tv);
   const launchingName = launching && apps?.find(a => a.id === launching)?.name;
-  $('screen').textContent = launchingName ? `Opening ${launchingName}…` : ours ? 'Casting from your Mac' : visible ? visible.name : !online ? 'Connection lost' : !st.selected ? 'Choose your TV' : !tv ? 'TV status unavailable' : 'Ready when you are';
+  const tvName = st.tvs.find(t => t.id === st.selected)?.name || 'your TV';
+  $('screen').textContent = launchingName ? `Opening ${launchingName}…` : ours ? 'Casting to' : visible ? visible.name : !online ? 'Connection lost' : !st.selected ? 'Choose your TV' : !tv ? 'TV status unavailable' : 'Ready when you are';
+  $('screen').setAttribute('aria-label', ours ? `Casting to ${tvName}` : $('screen').textContent);
   $('volume').disabled = !canControl() || tv?.volume == null;
   $('mute').disabled = !canControl() || tv?.muted == null;
-  if (!volDragging) { $('volume').value = tv?.volume ?? 0; $('volnum').textContent = tv?.volume ?? '—'; }
+  if (!volDragging) { $('volume').value = tv?.volume ?? 0; $('volnum').textContent = tv?.volume ?? '—'; updateRangeFill('volume'); }
+  if ($('volume').disabled) $('volumePreview').hidden = true;
   const muted = tv?.muted;
-  $('sound').textContent = muted === true ? 'Muted' : muted === false ? 'Sound on' : 'Sound unknown';
-  $('sound').className = 'sound-state' + (muted === true ? ' muted' : '');
-  $('mute').textContent = muted === true ? 'Unmute' : 'Mute';
+  setControlIcon('mute', muted === true ? 'volume-x' : 'volume-2', muted == null ? 'Sound unavailable' : muted ? 'Unmute TV' : 'Mute TV');
   $('mute').setAttribute('aria-pressed', String(muted === true));
-  $('mute').setAttribute('aria-label', muted === true ? 'Unmute TV' : 'Mute TV');
-  $('now').hidden = !st.now && !opening;
+  $('stop').hidden = $('now').hidden = !st.now && !opening;
   $('title').textContent = opening ? 'Opening ' + (st.library.find(m => m.id === opening)?.title || 'movie') + '…' : st.now?.title || '';
-  $('state').textContent = tv ? STATES[tv.state] || 'Cast playback' : 'Waiting for TV';
   for (const el of [$('seek'), $('toggle'), $('stop'), ...document.querySelectorAll('[data-skip]')]) el.disabled = !ours || !!opening;
   $('seek').disabled ||= !tv?.duration;
+  if ($('seek').disabled) $('seekPreview').hidden = true;
   if (!seeking) {
     $('seek').max = Math.floor(tv?.duration || 1);
     $('seek').value = Math.floor(tv?.position || 0);
     showTimes(ours ? tv.position : null, ours ? tv.duration : null);
   }
-  $('toggle').textContent = ours && tv.state === 'PLAYING' ? 'Pause' : 'Play';
+  const playing = ours && tv.state === 'PLAYING';
+  setControlIcon('toggle', playing ? 'pause' : 'play', playing ? 'Pause' : 'Play');
   renderSubtitles(ours ? st.now.subtitles : null);
   renderBurn(ours ? st.now : null);
   renderSubtitleMode();
@@ -465,20 +548,18 @@ function renderSubtitles(subs) {
     subs.live ? '' : 'Switching subtitles reloads the video where it is, with a short pause.',
   ].filter(Boolean).join(' ');
   $('subctl').hidden = !subs;
-  if (!subs) return;
+  if (!subs) { subtitlePicker.close(); return; }
   const value = shownSubtitle(subs);
   $('subRemove').hidden = !subs.tracks.find(t => t.id === value)?.added;
   $('subAdd').disabled = choosingSubs;
-  $('subAdd').textContent = choosingSubs ? 'Choosing…' : 'Add file…';
-  // Rebuilding the options closes an open menu, so only do it when they change.
+  setControlIcon('subAdd', 'plus', choosingSubs ? 'Choosing subtitle file…' : 'Add subtitle file');
   // Without a file from TV Cast, the TV shows the video's own subtitles, if it has any it can draw.
   const none = !subs.burn && subs.embedded.some(t => !t.image) ? 'From the video (TV menu)' : 'Off';
   const sig = JSON.stringify([subs.tracks, value, none]);
   if (sig === subSig) return;
   subSig = sig;
-  $('subsel').innerHTML = `<option value="off">${none}</option>` + subs.tracks.map(t =>
-    `<option value="${esc(t.id)}" ${t.missing ? 'disabled' : ''}>${esc(t.label + (t.added ? (t.missing ? ' (added, missing)' : ' (added)') : ''))}</option>`).join('');
-  $('subsel').value = value;
+  subtitlePicker.setOptions([['off', none], ...subs.tracks.map(t =>
+    [t.id, t.label + (t.added ? (t.missing ? ' (added, missing)' : ' (added)') : ''), !!t.missing])], value);
 }
 // TVs whose players show no subtitle files get them burned into the picture: HLS segments encoded
 // as the TV plays, or a finished copy made once. Copies stay until deleted here or with tv burn --delete.
@@ -498,16 +579,35 @@ function renderBurn(now) {
 function renderSubtitleMode() {
   const tv = st.tvs.find(t => t.id === st.selected);
   $('submodeRow').hidden = !tv;
+  $('submode').disabled = !canControl();
+  if (!tv || $('submode').disabled) subtitleModePicker.close();
   if (!tv) return;
-  if (document.activeElement !== $('submode')) $('submode').value = tv.subtitle_mode;
+  subtitleModePicker.setValue(tv.subtitle_mode);
   $('submodeNote').textContent = tv.subtitles === 'burn'
     ? (tv.subtitle_mode === 'auto' ? 'This TV shows no subtitle files, so TV Cast burns them into the picture.' : 'Subtitles are burned into the picture.')
     : (tv.subtitle_mode === 'auto' ? 'Subtitle files go to the TV, which draws them.' : '');
 }
 function showTimes(pos, dur) {
-  $('pos').textContent = pos == null ? '' : `${clock(pos)} / ${clock(dur)}`;
-  $('left').textContent = dur ? `${clock(dur - (pos || 0))} left` : '';
+  $('pos').textContent = clock(pos);
+  $('left').textContent = dur && pos != null ? `−${clock(dur - pos)}` : '—';
+  $('left').setAttribute('aria-label', dur && pos != null ? `${clock(dur - pos)} remaining` : 'Remaining time unavailable');
   $('seek').setAttribute('aria-valuetext', `${clock(pos)} of ${clock(dur)}`);
+  updateRangeFill('seek');
+}
+function updateRangeFill(id) {
+  const slider = $(id);
+  slider.style.setProperty('--range-progress', `${Math.max(0, Math.min(100, slider.value / slider.max * 100))}%`);
+}
+function showRangePreview(id, fraction) {
+  if ($(id).disabled) return;
+  fraction = Math.max(0, Math.min(1, fraction));
+  const preview = $(id + 'Preview'), width = $(id).getBoundingClientRect().width;
+  const value = fraction * Number($(id).max);
+  preview.textContent = id === 'seek' ? clock(value) : `${Math.round(value)}%`;
+  preview.hidden = false;
+  const half = preview.offsetWidth / 2;
+  // Range values run between the centers of the 14 px thumb at either end.
+  preview.style.left = Math.max(half, Math.min(width - half, 7 + fraction * (width - 14))) + 'px';
 }
 function renderQueue() {
   if (!st) return;
@@ -524,32 +624,45 @@ function renderQueue() {
   $('playQueue').disabled = disabled || !canControl() || !st.tv || !!opening || !items[0]?.available;
   $('playQueue').textContent = queueBusy && opening ? 'Opening…' : st.now ? 'Play next' : 'Play queue';
   show('queuemsg', errors.queuemsg || st.queue_error);
+  sizeListWindows();
 }
 // Keyed on position, not watched: a rewatch stopped partway is both watched and resumable.
 const resumable = m => m.position >= RESUME_MIN;
 const playedOn = m => new Date(m.updated * 1000).toLocaleDateString(undefined, {month:'short', day:'numeric'});
 const yearTag = m => m.year ? `<span class="count">${m.year}</span>` : '';
 const playedSoFar = m => resumable(m) ? clock(m.position) + (m.duration ? ` of ${clock(m.duration)}` : '') : m.watched ? 'Watched' : 'Played';
-function lastPlayedCard(m, off) {
+const removeHistoryButton = (m, off) => `<button class="icon-button" data-history-remove="${esc(m.id)}" data-tooltip="Remove from history" aria-label="${esc('Remove ' + m.title + ' from history')}"${off}><span class="icon icon-x" aria-hidden="true"></span></button>`;
+function lastPlayedCard(m, off, onlyHistory) {
   const left = resumable(m) && m.duration > m.position ? runtime(m.duration - m.position) + ' left' : '';
   const bar = resumable(m) && m.duration ? `<progress max="${m.duration}" value="${m.position}" aria-label="Watched so far"></progress>` : '';
   const start = resumable(m) ? `<button data-cast="${esc(m.id)}" data-from-start="true"${off}>Start over</button>` : '';
-  return `<span class="caption">Last played ${esc(playedOn(m))}</span><h2>${esc(m.title)}${yearTag(m)}</h2>${bar}<div class="times"><span>${esc(playedSoFar(m))}</span><span>${esc(left)}</span></div><div class="controls"><button class="primary" data-cast="${esc(m.id)}"${off}>${resumable(m) ? 'Resume' : 'Play again'}</button>${start}</div>`;
+  return `<div class="row"><span class="caption">Last played ${esc(playedOn(m))}</span><div class="history-actions">${onlyHistory ? `<button class="link-button" data-history-clear${off}>Clear history</button>` : ''}${removeHistoryButton(m, off)}</div></div><h2>${esc(m.title)}${yearTag(m)}</h2>${bar}<div class="times"><span>${esc(playedSoFar(m))}</span><span>${esc(left)}</span></div><div class="controls"><button class="primary" data-cast="${esc(m.id)}"${off}>${resumable(m) ? 'Resume' : 'Play again'}</button>${start}</div>`;
 }
 // While nothing casts, the newest played movie takes the Now Playing slot.
 function renderHistory() {
-  const playing = opening || st.now?.id, disabled = !online || !!opening;
+  const playing = opening || st.now?.id, disabled = !online || !!opening || historyBusy;
   const items = playHistory(st.library, playing);
   const last = playing ? null : items.shift();
   const sig = JSON.stringify([last, items, disabled]);
   if (sig !== historySig) {  // polling must not rebuild the buttons, which would drop their focus
     historySig = sig;
     const off = disabled ? ' disabled' : '';
-    $('lastPlayed').innerHTML = last ? lastPlayedCard(last, off) : '';
-    $('historyList').innerHTML = items.map(m => `<li><div class="queue-title">${esc(m.title)}${yearTag(m)}<p class="note">${esc(playedSoFar(m))} · ${esc(playedOn(m))}</p></div><button data-cast="${esc(m.id)}"${off}>${resumable(m) ? 'Resume' : 'Play again'}</button></li>`).join('');
+    $('lastPlayed').innerHTML = last ? lastPlayedCard(last, off, !items.length) : '';
+    $('historyList').innerHTML = items.map(m => `<li><div class="queue-title">${esc(m.title)}${yearTag(m)}<p class="note">${esc(playedSoFar(m))} · ${esc(playedOn(m))}</p></div><div class="history-actions"><button data-cast="${esc(m.id)}"${off}>${resumable(m) ? 'Resume' : 'Play again'}</button>${removeHistoryButton(m, off)}</div></li>`).join('');
   }
   $('lastPlayed').hidden = !last;
   $('history').hidden = !items.length;
+  $('clearHistory').disabled = disabled;
+  show('historymsg', errors.historymsg);
+  sizeListWindows();
+}
+async function historyAction(action, body = {}) {
+  if (!online || historyBusy) return;
+  historyBusy = true; renderHistory();
+  await act('history_' + action, body, 'historymsg');
+  historyBusy = false; renderHistory();
+  const target = document.querySelector('#lastPlayed button:not(:disabled), #history:not([hidden]) button:not(:disabled)') || $('screen');
+  target.focus({preventScroll:true});
 }
 async function queueAction(action, body = {}) {
   if (queueBusy || !online) return;
@@ -571,7 +684,6 @@ function renderRemote() {
     apps = null; appsAt = 0; appsNext = 0; appsLoading = false; launching = null;
     delete errors.remotemsg; delete errors.appmsg;
     clearTimeout(powerTimer); powerArmed = false;
-    $('typed').value = '';
   }
   const available = st.remote.available, paired = available && st.remote.paired;
   const enabled = canUseRemote();
@@ -583,10 +695,12 @@ function renderRemote() {
   $('pair').textContent = pairing ? 'Pairing…' : 'Pair with TV';
   $('remoteControls').hidden = !paired;
   document.querySelectorAll('[data-key]').forEach(b => b.disabled = !enabled || !!launching);
-  $('sendText').disabled = !enabled;
+  $('tvoff').hidden = !paired;
   $('tvoff').disabled = !enabled;
-  $('tvoff').textContent = powerArmed ? 'Confirm turn off' : 'Turn TV off';
+  setControlIcon('tvoff', 'power', powerArmed ? 'Confirm turn off' : 'Turn TV off');
+  $('tvoff').classList.toggle('danger', powerArmed);
   $('tvoff').classList.toggle('armed', powerArmed);
+  $('powerHint').hidden = !powerArmed;
   const fresh = appsFresh();
   const sig = JSON.stringify([apps, fresh, enabled, launching]);
   if (sig !== appsSig) {
@@ -642,7 +756,7 @@ async function refresh() {
     if (st) { renderRemote(); renderStatus(); renderLibrary(); renderQueue(); }
     else {
       $('screen').textContent = 'TV Cast is offline'; $('connection').textContent = 'Service offline';
-      $('sound').textContent = 'Sound unknown';
+      setControlIcon('mute', 'volume-2', 'Sound unavailable');
       for (const id of ['rescan', 'addFolder']) $(id).disabled = true;
     }
     $('srv').textContent = 'Service offline';
@@ -658,8 +772,7 @@ async function poll() { if (isTV()) await refresh(); setTimeout(poll, document.h
 function togglePlay() { if (ownsPlayback()) act(st.tv.state === 'PLAYING' ? 'pause' : 'play'); }
 function skip(delta) { if (ownsPlayback() && st.tv.duration) act('seek', {seconds:Math.min(Math.max(0, (st.tv.position || 0) + delta), st.tv.duration - 1)}); }
 function remoteKey(key) { if (canUseRemote() && !launching) act('keys', {keys:[key]}, 'remotemsg'); }
-$('tv').onchange = async e => {
-  const id = e.target.value;
+const tvPicker = new ThemedSelect($('tv'), $('tvOptions'), async id => {
   selecting = true; appsGeneration++; refreshId++;
   appsLoading = false; launching = null; appsAt = 0; appsNext = 0;
   renderTvs(); renderRemote(); renderStatus(); renderLibrary(); renderQueue();
@@ -667,21 +780,31 @@ $('tv').onchange = async e => {
   selecting = false; tvSig = ''; await refresh();
   show('globalmsg', errors.globalmsg);
   if (result) continueCast();
-};
+});
 $('find').onclick = async () => { finding = true; renderTvs(); await act('discover', {}, 'globalmsg'); finding = false; tvSig = ''; renderTvs(); show('globalmsg', errors.globalmsg); continueCast(); };
 $('mute').onclick = () => { if (canControl() && st.tv?.muted != null) act('mute', {on:!st.tv.muted}, 'remotemsg'); };
-$('volume').oninput = e => { volDragging = true; $('volnum').textContent = e.target.value; };
-$('volume').onchange = async e => { await act('volume', {level:+e.target.value}, 'remotemsg'); volDragging = false; renderStatus(); };
-$('seek').oninput = e => { seeking = true; showTimes(+e.target.value, +e.target.max); };
-$('seek').onchange = async e => { await act('seek', {seconds:+e.target.value}); seeking = false; renderStatus(); };
+$('volume').oninput = e => { volDragging = true; $('volnum').textContent = e.target.value; updateRangeFill('volume'); showRangePreview('volume', +e.target.value / +e.target.max); };
+$('volume').onchange = async e => { $('volumePreview').hidden = true; await act('volume', {level:+e.target.value}, 'remotemsg'); volDragging = false; renderStatus(); };
+for (const id of ['seek', 'volume']) {
+  $(id).onpointermove = e => {
+    if (e.pointerType === 'touch') return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    showRangePreview(id, (e.clientX - rect.left - 7) / (rect.width - 14));
+  };
+  $(id).onpointerleave = $(id).onblur = () => { $(id + 'Preview').hidden = true; };
+  $(id).onkeydown = e => { if (e.key === 'Escape') $(id + 'Preview').hidden = true; };
+}
+$('seek').oninput = e => { seeking = true; showTimes(+e.target.value, +e.target.max); showRangePreview('seek', +e.target.value / +e.target.max); };
+$('seek').onchange = async e => { $('seekPreview').hidden = true; await act('seek', {seconds:+e.target.value}); seeking = false; renderStatus(); };
 $('toggle').onclick = togglePlay;
 $('stop').onclick = () => act('stop');
 document.querySelectorAll('[data-skip]').forEach(b => { b.setAttribute('aria-label', `${+b.dataset.skip < 0 ? 'Back' : 'Forward'} ${Math.abs(+b.dataset.skip)} seconds`); b.onclick = () => skip(+b.dataset.skip); });
 // Re-send Enable even when captions report on: Samsung can report them without drawing them.
-$('subsel').onchange = e => act('subtitles', {track:e.target.value});
+const subtitlePicker = new ThemedSelect($('subsel'), $('subselOptions'), track => act('subtitles', {track}));
 $('makeCopy').onclick = () => act('burn', {id:st.now.id});
 $('deleteCopy').onclick = () => { if (confirm('Delete the copy with burned-in subtitles? The movie itself stays.')) act('delete_copy', {id:st.now.id}); };
-$('submode').onchange = e => act('subtitle_mode', {mode:e.target.value});
+const subtitleModePicker = new ThemedSelect($('submode'), $('submodeOptions'), mode => act('subtitle_mode', {mode}));
+subtitleModePicker.setOptions([['auto', 'Auto'], ['file', 'As a file'], ['burn', 'Burned in']], 'auto');
 $('subAdd').onclick = async () => { choosingSubs = true; renderStatus(); await act('add_subtitles'); choosingSubs = false; renderStatus(); };
 $('subRemove').onclick = () => act('remove_subtitles', {track:$('subsel').value});
 $('queueList').onclick = e => {
@@ -689,6 +812,12 @@ $('queueList').onclick = e => {
   if (b) queueAction(b.dataset.queueAction, {id:b.dataset.id, direction:+b.dataset.direction});
 };
 $('clearQueue').onclick = () => queueAction('clear');
+$('tvPage').addEventListener('click', e => {
+  const button = e.target.closest('[data-history-remove], [data-history-clear]');
+  if (!button || button.disabled) return;
+  if (button.hasAttribute('data-history-remove')) historyAction('remove', {id:button.dataset.historyRemove});
+  else if (confirm('Clear viewing history? Resume positions and watched status will be kept.')) historyAction('clear');
+});
 $('playQueue').onclick = async () => {
   if (opening || !canControl() || queueBusy) return;
   opening = st.queue[0].id; renderQueue(); renderStatus();
@@ -713,18 +842,12 @@ $('apps').onclick = async e => {
   finally { if (generation === appsGeneration) { launching = null; renderRemote(); renderStatus(); await refresh(); } }
 };
 $('pair').onclick = async () => { pairing = true; renderRemote(); await act('pair', {}, 'remotemsg'); pairing = false; appsNext = 0; await refresh(); };
-$('typer').onsubmit = async e => {
-  e.preventDefault(); const value = $('typed').value;
-  if (!value || !canUseRemote()) return;
-  const tv = st.selected, result = await act('text', {text:value}, 'remotemsg');
-  if (result && tv === st.selected && $('typed').value === value) $('typed').value = '';
-};
 $('tvoff').onclick = () => {
   if (!powerArmed) { powerArmed = true; powerTimer = setTimeout(() => { powerArmed = false; renderRemote(); }, 4000); renderRemote(); return; }
   clearTimeout(powerTimer); powerArmed = false; remoteKey('KEY_POWER'); renderRemote();
 };
 document.addEventListener('keydown', e => {
-  if (!isTV() || document.querySelector('dialog[open]') || e.metaKey || e.ctrlKey || e.altKey || e.repeat || e.target.closest('input, select, textarea, [contenteditable=true]')) return;
+  if (!isTV() || document.querySelector('dialog[open]') || e.metaKey || e.ctrlKey || e.altKey || e.repeat || e.target.closest('input, select, textarea, [contenteditable=true], [role=combobox]')) return;
   const navigation = {ArrowUp:'KEY_UP', ArrowDown:'KEY_DOWN', ArrowLeft:'KEY_LEFT', ArrowRight:'KEY_RIGHT'};
   if (e.target.closest('#remote') && navigation[e.key]) { e.preventDefault(); remoteKey(navigation[e.key]); }
   else if (e.key.toLowerCase() === 'm') { e.preventDefault(); $('mute').click(); }
@@ -736,7 +859,6 @@ document.addEventListener('keydown', e => {
 </script>
 <script src="/catalogue.js"></script>
 <script src="/people-picker.js"></script>
-<script src="/themed-select.js"></script>
 <script src="/library.js"></script>
 </body>
 </html>
