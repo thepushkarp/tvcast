@@ -56,19 +56,20 @@ class ThemedSelect {
   }
 
   setOptions(entries, value) {
-    const options = entries.map(([key, label]) => [String(key), String(label)]);
+    const options = entries.map(([key, label, disabled = false]) => [String(key), String(label), disabled]);
     const key = JSON.stringify(options);
     if (key !== this.optionsKey) {
       const activeValue = this.options[this.active]?.[0];
       this.options = options;
       this.optionsKey = key;
       const fragment = document.createDocumentFragment();
-      options.forEach(([, label], index) => {
+      options.forEach(([, label, disabled], index) => {
         const option = document.createElement('li');
         option.id = this.list.id + '-option-' + index;
         option.dataset.choiceIndex = String(index);
         option.setAttribute('role', 'option');
         option.setAttribute('aria-selected', 'false');
+        if (disabled) option.setAttribute('aria-disabled', 'true');
         const text = document.createElement('span');
         text.textContent = label;
         option.append(ThemedSelect.icon('check'), text);
@@ -111,7 +112,8 @@ class ThemedSelect {
     this.list.hidden = false;
     this.button.setAttribute('aria-expanded', 'true');
     this.position();
-    this.activate(Math.max(0, this.options.findIndex(([key]) => key === this.button.value)));
+    const selected = this.options.findIndex(([key, , disabled]) => key === this.button.value && !disabled);
+    this.activate(selected < 0 ? this.options.findIndex(([, , disabled]) => !disabled) : selected);
   }
 
   close() {
@@ -123,6 +125,7 @@ class ThemedSelect {
   }
 
   activate(index, scroll = true) {
+    if (this.options[index]?.[2]) index = -1;
     this.active = index >= 0 && index < this.options.length ? index : -1;
     for (const [i, option] of [...this.list.children].entries()) option.classList.toggle('is-active', i === this.active);
     if (this.active < 0) {
@@ -135,7 +138,7 @@ class ThemedSelect {
   }
 
   choose(index) {
-    if (!this.options[index]) return;
+    if (this.button.disabled || !this.options[index] || this.options[index][2]) return;
     const value = this.options[index][0], changed = this.button.value !== value;
     this.setValue(value);
     this.close();
@@ -149,9 +152,13 @@ class ThemedSelect {
       event.preventDefault();
       const closed = this.list.hidden;
       if (closed) this.open();
-      if (key === 'Home') this.activate(0);
-      else if (key === 'End') this.activate(this.options.length - 1);
-      else if (!closed) this.activate(Math.max(0, Math.min(this.options.length - 1, this.active + (key === 'ArrowDown' ? 1 : -1))));
+      const enabled = this.options.map((option, index) => option[2] ? -1 : index).filter(index => index >= 0);
+      if (key === 'Home') this.activate(enabled[0] ?? -1);
+      else if (key === 'End') this.activate(enabled.at(-1) ?? -1);
+      else if (!closed) {
+        const next = Math.max(0, Math.min(enabled.length - 1, enabled.indexOf(this.active) + (key === 'ArrowDown' ? 1 : -1)));
+        this.activate(enabled[next] ?? -1);
+      }
     } else if (key === 'Enter' || key === ' ') {
       event.preventDefault();
       if (this.list.hidden) this.open(); else this.choose(this.active);
@@ -168,7 +175,7 @@ class ThemedSelect {
       const start = query.length === 1 ? this.active + 1 : this.active;
       for (let offset = 0; offset < this.options.length; offset++) {
         const index = (Math.max(0, start) + offset) % this.options.length;
-        if (this.options[index][1].toLocaleLowerCase().startsWith(query)) { this.activate(index); break; }
+        if (!this.options[index][2] && this.options[index][1].toLocaleLowerCase().startsWith(query)) { this.activate(index); break; }
       }
     }
   }

@@ -114,6 +114,25 @@ class CatalogueTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.app.control('watched', {'id': self.movie.id, 'watched': 'false'})
 
+    def test_history_removal_preserves_movie_data_and_can_be_recorded_again(self):
+        other = os.path.join(self.root, 'Disconnected.mp4')
+        preserved = dict(position=500, duration=1000, watched=True, match={'tmdb_id': 1})
+        self.app.state.update_movie(self.file, updated=10, **preserved)
+        self.app.state.update_movie(other, updated=20, position=100)
+        with self.assertRaises(ValueError):
+            self.app.control('history_remove', {'id': 'missing'})
+        self.assertEqual(self.app.state.movie(self.file)['updated'], 10)
+        self.app.control('history_remove', {'id': self.movie.id})
+        self.assertEqual(State(self.app.state.path).movie(self.file), preserved)
+        self.assertEqual(self.app.state.movie(other)['updated'], 20)
+        self.app.state.save_progress(self.file, 510, 1000, False, 30)
+        self.assertEqual(self.app.state.movie(self.file)['updated'], 30)
+        self.app.control('history_clear', {})
+        saved = State(self.app.state.path)
+        self.assertEqual(saved.movie(self.file), dict(preserved, position=510))
+        self.assertEqual(saved.movie(other), {'position': 100})
+        self.assertTrue(os.path.isfile(self.file))
+
     def test_http_local_endpoints_and_mutation_guards(self):
         handler = type('TestPanel', (PanelHandler,), {'app': self.app, 'log_message': lambda *args: None})
         server = ThreadingHTTPServer(('127.0.0.1', 0), handler)
@@ -134,7 +153,7 @@ class CatalogueTest(unittest.TestCase):
                     self.assertEqual(r.headers.get_content_type(), content_type)
                     self.assertTrue(r.read())
         for path, headers, body in [('/api/' + action, {}, b'{}') for action in
-                                    ('watched', 'open_local', 'reveal', 'metadata_configure',
+                                    ('watched', 'history_remove', 'history_clear', 'open_local', 'reveal', 'metadata_configure',
                                      'metadata_match', 'metadata_refresh_all')] + [
                                     ('/api/health', {'Host': 'attacker.invalid'}, None),
                                     ('/library.js/../state.py', {}, None),

@@ -101,9 +101,6 @@ a { color: var(--accent); }
 .metadata-link:hover { text-decoration: underline; background: none !important; }
 .metadata-link[data-browse-genre] { color: var(--text); background: var(--control); padding-inline: 10px; border-radius: 6px; }
 .detail-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0; }
-.watched-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
-.watched-toggle svg { width: 17px; height: 17px; }
-.watched-toggle[aria-pressed=true] { color: var(--accent); background: var(--active); border-color: var(--accent); }
 .movie-websites { display: flex; flex-wrap: wrap; gap: 4px; margin: -8px 0 16px; }
 .movie-websites a { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 8px; }
 .movie-websites svg { width: 32px; height: 32px; }
@@ -116,8 +113,7 @@ a { color: var(--accent); }
 :root[data-theme=dark] .movie-websites .brand-logo-light { display: none; }
 :root[data-theme=dark] .movie-websites .brand-logo-dark { display: inline; }
 .detail-secondary { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 16px; }
-.detail-secondary button { font-weight: 400; padding-inline: 0; }
-#tvPage > .picker { justify-content: flex-end; padding-top: 24px; }
+.detail-secondary button { font-weight: 400; padding: 8px 12px; }
 .cast-request { margin-top: 20px; padding: 16px; border: 1px solid var(--line); border-radius: 8px; }
 .cast-request > div { display: flex; gap: 16px; align-items: center; margin-top: 8px; }
 dialog { color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 24px; width: min(580px, calc(100% - 32px)); max-height: calc(100vh - 48px); overflow: auto; }

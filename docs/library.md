@@ -214,6 +214,8 @@ In the panel, **Make copy** and **Delete copy** sit under the subtitles while a 
   page or `tv open … --from-start` to begin again.
 - While nothing is casting, the TV tab shows the last played movie with **Resume** and
   **Start over**. **History** under the queue lists the other recently played movies, one row each.
+- Use the cross beside a history entry to remove it, or **Clear history** to clear all entries.
+  Movie files, resume positions and watched status are kept. Continued playback records history again.
 - Progress is saved once a movie plays past 30 seconds, so a brief open neither joins History nor
   replaces a resume point. **Start over** replaces it at once.
 - Past 95% counts as watched.
