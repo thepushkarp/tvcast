@@ -37,7 +37,8 @@ class CatalogueTest(unittest.TestCase):
         self.app.state.set_probe(self.file, {'size': self.movie.size, 'mtime': self.movie.mtime,
             'info': {'duration': 3600, 'subtitles': [], 'video': ['h264'], 'audio': ['aac']}})
         self.app.metadata.cache[1] = {'tmdb_id': 1, 'imdb_id': 'tt0000001', 'title': 'Matched title',
-                                      'year': 2001, 'score': 9.9, 'vote_count': 10}
+                                      'year': 2001, 'score': 9.9, 'vote_count': 10,
+                                      'wikidata_id': 'Q123', 'wikipedia_url': 'https://en.wikipedia.org/wiki/Example'}
         self.app.metadata.ratings.values['tt0000001'] = [7.4, 123]
         with mock.patch.object(appmod, 'tv_status', side_effect=AssertionError('TV queried')), \
              mock.patch.object(appmod, 'probe', side_effect=AssertionError('probed in request')), \
@@ -46,6 +47,7 @@ class CatalogueTest(unittest.TestCase):
             m = self.app.catalogue()['library'][0]
         self.assertEqual((m['file_runtime_s'], m['saved_duration']), (3600, 9000))
         self.assertEqual((m['score'], m['vote_count']), (7.4, 123))
+        self.assertEqual((m['wikidata_id'], m['wikipedia_url']), ('Q123', 'https://en.wikipedia.org/wiki/Example'))
         self.assertEqual((m['title'], m['file_title'], m['position']), ('Matched title', 'Example', 75))
 
     def test_missing_imdb_rating_never_falls_back_to_cached_tmdb_score(self):

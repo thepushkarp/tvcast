@@ -163,41 +163,39 @@ try { const theme = localStorage.getItem('tvcast.theme.v1'); if (theme === 'ligh
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
   .primary { background: var(--accent); border-color: var(--accent); color: var(--bg); }
   .primary:hover:not(:disabled) { background: var(--accent); filter: brightness(.93); }
-  .picker { display: flex; align-items: center; gap: 10px; min-width: 0; }
-  .picker button { width: 108px; flex: none; white-space: nowrap; }
-  select { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); min-height: 44px; padding: 10px 34px 10px 14px; min-width: 0; max-width: 320px; text-overflow: ellipsis; font-size: 13px; line-height: 1.4; }
-
-  .select-wrap { position: relative; display: inline-grid; min-width: 0; }
-  .select-wrap:has(select[hidden]) { display: none; }
-  .select-wrap select { appearance: none; width: 100%; max-width: none; padding-right: 40px; }
-  .select-wrap:has(select:disabled)::after { opacity: .45; }
-  .select-wrap::after {
-    content: ""; position: absolute; right: 14px; top: 50%; width: 16px; height: 16px;
-    transform: translateY(-50%); pointer-events: none; background: var(--muted);
-    mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20%3E%20%3Cpath%20d%3D%22m6%209%206%206%206-6%22%20%2F%3E%20%3C%2Fsvg%3E") center / contain no-repeat;
-  }
-  .statusbar { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 24px 0; }
-  .statusbar h2 { font-size: 25px; overflow-wrap: anywhere; }
+  #submodePicker { width: 116px; flex: none; }
+  .statusbar { display: grid; grid-template-columns: auto minmax(0, 240px) 1fr; align-items: center; gap: 12px; padding: 24px 0; }
+  .statusbar h2 { grid-column: 1; margin: 0; font-size: 14px; font-weight: 500; letter-spacing: 0; color: var(--muted); overflow-wrap: anywhere; }
+  #tvPicker { grid-column: 2; }
+  #find { grid-column: 3; justify-self: end; }
+  #find { width: auto; padding: 10px 14px; }
+  #find svg { display: none; }
+  .statusbar .connection { grid-column: 1 / -1; }
   .caption, .note, .count { font-size: 13px; color: var(--muted); }
   .count { font-weight: 400; margin-left: 8px; }
   .connection { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; white-space: nowrap; }
   .connection::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
-  .connection.live { color: var(--accent); }
-  .workspace { display: grid; grid-template-columns: 310px minmax(0, 1fr); gap: 40px; align-items: start; }
-  .remote-panel { background: var(--surface); border-radius: 22px; padding: 22px; position: sticky; top: 22px; }
-  .remote-panel:has(details[open]) { position: static; }
+  .workspace { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 40px; align-items: start; }
+  .remote-panel { background: var(--surface); border-radius: 22px; padding: 18px; max-height: 100%; overflow-y: auto; overscroll-behavior: contain; }
   .remote-panel h2 { font-size: 16px; }
   .badge { display: inline-block; font-size: 12px; color: var(--muted); }
-  .sound-state { padding: 3px 8px; background: var(--control); border-radius: 6px; font-size: 12px; }
-  .sound-state.muted { background: var(--warning-bg); color: var(--warning); }
+  .remote-heading { display: flex; align-items: center; gap: 10px; }
+  .remote-heading .badge { margin-left: auto; }
+  .remote-icon { display: inline-grid; place-items: center; width: 44px; min-height: 44px; padding: 0; flex: none; }
+  .remote-icon svg, .transport svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  #mute[aria-pressed=true] { color: var(--error); border-color: currentColor; background: color-mix(in srgb, var(--error) 12%, var(--surface)); }
+  #powerHint { margin-top: 12px; }
   .volume { padding: 18px 0 20px; border-bottom: 1px solid var(--line); }
   .volume .row { margin-bottom: 8px; }
   .volume-controls { display: flex; align-items: center; gap: 12px; }
-  .volume-controls button { width: 84px; flex: none; }
+  #submodeRow { padding-top: 16px; gap: 10px; }
+  #submodeRow label { flex: 1; }
+  #submodeNote:not(:empty) { margin-top: 6px; font-size: 12px; }
   output { min-width: 3ch; text-align: right; font-size: 14px; font-variant-numeric: tabular-nums; }
   input[type=range] { flex: 1; min-width: 0; width: 100%; height: 30px; margin: 0; accent-color: var(--accent); cursor: pointer; }
-  .dpad { display: grid; grid-template: repeat(3, 58px) / repeat(3, 64px); gap: 4px; width: max-content; margin: 22px auto; }
-  .dpad button { border: none; background: var(--control); border-radius: 14px; color: var(--muted); }
+  .dpad { --key-size: 58px; display: grid; grid-template: repeat(3, var(--key-size)) / repeat(3, var(--key-size)); gap: 6px; width: max-content; margin: 22px auto; }
+  .dpad button { width: auto; border: none; background: var(--control); border-radius: 14px; color: var(--muted); }
+  .dpad svg { width: 24px; height: 24px; }
   .dpad button:hover:not(:disabled) { color: var(--text); background: var(--active); }
   .dpad .up { grid-area: 1 / 2; border-radius: 20px 20px 10px 10px; }
   .dpad .left { grid-area: 2 / 1; border-radius: 20px 10px 10px 20px; }
@@ -206,7 +204,7 @@ try { const theme = localStorage.getItem('tvcast.theme.v1'); if (theme === 'ligh
   .dpad .down { grid-area: 3 / 2; border-radius: 10px 10px 20px 20px; }
   .keys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
   .keys + .keys { margin-top: 8px; }
-  .keys button { padding-inline: 4px; }
+  .keys button { width: auto; padding-inline: 4px; }
   .apps { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
   .apps button { text-align: left; padding: 12px 14px; min-height: 60px; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
   .apps button small { display: block; color: var(--muted); font-size: 11px; font-weight: 400; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; }
@@ -215,26 +213,59 @@ try { const theme = localStorage.getItem('tvcast.theme.v1'); if (theme === 'ligh
   .link-button { border: none; padding: 8px; min-height: 40px; color: var(--accent); font-size: 12px; }
   #rescan, #refreshApps { width: 88px; flex: none; white-space: nowrap; }
   #pair, #addFolder, #playQueue { width: 112px; flex: none; white-space: nowrap; }
-  #tvoff { width: 148px; white-space: nowrap; }
-  details { border-top: 1px solid var(--line); margin-top: 20px; padding-top: 14px; }
-  summary { color: var(--muted); font-size: 13px; min-height: 40px; padding-block: 8px; }
-  details[open] > summary { margin-bottom: 12px; }
-  .typer { display: flex; gap: 8px; margin: 8px 0 18px; }
+  #tvoff { border-radius: 50%; }
+  #showDiagnostics { border: 0; color: var(--muted); }
   input[type=text], input[type=search] { min-width: 0; width: 100%; min-height: 44px; border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; background: var(--surface); line-height: 1.4; }
-  .typer input { font-size: 13px; }
   .danger { color: var(--error); }
   .danger.armed { border-color: var(--error); background: var(--surface); }
   .msg { font-size: 13px; color: var(--error); margin-top: 12px; overflow-wrap: anywhere; }
   .msg:empty { display: none; }
   .msg.info { color: var(--muted); }
   .now { border-bottom: 1px solid var(--line); padding-bottom: 24px; margin-bottom: 26px; }
-  .now h2 { margin: 8px 0 14px; }
+  .now h2 { margin: 0 0 18px; }
+  .now h2 { overflow-wrap: anywhere; }
+  .now h2 a { color: inherit; text-decoration: none; }
+  .now h2 a:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .now h2 a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
+  #stop { grid-column: 3; justify-self: end; border-color: transparent; color: var(--muted); display: inline-flex; gap: 7px; width: auto; padding: 10px 12px; white-space: nowrap; font-size: 12px; }
+  #stop svg { width: 16px; height: 16px; }
+  .playback-bar { container-type: inline-size; padding: 14px 18px 18px; background: var(--surface); border-radius: 16px; }
+  .range-bar { position: relative; min-width: 0; }
+  .volume-controls .range-bar { flex: 1; }
+  .range-bar input { display: block; appearance: none; background: transparent; }
+  .range-bar input::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: linear-gradient(to right, var(--accent) var(--range-progress, 0%), var(--line) var(--range-progress, 0%)); }
+  .range-bar input::-moz-range-track { height: 4px; border-radius: 2px; background: linear-gradient(to right, var(--accent) var(--range-progress, 0%), var(--line) var(--range-progress, 0%)); }
+  .range-bar input::-webkit-slider-thumb { appearance: none; width: 14px; height: 14px; margin-top: -5px; border: none; border-radius: 50%; background: var(--accent); }
+  .range-bar input::-moz-range-thumb { width: 14px; height: 14px; border: none; border-radius: 50%; background: var(--accent); }
+  .range-preview { position: absolute; bottom: calc(100% + 4px); transform: translateX(-50%); padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--text); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; pointer-events: none; box-shadow: 0 3px 12px rgb(0 0 0 / .15); }
   .times { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .playback-actions { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 12px; margin-top: 18px; }
+  @container (max-width: 580px) {
+    .playback-actions { grid-template-columns: 1fr; gap: 8px; }
+    .playback-actions .transport, .playback-actions #stop { grid-column: 1; }
+  }
+  .transport { grid-column: 2; display: flex; justify-content: center; align-items: center; gap: 12px; }
+  .transport button { display: grid; place-items: center; width: 44px; min-height: 44px; padding: 6px; border: none; color: var(--muted); }
+  .transport .primary { width: 58px; height: 58px; margin-inline: 6px; border-radius: 50%; color: var(--bg); }
+  .transport .primary svg { width: 24px; height: 24px; fill: currentColor; }
+  .transport .skip { height: 58px; grid-template-rows: 24px 14px; gap: 4px; padding: 8px 4px; }
+  .transport .skip svg { width: 22px; height: 22px; }
+  .transport .skip span { font-size: 12px; line-height: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  @media (min-width: 641px) and (max-width: 960px), (max-width: 380px) {
+    .playback-bar { padding-inline: 12px; }
+    .transport { gap: 4px; }
+    .transport .primary { margin-inline: 0; }
+    .times { font-size: 11px; }
+  }
   .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; align-items: center; }
   .controls .primary { min-width: 84px; }
   .subtitles { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 13px; }
-  .subtitles .select-wrap { flex: 0 1 280px; }
   .subtitles button { min-height: 40px; padding: 8px 14px; }
+  #subctl { flex-wrap: nowrap; }
+  #subctl .themed-select { flex: 1; }
+  #subctl .remote-icon { min-height: 44px; padding: 0; }
+  #subnote { margin-top: 12px; }
+  #subnote:empty { display: none; }
   .actions { display: flex; gap: 6px; flex: none; }
   .actions button { min-width: 58px; }
   .empty { color: var(--muted); padding: 30px 0; }
@@ -261,6 +292,8 @@ try { const theme = localStorage.getItem('tvcast.theme.v1'); if (theme === 'ligh
   .queue-empty { margin-top: 10px; }
   .history-list li { grid-template-columns: minmax(0, 1fr) auto; }
   .history-list .note { margin: 2px 0 0; }
+  .history-actions { display: flex; align-items: center; gap: 6px; }
+  .history-actions [data-cast] { width: 104px; flex: none; }
   progress { display: block; width: 100%; height: 6px; margin-bottom: 6px; accent-color: var(--accent); }
   .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0; }
   .stats dt { color: var(--muted); font-size: 12px; }
@@ -270,6 +303,23 @@ try { const theme = localStorage.getItem('tvcast.theme.v1'); if (theme === 'ligh
   footer { border-top: 1px solid var(--line); margin-top: 30px; padding-top: 15px; display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; color: var(--muted); font-size: 12px; }
   kbd { font: inherit; color: var(--text); }
   .warn { color: var(--warning); }
+  @media (min-width: 641px) {
+    main:has(#tvPage:not([hidden])) { min-height: 100dvh; display: flex; flex-direction: column; padding-bottom: 20px; }
+    main:has(#tvPage:not([hidden])) > header { flex: none; }
+    #tvPage:not([hidden]) { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+    #tvPage > .statusbar { flex: none; }
+    .workspace { flex: 1; min-height: 0; }
+    .remote-panel { position: sticky; top: 20px; max-height: calc(100dvh - 40px); }
+    .content { display: flex; flex-direction: column; }
+    .content > :not(.queue) { flex: none; }
+    .content > .queue { display: flex; flex-direction: column; flex: none; padding-right: 20px; }
+    .content > .queue:has(.queue-list:empty) { flex: none; min-height: 0; }
+    .queue > :not(.queue-list) { flex: none; }
+    .queue-list { max-height: var(--list-window); overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; padding-inline: 8px 28px; margin-inline: -8px -28px; }
+    .queue-list:empty { display: none; }
+    .content > .queue > .row { padding-bottom: 6px; }
+    #tvPage > footer { flex: none; }
+  }
   @media (max-width: 820px) {
     main { padding: 20px; }
     .workspace { grid-template-columns: 280px minmax(0, 1fr); gap: 24px; }
@@ -279,25 +329,43 @@ try { const theme = localStorage.getItem('tvcast.theme.v1'); if (theme === 'ligh
     main { padding: 18px 16px 28px; }
     header { flex-wrap: wrap; padding-bottom: 18px; }
     .brand { flex-basis: 100%; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-    .picker { flex: 1 0 100%; }
-    .picker .select-wrap { flex: 1; }
-    .picker select { font-size: 12px; }
-    .picker button { flex: none; padding-inline: 9px; }
-    .statusbar { padding: 20px 0; align-items: flex-start; }
-    .statusbar h2 { font-size: 22px; }
+    .statusbar { grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 20px 0; }
+    .statusbar h2 { grid-column: 1 / -1; font-size: 13px; }
+    #tvPicker { grid-column: 1; }
+    #find { grid-column: 2; width: 44px; padding: 0; }
+    #find svg { display: block; }
+    #find span { display: none; }
     .connection { font-size: 12px; }
     .workspace { display: flex; flex-direction: column; gap: 28px; }
-    .remote-panel { position: static; width: 100%; padding: 20px; }
+    .remote-panel { position: static; width: 100%; padding: 20px; max-height: none; overflow: visible; }
     .content { width: 100%; }
-    .dpad { grid-template-rows: repeat(3, 52px); margin-block: 18px; }
+    .dpad { --key-size: 52px; margin-block: 18px; }
     .controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .controls .primary { min-width: 0; }
   }
-  @media (max-width: 380px) {
-    .picker { flex-basis: 100%; }
-    .picker .select-wrap { max-width: none; }
+  @media (min-width: 641px) and (max-height: 1000px) {
+    .remote-panel { padding: 18px; }
+    .volume { padding-block: 12px; }
+    .volume .row { margin-bottom: 4px; }
+    #submodeRow { padding-top: 10px; }
+    .dpad { --key-size: 52px; margin-block: 18px; }
+    .app-heading { margin-top: 12px; }
+    .apps { margin-top: 6px; }
+    .apps button { min-height: 44px; padding: 8px 10px; }
   }
-  @media (max-height: 850px) { .remote-panel { position: static; } }
+  @media (min-width: 821px) and (max-height: 850px) {
+    main { padding-top: 18px; }
+    header { padding-bottom: 16px; }
+    .statusbar { padding-block: 16px; }
+    .now { padding-bottom: 16px; margin-bottom: 16px; }
+    .queue { padding-bottom: 12px; margin-bottom: 12px; }
+    footer { margin-top: 20px; }
+    #remoteControls { display: grid; grid-template-columns: 156px minmax(0, 1fr); column-gap: 12px; }
+    .dpad { --key-size: 48px; grid-area: 1 / 1 / 3 / 2; }
+    #remoteControls > .keys { grid-column: 2; align-self: end; gap: 2px; margin: 0; }
+    #remoteControls > .keys + .keys { align-self: start; margin-top: 8px; }
+    #remoteControls > .app-heading, #remoteControls > .apps, #appmsg { grid-column: 1 / -1; }
+  }
   @media (prefers-reduced-motion: reduce) { button:active:not(:disabled) { transform: none; } }
 </style>
 <!-- Icons: https://lucide.dev (chevron-down, x, arrow-up, arrow-down, tv)
@@ -390,6 +458,8 @@ a { color: var(--accent); }
 .view-toggle button[aria-pressed=true] { background: var(--control); color: var(--text); }
 .discovery-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 16px; }
 .discovery-tools > .genre-picker { flex: 0 0 160px; }
+.discovery-tools > .language-picker { flex: 0 0 160px; }
+.discovery-tools > .collection-picker { flex: 0 1 240px; min-width: 160px; }
 .discovery-tools > .watched-picker { flex: 0 0 145px; }
 #libraryNote:not(:empty) { margin-bottom: 18px; }
 .movie-list { list-style: none; padding: 0; margin: 0; }
@@ -440,17 +510,18 @@ a { color: var(--accent); }
 .movie-detail { display: grid; grid-template-columns: minmax(160px, 260px) minmax(0, 1fr); gap: 42px; align-items: start; }
 .movie-detail h2 { font-size: 32px; line-height: 1.2; letter-spacing: -.7px; font-weight: 600; }
 .movie-detail .movie-meta { margin: 14px 0 22px; font-size: 14px; }
+.movie-languages { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: baseline; }
+.movie-languages .metadata-link { font: inherit; min-height: 24px; padding: 0; }
 .movie-detail .synopsis { max-width: 65ch; line-height: 1.75; margin: 24px 0; }
 .movie-detail dl { display: grid; grid-template-columns: 85px minmax(0, 1fr); align-items: first baseline; gap: 12px 18px; font-size: 13px; line-height: 1.6; }
 .movie-detail dt { color: var(--muted); }
 .movie-detail dd { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.cast-credit { flex-basis: 100%; }
+.cast-character { color: var(--muted); }
 .metadata-link { border: 0; padding: 4px 0; min-height: 32px; font-size: 13px; font-weight: 400; color: var(--accent); text-align: left; }
 .metadata-link:hover { text-decoration: underline; background: none !important; }
 .metadata-link[data-browse-genre] { color: var(--text); background: var(--control); padding-inline: 10px; border-radius: 6px; }
 .detail-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0; }
-.watched-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
-.watched-toggle svg { width: 17px; height: 17px; }
-.watched-toggle[aria-pressed=true] { color: var(--accent); background: var(--active); border-color: var(--accent); }
 .movie-websites { display: flex; flex-wrap: wrap; gap: 4px; margin: -8px 0 16px; }
 .movie-websites a { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 8px; }
 .movie-websites svg { width: 32px; height: 32px; }
@@ -463,8 +534,7 @@ a { color: var(--accent); }
 :root[data-theme=dark] .movie-websites .brand-logo-light { display: none; }
 :root[data-theme=dark] .movie-websites .brand-logo-dark { display: inline; }
 .detail-secondary { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 16px; }
-.detail-secondary button { font-weight: 400; padding-inline: 0; }
-#tvPage > .picker { justify-content: flex-end; padding-top: 24px; }
+.detail-secondary button { font-weight: 400; padding: 8px 12px; }
 .cast-request { margin-top: 20px; padding: 16px; border: 1px solid var(--line); border-radius: 8px; }
 .cast-request > div { display: flex; gap: 16px; align-items: center; margin-top: 8px; }
 dialog { color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 24px; width: min(580px, calc(100% - 32px)); max-height: calc(100vh - 48px); overflow: auto; }
@@ -477,6 +547,7 @@ dialog .row button { border: 0; font-size: 22px; }
 dialog form label { display: block; font-size: 13px; margin: 16px 0 6px; }
 input[type=password], input[type=number] { box-sizing: border-box; width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--text); font: inherit; }
 #metadataSetup .controls { display: flex; }
+#metadataSetup + .note { margin-top: 12px; }
 #metadataStatus { margin-top: 16px; }
 .attribution { margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 11px; color: var(--muted); line-height: 1.6; }
 .attribution img { margin-bottom: 8px; }
@@ -589,20 +660,22 @@ input[type=password], input[type=number] { box-sizing: border-box; width: 100%; 
 .themed-select-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .themed-select svg { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .themed-select > button > svg { color: var(--muted); }
+.themed-select > button[aria-expanded=true] { border-color: var(--accent); }
 .themed-select-options {
   position: fixed; z-index: 35; box-sizing: border-box; overflow-y: auto; overscroll-behavior: contain;
-  list-style: none; margin: 0; padding: 5px; border: 1px solid var(--line); border-radius: 8px;
+  list-style: none; margin: 0; padding: 5px; border: 1px solid var(--line); border-radius: 10px;
   color: var(--text); background: var(--surface); box-shadow: 0 8px 24px rgb(0 0 0 / .16);
   font-size: 13px; line-height: 1.4;
 }
 .themed-select-options[hidden] { display: none; }
 .themed-select-options [role=option] {
-  display: flex; align-items: center; gap: 10px; min-height: 38px; box-sizing: border-box;
+  display: flex; align-items: center; gap: 10px; min-height: 40px; box-sizing: border-box;
   padding: 8px 10px; border-radius: 5px; cursor: pointer; overflow-wrap: anywhere;
 }
 .themed-select-options [role=option] > svg { visibility: hidden; color: var(--accent); }
 .themed-select-options [role=option][aria-selected=true] > svg { visibility: visible; }
 .themed-select-options [role=option].is-active { background: var(--control); color: var(--accent); }
+.themed-select-options [role=option][aria-disabled=true] { opacity: .45; cursor: default; }
 </style>
 <style>/* Keep the app's controls usable inside the narrower landing-page frame. */
 body { padding:0; }
@@ -655,6 +728,19 @@ footer { font-size:11px;margin-top:20px; }
 <!-- Lucide icons, ISC license; see LICENSE-ICONS. Source: https://github.com/lucide-icons/lucide/tree/main/icons -->
 <symbol id="play" viewBox="0 0 24 24"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z" />
 </symbol>
+<symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="pause" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></symbol>
+<symbol id="square" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/></symbol>
+<symbol id="chevron-up" viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></symbol>
+<symbol id="chevron-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+<symbol id="power" viewBox="0 0 24 24"><path d="M12 2v10M18.4 5.6a9 9 0 1 1-12.8 0"/></symbol>
+<symbol id="volume-2" viewBox="0 0 24 24"><path d="m11 3-6 5H2v8h3l6 5zM15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></symbol>
+<symbol id="volume-x" viewBox="0 0 24 24"><path d="m11 3-6 5H2v8h3l6 5zM17 9l5 6M22 9l-5 6"/></symbol>
+<symbol id="corner-up-left" viewBox="0 0 24 24"><path d="m9 14-5-5 5-5M4 9h10a6 6 0 0 1 6 6v5"/></symbol>
+<symbol id="house" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-8H9v8H4a1 1 0 0 1-1-1z"/></symbol>
+<symbol id="log-in" viewBox="0 0 24 24"><path d="M15 3h5a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1h-5M3 12h12m-5-5 5 5-5 5"/></symbol>
+<symbol id="rotate-ccw" viewBox="0 0 24 24"><path d="M12 6a8 8 0 1 1-8 8M8 6l4-4M8 6l4 4M8 6h4"/></symbol>
+<symbol id="rotate-cw" viewBox="0 0 24 24"><path d="M12 6a8 8 0 1 0 8 8M16 6l-4-4M16 6l-4 4M16 6h-4"/></symbol>
 <symbol id="cast" viewBox="0 0 24 24"><path d="M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6" />
   <path d="M2 12a9 9 0 0 1 8 8" />
   <path d="M2 16a5 5 0 0 1 4 4" />
@@ -797,6 +883,7 @@ footer { font-size:11px;margin-top:20px; }
 <!-- Official TMDB primary logo; see LICENSE-ICONS. -->
 <symbol id="brand-tmdb" viewBox="0 0 185.04 133.4"><defs><linearGradient id="brand-tmdb-gradient" y1="66.7" x2="185.04" y2="66.7" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#90cea1"/><stop offset="0.56" stop-color="#3cbec9"/><stop offset="1" stop-color="#00b3e5"/></linearGradient></defs><path fill="url(#brand-tmdb-gradient)" d="M51.06,66.7h0A17.67,17.67,0,0,1,68.73,49h-.1A17.67,17.67,0,0,1,86.3,66.7h0A17.67,17.67,0,0,1,68.63,84.37h.1A17.67,17.67,0,0,1,51.06,66.7Zm82.67-31.33h32.9A17.67,17.67,0,0,0,184.3,17.7h0A17.67,17.67,0,0,0,166.63,0h-32.9A17.67,17.67,0,0,0,116.06,17.7h0A17.67,17.67,0,0,0,133.73,35.37Zm-113,98h63.9A17.67,17.67,0,0,0,102.3,115.7h0A17.67,17.67,0,0,0,84.63,98H20.73A17.67,17.67,0,0,0,3.06,115.7h0A17.67,17.67,0,0,0,20.73,133.37Zm83.92-49h6.25L125.5,49h-8.35l-8.9,23.2h-.1L99.4,49H90.5Zm32.45,0h7.8V49h-7.8Zm22.2,0h24.95V77.2H167.1V70h15.35V62.8H167.1V56.2h16.25V49h-24ZM10.1,35.4h7.8V6.9H28V0H0V6.9H10.1ZM39,35.4h7.8V20.1H61.9V35.4h7.8V0H61.9V13.2H46.75V0H39Zm41.25,0h25V28.2H88V21h15.35V13.8H88V7.2h16.25V0h-24Zm-79,49H9V57.25h.1l9,27.15H24l9.3-27.15h.1V84.4h7.8V49H29.45l-8.2,23.1h-.1L13,49H1.2Zm112.09,49H126a24.59,24.59,0,0,0,7.56-1.15,19.52,19.52,0,0,0,6.35-3.37,16.37,16.37,0,0,0,4.37-5.5A16.91,16.91,0,0,0,146,115.8a18.5,18.5,0,0,0-1.68-8.25,15.1,15.1,0,0,0-4.52-5.53A18.55,18.55,0,0,0,133.07,99,33.54,33.54,0,0,0,125,98H113.29Zm7.81-28.2h4.6a17.43,17.43,0,0,1,4.67.62,11.68,11.68,0,0,1,3.88,1.88,9,9,0,0,1,2.62,3.18,9.87,9.87,0,0,1,1,4.52,11.92,11.92,0,0,1-1,5.08,8.69,8.69,0,0,1-2.67,3.34,10.87,10.87,0,0,1-4,1.83,21.57,21.57,0,0,1-5,.55H121.1Zm36.14,28.2h14.5a23.11,23.11,0,0,0,4.73-.5,13.38,13.38,0,0,0,4.27-1.65,9.42,9.42,0,0,0,3.1-3,8.52,8.52,0,0,0,1.2-4.68,9.16,9.16,0,0,0-.55-3.2,7.79,7.79,0,0,0-1.57-2.62,8.38,8.38,0,0,0-2.45-1.85,10,10,0,0,0-3.18-1v-.1a9.28,9.28,0,0,0,4.43-2.82,7.42,7.42,0,0,0,1.67-5,8.34,8.34,0,0,0-1.15-4.65,7.88,7.88,0,0,0-3-2.73,12.9,12.9,0,0,0-4.17-1.3,34.42,34.42,0,0,0-4.63-.32h-13.2Zm7.8-28.8h5.3a10.79,10.79,0,0,1,1.85.17,5.77,5.77,0,0,1,1.7.58,3.33,3.33,0,0,1,1.23,1.13,3.22,3.22,0,0,1,.47,1.82,3.63,3.63,0,0,1-.42,1.8,3.34,3.34,0,0,1-1.13,1.2,4.78,4.78,0,0,1-1.57.65,8.16,8.16,0,0,1-1.78.2H165Zm0,14.15h5.9a15.12,15.12,0,0,1,2.05.15,7.83,7.83,0,0,1,2,.55,4,4,0,0,1,1.58,1.17,3.13,3.13,0,0,1,.62,2,3.71,3.71,0,0,1-.47,1.95,4,4,0,0,1-1.23,1.3,4.78,4.78,0,0,1-1.67.7,8.91,8.91,0,0,1-1.83.2h-7Z"/></symbol>
 <symbol id="circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /></symbol>
+<symbol id="brand-wikipedia" viewBox="0 0 24 24"><text x="12" y="19" text-anchor="middle" font-family="Georgia, serif" font-size="22" fill="currentColor" stroke="none">W</text></symbol>
 </svg>
 
 <main aria-label="TV Cast demo">
@@ -813,6 +900,8 @@ footer { font-size:11px;margin-top:20px; }
     </div>
     <div class="discovery-tools">
       <div class="themed-select genre-picker"><button type="button" id="genre" aria-label="Genre">All genres</button><ul id="genreOptions" hidden></ul></div>
+      <div class="themed-select language-picker"><button type="button" id="language" aria-label="Language">All languages</button><ul id="languageOptions" hidden></ul></div>
+      <div class="themed-select collection-picker"><button type="button" id="collection" aria-label="Film collection">All collections</button><ul id="collectionOptions" hidden></ul></div>
       <div id="personPicker"><input type="text" id="person" aria-label="Filter by actor or director" placeholder="Actor or director"><button type="button" id="clearPerson" class="person-clear" data-tooltip="Clear person filter" aria-label="Clear person filter" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><use href="#x"></use></svg></button><ul id="peopleOptions" hidden></ul></div>
       <div class="themed-select watched-picker"><button type="button" id="filter" aria-label="Watched status">All movies</button><ul id="watchedOptions" hidden></ul></div>
       <label class="collections-toggle"><input type="checkbox" id="showCollections" checked>Show subfolders as collections</label>
@@ -823,68 +912,60 @@ footer { font-size:11px;margin-top:20px; }
   </section>
   <section id="moviePage" hidden><a href="#/library" class="back-link" id="backToLibrary">‹ Back to library</a><div id="movieContent"></div><p class="msg" id="moviemsg" role="status"></p></section>
   <section id="tvPage" hidden>
-    <div class="picker">
-      <span class="select-wrap"><select id="tv" aria-label="TV" hidden></select></span>
-      <button id="find">Find TVs</button>
-    </div>
   <div id="castRequest" class="cast-request" hidden><p id="castMessage" role="status"></p><div><button id="retryCast" hidden>Retry</button><button id="cancelCast">Cancel</button><a href="#/library" class="back-link">Back to library</a></div></div>
   <div class="statusbar">
-    <h2 id="screen">Connecting…</h2>
+    <h2 id="screen" tabindex="-1">Connecting…</h2>
+    <div class="themed-select" id="tvPicker" hidden><button id="tv" aria-label="TV">Choose a TV</button><ul id="tvOptions" hidden></ul></div>
+    <button id="find" class="remote-icon" aria-label="Find TVs" data-tooltip="Find TVs"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#search"></use></svg><span>Find TVs</span></button>
     <span class="connection" id="connection">Checking TV</span>
   </div>
   <p class="msg" id="globalmsg" role="status"></p>
   <div class="workspace">
     <aside class="remote-panel" id="remote" aria-label="TV remote">
-      <div class="row"><h2>Samsung remote</h2><span class="badge" id="rstate"></span></div>
+      <div class="remote-heading"><h2>Samsung remote</h2><span class="badge" id="rstate"></span><button class="remote-icon" id="showDiagnostics" aria-label="Connection and stream details" aria-haspopup="dialog" data-tooltip="Connection &amp; stream details"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v6M12 7h.01"></path></svg></button><button class="remote-icon" id="tvoff" hidden disabled aria-label="Turn TV off" data-tooltip="Turn TV off"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#power"></use></svg></button></div>
+      <p class="note danger" id="powerHint" role="status" hidden>Press power again to turn the TV off. Use its own remote to turn it back on.</p>
       <div class="volume">
-        <div class="row"><label class="caption" for="volume">Volume</label><span class="sound-state" id="sound">Checking sound</span></div>
+        <div class="row"><label class="caption" for="volume">Volume</label></div>
         <div class="volume-controls">
-          <button id="mute" aria-pressed="false" disabled>Mute</button>
-          <input type="range" id="volume" min="0" max="100" value="0" aria-label="TV volume" disabled>
+          <button class="remote-icon" id="mute" aria-pressed="false" disabled aria-label="Mute TV" data-tooltip="Mute TV"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#volume-2"></use></svg></button>
+          <div class="range-bar"><input type="range" id="volume" min="0" max="100" value="0" aria-label="TV volume" disabled><span class="range-preview" id="volumePreview" aria-hidden="true" hidden></span></div>
           <output id="volnum" for="volume">—</output>
         </div>
       </div>
-      <div class="row" id="submodeRow" hidden><label class="caption" for="submode">Subtitles on this TV</label><span class="select-wrap"><select id="submode"><option value="auto">Auto</option><option value="file">As a file</option><option value="burn">Burned in</option></select></span></div>
+      <div class="row" id="submodeRow" hidden><label class="caption" for="submode">Subtitles on this TV</label><div class="themed-select" id="submodePicker"><button id="submode" aria-label="Subtitles on this TV">Auto</button><ul id="submodeOptions" hidden></ul></div></div>
       <p class="note" id="submodeNote"></p>
       <div id="pairing" hidden><p class="note" id="pairNote"></p><button id="pair" class="primary" hidden>Pair with TV</button></div>
       <div id="remoteControls" hidden>
         <div class="dpad" role="group" aria-label="Navigation">
-          <button class="up" data-key="KEY_UP" aria-label="Up"><span aria-hidden="true">↑</span></button>
-          <button class="left" data-key="KEY_LEFT" aria-label="Left"><span aria-hidden="true">←</span></button>
-          <button class="ok" data-key="KEY_ENTER" aria-label="OK">OK</button>
-          <button class="right" data-key="KEY_RIGHT" aria-label="Right"><span aria-hidden="true">→</span></button>
-          <button class="down" data-key="KEY_DOWN" aria-label="Down"><span aria-hidden="true">↓</span></button>
+          <button class="remote-icon up" data-key="KEY_UP" aria-label="Up" data-tooltip="Up"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#chevron-up"></use></svg></button>
+          <button class="remote-icon left" data-key="KEY_LEFT" aria-label="Left" data-tooltip="Left"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#chevron-left"></use></svg></button>
+          <button class="remote-icon ok" data-key="KEY_ENTER" aria-label="OK" data-tooltip="OK"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#check"></use></svg></button>
+          <button class="remote-icon right" data-key="KEY_RIGHT" aria-label="Right" data-tooltip="Right"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#chevron-right"></use></svg></button>
+          <button class="remote-icon down" data-key="KEY_DOWN" aria-label="Down" data-tooltip="Down"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#chevron-down"></use></svg></button>
         </div>
-        <div class="keys"><button data-key="KEY_RETURN">Back</button><button data-key="KEY_HOME">Home</button><button data-key="KEY_SOURCE">Source</button></div>
-        <div class="keys"><button data-key="KEY_PLAY">Play</button><button data-key="KEY_PAUSE">Pause</button><button data-key="KEY_MENU">Settings</button></div>
+        <div class="keys"><button class="remote-icon" data-key="KEY_RETURN" aria-label="Back" data-tooltip="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#corner-up-left"></use></svg></button><button class="remote-icon" data-key="KEY_HOME" aria-label="Home" data-tooltip="Home"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#house"></use></svg></button><button class="remote-icon" data-key="KEY_SOURCE" aria-label="Source" data-tooltip="Source"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#log-in"></use></svg></button></div>
+        <div class="keys"><button class="remote-icon" data-key="KEY_PLAY" aria-label="Play" data-tooltip="Play"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#play"></use></svg></button><button class="remote-icon" data-key="KEY_PAUSE" aria-label="Pause" data-tooltip="Pause"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#pause"></use></svg></button><button class="remote-icon" data-key="KEY_MENU" aria-label="Settings" data-tooltip="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#settings"></use></svg></button></div>
         <div class="row app-heading"><h2>Apps</h2><button class="link-button" id="refreshApps">Refresh</button></div>
         <div class="apps" id="apps"></div>
         <p class="msg" id="appmsg" role="status"></p>
-        <details id="moreRemote">
-          <summary>Typing, inputs &amp; power</summary>
-          <label class="caption" for="typed">Type on the TV</label>
-          <p class="note">Open a search box on the TV first.</p>
-          <form class="typer" id="typer"><input type="text" id="typed" placeholder="Search or enter text" autocomplete="off"><button id="sendText">Send</button></form>
-          <div class="keys"><button data-key="KEY_HDMI1">HDMI 1</button><button data-key="KEY_HDMI2">HDMI 2</button><button data-key="KEY_HDMI3">HDMI 3</button></div>
-          <p class="note">Use Source to see the TV's available inputs.</p>
-          <div class="folders"><button class="danger" id="tvoff">Turn TV off</button></div>
-          <p class="note">Use the TV's own remote to turn it back on.</p>
-        </details>
       </div>
       <p class="msg" id="remotemsg" role="status"></p>
-      <details id="diagnostics"><summary>Connection &amp; stream details</summary>
-        <dl class="stats"><div><dt>TV</dt><dd id="device">—</dd></div><div><dt>Stream</dt><dd id="srv">—</dd></div><div><dt>Sending now</dt><dd id="rate">—</dd></div><div><dt>Sent since start</dt><dd id="sent">—</dd></div><div><dt>Last TV request</dt><dd id="last">—</dd></div><div><dt>Open transfers</dt><dd id="active">—</dd></div><div><dt>Running for</dt><dd id="uptime">—</dd></div><div><dt>Mac power</dt><dd id="power">—</dd></div></dl>
-        <p class="file" id="file"></p><p class="note">App status covers the supported apps listed above. The TV does not report the current HDMI input or titles playing inside apps here.</p>
-      </details>
     </aside>
     <div class="content">
       <section class="now" id="lastPlayed" aria-label="Last played" hidden></section>
       <section class="now" id="now" aria-label="Cast playback" hidden>
-        <span class="caption" id="state"></span><h2 id="title"></h2>
-        <input type="range" id="seek" min="0" max="1" value="0" aria-label="Seek" disabled>
-        <div class="times"><span id="pos"></span><span id="left"></span></div>
-        <div class="controls"><button data-skip="-30">−30s</button><button data-skip="-10">−10s</button><button class="primary" id="toggle" disabled>Play</button><button data-skip="10">+10s</button><button data-skip="30">+30s</button><button id="stop" disabled>Stop</button></div>
-        <div class="subtitles" id="subctl" hidden><label for="subsel">Subtitles</label><span class="select-wrap"><select id="subsel"></select></span><button id="subAdd">Add file…</button><button id="subRemove" class="link-button" hidden>Remove</button></div>
+        <h2 id="title"></h2>
+        <div class="playback-bar">
+          <div class="range-bar"><input type="range" id="seek" min="0" max="1" value="0" aria-label="Seek" disabled><span class="range-preview" id="seekPreview" aria-hidden="true" hidden></span></div>
+          <div class="times"><span id="pos"></span><span id="left" role="timer"></span></div>
+          <div class="playback-actions">
+          <div class="transport" role="group" aria-label="Playback controls">
+            <button class="skip" data-skip="-30" aria-label="Back 30 seconds" data-tooltip="Back 30 seconds"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#rotate-ccw"></use></svg><span aria-hidden="true">30s</span></button><button class="skip" data-skip="-10" aria-label="Back 10 seconds" data-tooltip="Back 10 seconds"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#rotate-ccw"></use></svg><span aria-hidden="true">10s</span></button><button class="primary" id="toggle" aria-label="Play" data-tooltip="Play" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#play"></use></svg></button><button class="skip" data-skip="10" aria-label="Forward 10 seconds" data-tooltip="Forward 10 seconds"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#rotate-cw"></use></svg><span aria-hidden="true">10s</span></button><button class="skip" data-skip="30" aria-label="Forward 30 seconds" data-tooltip="Forward 30 seconds"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#rotate-cw"></use></svg><span aria-hidden="true">30s</span></button>
+          </div>
+          <button class="remote-icon" id="stop" hidden disabled aria-label="Stop casting" data-tooltip="Stop casting"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#square"></use></svg><span>Stop casting</span></button>
+          </div>
+        </div>
+        <div class="subtitles" id="subctl" hidden><label for="subsel">Subtitles</label><div class="themed-select"><button id="subsel" aria-label="Subtitles">Off</button><ul id="subselOptions" hidden></ul></div><button id="subAdd" class="remote-icon" aria-label="Add subtitle file" data-tooltip="Add subtitle file"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#plus"></use></svg></button><button id="subRemove" class="remote-icon" aria-label="Remove subtitle file" data-tooltip="Remove subtitle file" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#x"></use></svg></button></div>
         <div class="subtitles" id="burnctl" hidden><span id="burnlabel"></span><button id="makeCopy">Make copy</button><button id="deleteCopy" class="link-button">Delete copy</button></div>
         <p class="note" id="subnote"></p>
         <p class="note" id="upnext"></p>
@@ -897,13 +978,19 @@ footer { font-size:11px;margin-top:20px; }
         <p class="msg" id="queuemsg" role="status"></p>
       </section>
       <section class="queue" id="history" aria-labelledby="historyTitle" hidden>
-        <h2 id="historyTitle">History</h2>
+        <div class="row"><h2 id="historyTitle">History</h2><button class="link-button" id="clearHistory" data-history-clear>Clear history</button></div>
         <ol class="queue-list history-list" id="historyList"></ol>
       </section>
+      <p class="msg" id="historymsg" role="status"></p>
     </div>
   </div>
   <footer><span id="powerBrief"></span><span><kbd>M</kbd> mute &nbsp; <kbd>Space</kbd> cast play/pause &nbsp; Arrow keys navigate the remote when focused</span></footer>
   </section>
+  <dialog id="diagnostics" aria-labelledby="diagnosticsTitle">
+    <div class="row"><h2 id="diagnosticsTitle">Connection &amp; stream details</h2><button class="remote-icon" data-close="diagnostics" aria-label="Close connection details"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#x"></use></svg></button></div>
+    <dl class="stats"><div><dt>TV</dt><dd id="device">—</dd></div><div><dt>Stream</dt><dd id="srv">—</dd></div><div><dt>Sending now</dt><dd id="rate">—</dd></div><div><dt>Sent since start</dt><dd id="sent">—</dd></div><div><dt>Last TV request</dt><dd id="last">—</dd></div><div><dt>Open transfers</dt><dd id="active">—</dd></div><div><dt>Running for</dt><dd id="uptime">—</dd></div><div><dt>Mac power</dt><dd id="power">—</dd></div></dl>
+    <p class="file" id="file"></p><p class="note">App status covers the supported apps listed above. The TV does not report the current HDMI input or titles playing inside apps here.</p>
+  </dialog>
   <div id="watchedNotice" class="watched-notice" hidden><p id="watchedNoticeText" role="status"></p><button id="undoWatched" aria-keyshortcuts="Meta+Z Control+Z" data-tooltip="Undo watched change (⌘Z)">Undo</button></div>
   <dialog id="librarySettings" aria-labelledby="settingsTitle">
     <div class="row"><h2 id="settingsTitle">Library settings</h2><button data-close="librarySettings" data-tooltip="Close settings" aria-label="Close settings">×</button></div>
@@ -917,8 +1004,201 @@ footer { font-size:11px;margin-top:20px; }
   </dialog>
   <dialog id="matchDialog" aria-labelledby="matchTitle"><div class="row"><h2 id="matchTitle">Correct match</h2><button data-close="matchDialog" data-tooltip="Close match search" aria-label="Close match search">×</button></div><form id="matchSearch"><label>Title<input id="matchQuery" type="text" required maxlength="300"></label><label>Year<input id="matchYear" type="number" min="1800" max="2200"></label><button type="submit">Search TMDB</button></form><p id="matchmsg" class="msg" role="status"></p><div id="matchResults"></div><button id="leaveUnmatched">Leave unmatched</button></dialog>
 </main>
+<script>/* Select-only comboboxes retain keyboard focus while the list announces its active option. */
+class ThemedSelect {
+  constructor(button, list, onChange) {
+    this.button = button;
+    this.list = list;
+    this.onChange = onChange;
+    this.options = [];
+    this.optionsKey = '';
+    this.active = -1;
+    this.typeahead = '';
+    this.typedAt = 0;
+    button.type = 'button';
+    button.setAttribute('role', 'combobox');
+    button.setAttribute('aria-haspopup', 'listbox');
+    button.setAttribute('aria-controls', list.id);
+    button.setAttribute('aria-expanded', 'false');
+    this.label = document.createElement('span');
+    this.label.className = 'themed-select-label';
+    button.replaceChildren(this.label, ThemedSelect.icon('chevron-down'));
+    list.classList.add('themed-select-options');
+    list.setAttribute('role', 'listbox');
+    list.setAttribute('aria-label', button.getAttribute('aria-label') + ' options');
+    list.hidden = true;
+    button.addEventListener('click', () => list.hidden ? this.open() : this.close());
+    button.addEventListener('keydown', event => this.keydown(event));
+    button.addEventListener('blur', () => this.close());
+    list.addEventListener('pointerdown', event => {
+      if (event.target.closest('[data-choice-index]')) event.preventDefault();
+    });
+    list.addEventListener('click', event => {
+      const option = event.target.closest('[data-choice-index]');
+      if (option) this.choose(Number(option.dataset.choiceIndex));
+    });
+    list.addEventListener('pointermove', event => {
+      const option = event.target.closest('[data-choice-index]');
+      if (option) this.activate(Number(option.dataset.choiceIndex), false);
+    });
+    document.addEventListener('pointerdown', event => {
+      if (!button.parentElement.contains(event.target)) this.close();
+    });
+    document.addEventListener('scroll', event => {
+      if (!list.hidden && !list.contains(event.target)) this.close();
+    }, true);
+    window.addEventListener('resize', () => this.close());
+    window.addEventListener('hashchange', () => this.close());
+  }
+
+  static icon(name) {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('aria-hidden', 'true');
+    const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+    use.setAttribute('href', '#' + name);
+    svg.append(use);
+    return svg;
+  }
+
+  setOptions(entries, value) {
+    const options = entries.map(([key, label, disabled = false]) => [String(key), String(label), disabled]);
+    const key = JSON.stringify(options);
+    if (key !== this.optionsKey) {
+      const activeValue = this.options[this.active]?.[0];
+      this.options = options;
+      this.optionsKey = key;
+      const fragment = document.createDocumentFragment();
+      options.forEach(([, label, disabled], index) => {
+        const option = document.createElement('li');
+        option.id = this.list.id + '-option-' + index;
+        option.dataset.choiceIndex = String(index);
+        option.setAttribute('role', 'option');
+        option.setAttribute('aria-selected', 'false');
+        if (disabled) option.setAttribute('aria-disabled', 'true');
+        const text = document.createElement('span');
+        text.textContent = label;
+        option.append(ThemedSelect.icon('check'), text);
+        fragment.append(option);
+      });
+      this.list.replaceChildren(fragment);
+      this.active = options.findIndex(([key]) => key === activeValue);
+    }
+    this.setValue(value);
+  }
+
+  setValue(value) {
+    value = String(value ?? '');
+    const changed = this.button.value !== value;
+    this.button.value = value;
+    this.label.textContent = this.options.find(([key]) => key === value)?.[1] ?? value;
+    for (const [index, option] of [...this.list.children].entries()) {
+      option.setAttribute('aria-selected', String(this.options[index][0] === value));
+    }
+    if (!this.list.hidden) {
+      this.activate(changed ? this.options.findIndex(([key]) => key === value) : this.active, false);
+      this.position();
+    }
+  }
+
+  position() {
+    const rect = this.button.getBoundingClientRect();
+    const width = Math.min(innerWidth - 16, Math.max(rect.width, 210));
+    const below = innerHeight - rect.bottom - 14, above = rect.top - 14;
+    const upwards = below < 240 && above > below;
+    this.list.style.width = width + 'px';
+    this.list.style.left = Math.max(8, Math.min(innerWidth - width - 8, rect.left)) + 'px';
+    this.list.style.maxHeight = Math.max(44, Math.min(320, upwards ? above : below)) + 'px';
+    this.list.style.top = upwards ? 'auto' : rect.bottom + 6 + 'px';
+    this.list.style.bottom = upwards ? innerHeight - rect.top + 6 + 'px' : 'auto';
+  }
+
+  open() {
+    if (this.button.disabled || !this.options.length) return;
+    this.list.hidden = false;
+    this.button.setAttribute('aria-expanded', 'true');
+    this.position();
+    const selected = this.options.findIndex(([key, , disabled]) => key === this.button.value && !disabled);
+    this.activate(selected < 0 ? this.options.findIndex(([, , disabled]) => !disabled) : selected);
+  }
+
+  close() {
+    this.list.hidden = true;
+    this.button.setAttribute('aria-expanded', 'false');
+    this.button.removeAttribute('aria-activedescendant');
+    this.active = -1;
+    this.typeahead = '';
+  }
+
+  activate(index, scroll = true) {
+    if (this.options[index]?.[2]) index = -1;
+    this.active = index >= 0 && index < this.options.length ? index : -1;
+    for (const [i, option] of [...this.list.children].entries()) option.classList.toggle('is-active', i === this.active);
+    if (this.active < 0) {
+      this.button.removeAttribute('aria-activedescendant');
+      return;
+    }
+    const option = this.list.children[this.active];
+    this.button.setAttribute('aria-activedescendant', option.id);
+    if (scroll) option.scrollIntoView({block:'nearest'});
+  }
+
+  choose(index) {
+    if (this.button.disabled || !this.options[index] || this.options[index][2]) return;
+    const value = this.options[index][0], changed = this.button.value !== value;
+    this.setValue(value);
+    this.close();
+    if (changed) this.onChange(value);
+  }
+
+  keydown(event) {
+    if (event.isComposing || event.ctrlKey || event.altKey || event.metaKey) return;
+    const key = event.key;
+    if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(key)) {
+      event.preventDefault();
+      const closed = this.list.hidden;
+      if (closed) this.open();
+      const enabled = this.options.map((option, index) => option[2] ? -1 : index).filter(index => index >= 0);
+      if (key === 'Home') this.activate(enabled[0] ?? -1);
+      else if (key === 'End') this.activate(enabled.at(-1) ?? -1);
+      else if (!closed) {
+        const next = Math.max(0, Math.min(enabled.length - 1, enabled.indexOf(this.active) + (key === 'ArrowDown' ? 1 : -1)));
+        this.activate(enabled[next] ?? -1);
+      }
+    } else if (key === 'Enter' || key === ' ') {
+      event.preventDefault();
+      if (this.list.hidden) this.open(); else this.choose(this.active);
+    } else if (key === 'Escape' && !this.list.hidden) {
+      event.preventDefault(); event.stopPropagation(); this.close();
+    } else if (key === 'Tab') this.close();
+    else if (key.length === 1) {
+      event.preventDefault();
+      if (this.list.hidden) this.open();
+      const now = performance.now(), character = key.toLocaleLowerCase();
+      this.typeahead = now - this.typedAt < 700 ? this.typeahead + character : character;
+      this.typedAt = now;
+      const query = [...this.typeahead].every(c => c === character) ? character : this.typeahead;
+      const start = query.length === 1 ? this.active + 1 : this.active;
+      for (let offset = 0; offset < this.options.length; offset++) {
+        const index = (Math.max(0, start) + offset) % this.options.length;
+        if (!this.options[index][2] && this.options[index][1].toLocaleLowerCase().startsWith(query)) { this.activate(index); break; }
+      }
+    }
+  }
+}
+</script>
 <script>
 const $ = id => document.getElementById(id);
+$('showDiagnostics').onclick = () => $('diagnostics').showModal();
+function sizeListWindows() {
+  for (const id of ['queueList', 'historyList']) {
+    const list = $(id);
+    // Measure actual rows so wrapped titles remain fully visible in the three-item window.
+    const height = Array.from(list.children).slice(0, 3).reduce((sum, row) => sum + row.getBoundingClientRect().height, 0);
+    list.style.setProperty('--list-window', `${height}px`);
+  }
+}
+new ResizeObserver(sizeListWindows).observe(document.querySelector('.content'));
 const dateTimeFormat = new Intl.DateTimeFormat(undefined, {dateStyle:'medium', timeStyle:'short'});
 function updateDateTime() {
   const now = new Date();
@@ -937,10 +1217,9 @@ const clock = s => {
 const runtime = s => { const m = Math.round(s / 60); return s ? `${Math.floor(m / 60)}h ${m % 60}m` : ''; };
 const size = n => n >= 1e9 ? (n / 1e9).toFixed(2) + ' GB' : (n / 1e6).toFixed(1) + ' MB';
 const ago = s => s == null ? 'No requests yet' : s < 2 ? 'Just now' : s < 120 ? `${Math.round(s)}s ago` : `${Math.round(s / 60)} min ago`;
-const STATES = {PLAYING:'Playing from your Mac', PAUSED_PLAYBACK:'Paused', STOPPED:'Stopped', TRANSITIONING:'Loading…', NO_MEDIA_PRESENT:'No media loaded'};
 const RESUME_MIN = 30;
 let st = null, online = false, selecting = false, finding = false, pairing = false;
-let opening = null, choosingSubs = false, seeking = false, volDragging = false, queueBusy = false;
+let opening = null, choosingSubs = false, seeking = false, volDragging = false, queueBusy = false, historyBusy = false;
 let apps = null, appsLoading = false, appsAt = 0, appsNext = 0, appsGeneration = 0, appsSig = '';
 let remoteTv = null, launching = null, powerArmed = false, powerTimer;
 let tvSig = '', queueSig = '', subSig = '', historySig = '', refreshId = 0;
@@ -979,40 +1258,59 @@ function renderTvs() {
   const sig = JSON.stringify([st.tvs, st.selected, finding, selecting]);
   if (sig === tvSig) return;
   tvSig = sig;
-  $('tv').hidden = !st.tvs.length;
+  $('tvPicker').hidden = !st.tvs.length;
   $('tv').disabled = finding || selecting;
-  $('tv').innerHTML = (st.selected ? '' : '<option value="" disabled selected>Choose a TV</option>') + st.tvs.map(t => `<option value="${esc(t.id)}" ${t.id === st.selected ? 'selected' : ''}>${esc(t.name)}</option>`).join('');
+  tvPicker.setOptions(st.tvs.map(t => [t.id, t.name]), st.selected || '');
+  if (!st.selected) tvPicker.label.textContent = 'Choose a TV';
+  if ($('tv').disabled || $('tvPicker').hidden) tvPicker.close();
   $('find').disabled = finding || selecting;
-  $('find').textContent = finding ? 'Searching…' : 'Find TVs';
+  const findLabel = finding ? 'Searching…' : 'Find TVs';
+  $('find').querySelector('span').textContent = findLabel;
+  $('find').setAttribute('aria-label', findLabel);
+  $('find').dataset.tooltip = findLabel;
+}
+function setControlIcon(id, icon, label) {
+  const button = $(id);
+  button.querySelector('use').setAttribute('href', '#' + icon);
+  button.setAttribute('aria-label', label);
+  button.dataset.tooltip = label;
 }
 function renderStatus() {
   const tv = online ? st.tv : null;
   const visible = appsFresh() && apps?.find(a => a.visible === true);
   const ours = ownsPlayback();
   $('connection').textContent = !online ? 'Service offline' : !st.selected ? 'No TV selected' : tv ? 'TV connected' : 'Playback unavailable';
-  $('connection').className = 'connection ' + (online && tv ? 'live' : '');
+  $('connection').hidden = !!(online && tv);
   const launchingName = launching && apps?.find(a => a.id === launching)?.name;
-  $('screen').textContent = launchingName ? `Opening ${launchingName}…` : ours ? 'Casting from your Mac' : visible ? visible.name : !online ? 'Connection lost' : !st.selected ? 'Choose your TV' : !tv ? 'TV status unavailable' : 'Ready when you are';
+  const tvName = st.tvs.find(t => t.id === st.selected)?.name || 'your TV';
+  $('screen').textContent = launchingName ? `Opening ${launchingName}…` : ours ? 'Casting to' : visible ? visible.name : !online ? 'Connection lost' : !st.selected ? 'Choose your TV' : !tv ? 'TV status unavailable' : 'Ready when you are';
+  $('screen').setAttribute('aria-label', ours ? `Casting to ${tvName}` : $('screen').textContent);
   $('volume').disabled = !canControl() || tv?.volume == null;
   $('mute').disabled = !canControl() || tv?.muted == null;
-  if (!volDragging) { $('volume').value = tv?.volume ?? 0; $('volnum').textContent = tv?.volume ?? '—'; }
+  if (!volDragging) { $('volume').value = tv?.volume ?? 0; $('volnum').textContent = tv?.volume ?? '—'; updateRangeFill('volume'); }
+  if ($('volume').disabled) $('volumePreview').hidden = true;
   const muted = tv?.muted;
-  $('sound').textContent = muted === true ? 'Muted' : muted === false ? 'Sound on' : 'Sound unknown';
-  $('sound').className = 'sound-state' + (muted === true ? ' muted' : '');
-  $('mute').textContent = muted === true ? 'Unmute' : 'Mute';
+  setControlIcon('mute', muted === true ? 'volume-x' : 'volume-2', muted == null ? 'Sound unavailable' : muted ? 'Unmute TV' : 'Mute TV');
   $('mute').setAttribute('aria-pressed', String(muted === true));
-  $('mute').setAttribute('aria-label', muted === true ? 'Unmute TV' : 'Mute TV');
-  $('now').hidden = !st.now && !opening;
-  $('title').textContent = opening ? 'Opening ' + (st.library.find(m => m.id === opening)?.title || 'movie') + '…' : st.now?.title || '';
-  $('state').textContent = tv ? STATES[tv.state] || 'Cast playback' : 'Waiting for TV';
+  $('stop').hidden = $('now').hidden = !st.now && !opening;
+  const title = $('title'), entry = st.library.find(m => m.id === (opening || st.now?.id));
+  const titleText = opening ? 'Opening ' + (entry?.title || 'movie') + '…' : st.now?.title || '';
+  if (entry) {
+    let link = title.querySelector('a');
+    if (!link) { link = document.createElement('a'); title.replaceChildren(link); }
+    link.href = '#/movie/' + encodeURIComponent(entry.id);
+    link.textContent = titleText;
+  } else title.textContent = titleText;
   for (const el of [$('seek'), $('toggle'), $('stop'), ...document.querySelectorAll('[data-skip]')]) el.disabled = !ours || !!opening;
   $('seek').disabled ||= !tv?.duration;
+  if ($('seek').disabled) $('seekPreview').hidden = true;
   if (!seeking) {
     $('seek').max = Math.floor(tv?.duration || 1);
     $('seek').value = Math.floor(tv?.position || 0);
     showTimes(ours ? tv.position : null, ours ? tv.duration : null);
   }
-  $('toggle').textContent = ours && tv.state === 'PLAYING' ? 'Pause' : 'Play';
+  const playing = ours && tv.state === 'PLAYING';
+  setControlIcon('toggle', playing ? 'pause' : 'play', playing ? 'Pause' : 'Play');
   renderSubtitles(ours ? st.now.subtitles : null);
   renderBurn(ours ? st.now : null);
   renderSubtitleMode();
@@ -1030,20 +1328,18 @@ function renderSubtitles(subs) {
     subs.live ? '' : 'Switching subtitles reloads the video where it is, with a short pause.',
   ].filter(Boolean).join(' ');
   $('subctl').hidden = !subs;
-  if (!subs) return;
+  if (!subs) { subtitlePicker.close(); return; }
   const value = shownSubtitle(subs);
   $('subRemove').hidden = !subs.tracks.find(t => t.id === value)?.added;
   $('subAdd').disabled = choosingSubs;
-  $('subAdd').textContent = choosingSubs ? 'Choosing…' : 'Add file…';
-  // Rebuilding the options closes an open menu, so only do it when they change.
+  setControlIcon('subAdd', 'plus', choosingSubs ? 'Choosing subtitle file…' : 'Add subtitle file');
   // Without a file from TV Cast, the TV shows the video's own subtitles, if it has any it can draw.
   const none = !subs.burn && subs.embedded.some(t => !t.image) ? 'From the video (TV menu)' : 'Off';
   const sig = JSON.stringify([subs.tracks, value, none]);
   if (sig === subSig) return;
   subSig = sig;
-  $('subsel').innerHTML = `<option value="off">${none}</option>` + subs.tracks.map(t =>
-    `<option value="${esc(t.id)}" ${t.missing ? 'disabled' : ''}>${esc(t.label + (t.added ? (t.missing ? ' (added, missing)' : ' (added)') : ''))}</option>`).join('');
-  $('subsel').value = value;
+  subtitlePicker.setOptions([['off', none], ...subs.tracks.map(t =>
+    [t.id, t.label + (t.added ? (t.missing ? ' (added, missing)' : ' (added)') : ''), !!t.missing])], value);
 }
 // TVs whose players show no subtitle files get them burned into the picture: HLS segments encoded
 // as the TV plays, or a finished copy made once. Copies stay until deleted here or with tv burn --delete.
@@ -1063,16 +1359,35 @@ function renderBurn(now) {
 function renderSubtitleMode() {
   const tv = st.tvs.find(t => t.id === st.selected);
   $('submodeRow').hidden = !tv;
+  $('submode').disabled = !canControl();
+  if (!tv || $('submode').disabled) subtitleModePicker.close();
   if (!tv) return;
-  if (document.activeElement !== $('submode')) $('submode').value = tv.subtitle_mode;
+  subtitleModePicker.setValue(tv.subtitle_mode);
   $('submodeNote').textContent = tv.subtitles === 'burn'
     ? (tv.subtitle_mode === 'auto' ? 'This TV shows no subtitle files, so TV Cast burns them into the picture.' : 'Subtitles are burned into the picture.')
     : (tv.subtitle_mode === 'auto' ? 'Subtitle files go to the TV, which draws them.' : '');
 }
 function showTimes(pos, dur) {
-  $('pos').textContent = pos == null ? '' : `${clock(pos)} / ${clock(dur)}`;
-  $('left').textContent = dur ? `${clock(dur - (pos || 0))} left` : '';
+  $('pos').textContent = `${clock(pos)} / ${clock(dur || null)}`;
+  $('left').textContent = dur && pos != null ? `−${clock(dur - pos)}` : '—';
+  $('left').setAttribute('aria-label', dur && pos != null ? `${clock(dur - pos)} remaining` : 'Remaining time unavailable');
   $('seek').setAttribute('aria-valuetext', `${clock(pos)} of ${clock(dur)}`);
+  updateRangeFill('seek');
+}
+function updateRangeFill(id) {
+  const slider = $(id);
+  slider.style.setProperty('--range-progress', `${Math.max(0, Math.min(100, slider.value / slider.max * 100))}%`);
+}
+function showRangePreview(id, fraction) {
+  if ($(id).disabled) return;
+  fraction = Math.max(0, Math.min(1, fraction));
+  const preview = $(id + 'Preview'), width = $(id).getBoundingClientRect().width;
+  const value = fraction * Number($(id).max);
+  preview.textContent = id === 'seek' ? clock(value) : `${Math.round(value)}%`;
+  preview.hidden = false;
+  const half = preview.offsetWidth / 2;
+  // Range values run between the centers of the 14 px thumb at either end.
+  preview.style.left = Math.max(half, Math.min(width - half, 7 + fraction * (width - 14))) + 'px';
 }
 function renderQueue() {
   if (!st) return;
@@ -1089,32 +1404,45 @@ function renderQueue() {
   $('playQueue').disabled = disabled || !canControl() || !st.tv || !!opening || !items[0]?.available;
   $('playQueue').textContent = queueBusy && opening ? 'Opening…' : st.now ? 'Play next' : 'Play queue';
   show('queuemsg', errors.queuemsg || st.queue_error);
+  sizeListWindows();
 }
 // Keyed on position, not watched: a rewatch stopped partway is both watched and resumable.
 const resumable = m => m.position >= RESUME_MIN;
 const playedOn = m => new Date(m.updated * 1000).toLocaleDateString(undefined, {month:'short', day:'numeric'});
 const yearTag = m => m.year ? `<span class="count">${m.year}</span>` : '';
 const playedSoFar = m => resumable(m) ? clock(m.position) + (m.duration ? ` of ${clock(m.duration)}` : '') : m.watched ? 'Watched' : 'Played';
-function lastPlayedCard(m, off) {
+const removeHistoryButton = (m, off) => `<button class="icon-button" data-history-remove="${esc(m.id)}" data-tooltip="Remove from history" aria-label="${esc('Remove ' + m.title + ' from history')}"${off}><span class="icon icon-x" aria-hidden="true"></span></button>`;
+function lastPlayedCard(m, off, onlyHistory) {
   const left = resumable(m) && m.duration > m.position ? runtime(m.duration - m.position) + ' left' : '';
   const bar = resumable(m) && m.duration ? `<progress max="${m.duration}" value="${m.position}" aria-label="Watched so far"></progress>` : '';
   const start = resumable(m) ? `<button data-cast="${esc(m.id)}" data-from-start="true"${off}>Start over</button>` : '';
-  return `<span class="caption">Last played ${esc(playedOn(m))}</span><h2>${esc(m.title)}${yearTag(m)}</h2>${bar}<div class="times"><span>${esc(playedSoFar(m))}</span><span>${esc(left)}</span></div><div class="controls"><button class="primary" data-cast="${esc(m.id)}"${off}>${resumable(m) ? 'Resume' : 'Play again'}</button>${start}</div>`;
+  return `<div class="row"><span class="caption">Last played ${esc(playedOn(m))}</span><div class="history-actions">${onlyHistory ? `<button class="link-button" data-history-clear${off}>Clear history</button>` : ''}${removeHistoryButton(m, off)}</div></div><h2>${esc(m.title)}${yearTag(m)}</h2>${bar}<div class="times"><span>${esc(playedSoFar(m))}</span><span>${esc(left)}</span></div><div class="controls"><button class="primary" data-cast="${esc(m.id)}"${off}>${resumable(m) ? 'Resume' : 'Play again'}</button>${start}</div>`;
 }
 // While nothing casts, the newest played movie takes the Now Playing slot.
 function renderHistory() {
-  const playing = opening || st.now?.id, disabled = !online || !!opening;
+  const playing = opening || st.now?.id, disabled = !online || !!opening || historyBusy;
   const items = playHistory(st.library, playing);
   const last = playing ? null : items.shift();
   const sig = JSON.stringify([last, items, disabled]);
   if (sig !== historySig) {  // polling must not rebuild the buttons, which would drop their focus
     historySig = sig;
     const off = disabled ? ' disabled' : '';
-    $('lastPlayed').innerHTML = last ? lastPlayedCard(last, off) : '';
-    $('historyList').innerHTML = items.map(m => `<li><div class="queue-title">${esc(m.title)}${yearTag(m)}<p class="note">${esc(playedSoFar(m))} · ${esc(playedOn(m))}</p></div><button data-cast="${esc(m.id)}"${off}>${resumable(m) ? 'Resume' : 'Play again'}</button></li>`).join('');
+    $('lastPlayed').innerHTML = last ? lastPlayedCard(last, off, !items.length) : '';
+    $('historyList').innerHTML = items.map(m => `<li><div class="queue-title">${esc(m.title)}${yearTag(m)}<p class="note">${esc(playedSoFar(m))} · ${esc(playedOn(m))}</p></div><div class="history-actions"><button data-cast="${esc(m.id)}"${off}>${resumable(m) ? 'Resume' : 'Play again'}</button>${removeHistoryButton(m, off)}</div></li>`).join('');
   }
   $('lastPlayed').hidden = !last;
   $('history').hidden = !items.length;
+  $('clearHistory').disabled = disabled;
+  show('historymsg', errors.historymsg);
+  sizeListWindows();
+}
+async function historyAction(action, body = {}) {
+  if (!online || historyBusy) return;
+  historyBusy = true; renderHistory();
+  await act('history_' + action, body, 'historymsg');
+  historyBusy = false; renderHistory();
+  const target = document.querySelector('#lastPlayed button:not(:disabled), #history:not([hidden]) button:not(:disabled)') || $('screen');
+  target.focus({preventScroll:true});
 }
 async function queueAction(action, body = {}) {
   if (queueBusy || !online) return;
@@ -1136,7 +1464,6 @@ function renderRemote() {
     apps = null; appsAt = 0; appsNext = 0; appsLoading = false; launching = null;
     delete errors.remotemsg; delete errors.appmsg;
     clearTimeout(powerTimer); powerArmed = false;
-    $('typed').value = '';
   }
   const available = st.remote.available, paired = available && st.remote.paired;
   const enabled = canUseRemote();
@@ -1148,10 +1475,12 @@ function renderRemote() {
   $('pair').textContent = pairing ? 'Pairing…' : 'Pair with TV';
   $('remoteControls').hidden = !paired;
   document.querySelectorAll('[data-key]').forEach(b => b.disabled = !enabled || !!launching);
-  $('sendText').disabled = !enabled;
+  $('tvoff').hidden = !paired;
   $('tvoff').disabled = !enabled;
-  $('tvoff').textContent = powerArmed ? 'Confirm turn off' : 'Turn TV off';
+  setControlIcon('tvoff', 'power', powerArmed ? 'Confirm turn off' : 'Turn TV off');
+  $('tvoff').classList.toggle('danger', powerArmed);
   $('tvoff').classList.toggle('armed', powerArmed);
+  $('powerHint').hidden = !powerArmed;
   const fresh = appsFresh();
   const sig = JSON.stringify([apps, fresh, enabled, launching]);
   if (sig !== appsSig) {
@@ -1207,7 +1536,7 @@ async function refresh() {
     if (st) { renderRemote(); renderStatus(); renderLibrary(); renderQueue(); }
     else {
       $('screen').textContent = 'TV Cast is offline'; $('connection').textContent = 'Service offline';
-      $('sound').textContent = 'Sound unknown';
+      setControlIcon('mute', 'volume-2', 'Sound unavailable');
       for (const id of ['rescan', 'addFolder']) $(id).disabled = true;
     }
     $('srv').textContent = 'Service offline';
@@ -1223,8 +1552,7 @@ async function poll() { if (isTV()) await refresh(); setTimeout(poll, document.h
 function togglePlay() { if (ownsPlayback()) act(st.tv.state === 'PLAYING' ? 'pause' : 'play'); }
 function skip(delta) { if (ownsPlayback() && st.tv.duration) act('seek', {seconds:Math.min(Math.max(0, (st.tv.position || 0) + delta), st.tv.duration - 1)}); }
 function remoteKey(key) { if (canUseRemote() && !launching) act('keys', {keys:[key]}, 'remotemsg'); }
-$('tv').onchange = async e => {
-  const id = e.target.value;
+const tvPicker = new ThemedSelect($('tv'), $('tvOptions'), async id => {
   selecting = true; appsGeneration++; refreshId++;
   appsLoading = false; launching = null; appsAt = 0; appsNext = 0;
   renderTvs(); renderRemote(); renderStatus(); renderLibrary(); renderQueue();
@@ -1232,21 +1560,31 @@ $('tv').onchange = async e => {
   selecting = false; tvSig = ''; await refresh();
   show('globalmsg', errors.globalmsg);
   if (result) continueCast();
-};
+});
 $('find').onclick = async () => { finding = true; renderTvs(); await act('discover', {}, 'globalmsg'); finding = false; tvSig = ''; renderTvs(); show('globalmsg', errors.globalmsg); continueCast(); };
 $('mute').onclick = () => { if (canControl() && st.tv?.muted != null) act('mute', {on:!st.tv.muted}, 'remotemsg'); };
-$('volume').oninput = e => { volDragging = true; $('volnum').textContent = e.target.value; };
-$('volume').onchange = async e => { await act('volume', {level:+e.target.value}, 'remotemsg'); volDragging = false; renderStatus(); };
-$('seek').oninput = e => { seeking = true; showTimes(+e.target.value, +e.target.max); };
-$('seek').onchange = async e => { await act('seek', {seconds:+e.target.value}); seeking = false; renderStatus(); };
+$('volume').oninput = e => { volDragging = true; $('volnum').textContent = e.target.value; updateRangeFill('volume'); showRangePreview('volume', +e.target.value / +e.target.max); };
+$('volume').onchange = async e => { $('volumePreview').hidden = true; await act('volume', {level:+e.target.value}, 'remotemsg'); volDragging = false; renderStatus(); };
+for (const id of ['seek', 'volume']) {
+  $(id).onpointermove = e => {
+    if (e.pointerType === 'touch') return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    showRangePreview(id, (e.clientX - rect.left - 7) / (rect.width - 14));
+  };
+  $(id).onpointerleave = $(id).onblur = () => { $(id + 'Preview').hidden = true; };
+  $(id).onkeydown = e => { if (e.key === 'Escape') $(id + 'Preview').hidden = true; };
+}
+$('seek').oninput = e => { seeking = true; showTimes(+e.target.value, +e.target.max); showRangePreview('seek', +e.target.value / +e.target.max); };
+$('seek').onchange = async e => { $('seekPreview').hidden = true; await act('seek', {seconds:+e.target.value}); seeking = false; renderStatus(); };
 $('toggle').onclick = togglePlay;
 $('stop').onclick = () => act('stop');
 document.querySelectorAll('[data-skip]').forEach(b => { b.setAttribute('aria-label', `${+b.dataset.skip < 0 ? 'Back' : 'Forward'} ${Math.abs(+b.dataset.skip)} seconds`); b.onclick = () => skip(+b.dataset.skip); });
 // Re-send Enable even when captions report on: Samsung can report them without drawing them.
-$('subsel').onchange = e => act('subtitles', {track:e.target.value});
+const subtitlePicker = new ThemedSelect($('subsel'), $('subselOptions'), track => act('subtitles', {track}));
 $('makeCopy').onclick = () => act('burn', {id:st.now.id});
 $('deleteCopy').onclick = () => { if (confirm('Delete the copy with burned-in subtitles? The movie itself stays.')) act('delete_copy', {id:st.now.id}); };
-$('submode').onchange = e => act('subtitle_mode', {mode:e.target.value});
+const subtitleModePicker = new ThemedSelect($('submode'), $('submodeOptions'), mode => act('subtitle_mode', {mode}));
+subtitleModePicker.setOptions([['auto', 'Auto'], ['file', 'As a file'], ['burn', 'Burned in']], 'auto');
 $('subAdd').onclick = async () => { choosingSubs = true; renderStatus(); await act('add_subtitles'); choosingSubs = false; renderStatus(); };
 $('subRemove').onclick = () => act('remove_subtitles', {track:$('subsel').value});
 $('queueList').onclick = e => {
@@ -1254,6 +1592,12 @@ $('queueList').onclick = e => {
   if (b) queueAction(b.dataset.queueAction, {id:b.dataset.id, direction:+b.dataset.direction});
 };
 $('clearQueue').onclick = () => queueAction('clear');
+$('tvPage').addEventListener('click', e => {
+  const button = e.target.closest('[data-history-remove], [data-history-clear]');
+  if (!button || button.disabled) return;
+  if (button.hasAttribute('data-history-remove')) historyAction('remove', {id:button.dataset.historyRemove});
+  else if (confirm('Clear viewing history? Resume positions and watched status will be kept.')) historyAction('clear');
+});
 $('playQueue').onclick = async () => {
   if (opening || !canControl() || queueBusy) return;
   opening = st.queue[0].id; renderQueue(); renderStatus();
@@ -1278,18 +1622,12 @@ $('apps').onclick = async e => {
   finally { if (generation === appsGeneration) { launching = null; renderRemote(); renderStatus(); await refresh(); } }
 };
 $('pair').onclick = async () => { pairing = true; renderRemote(); await act('pair', {}, 'remotemsg'); pairing = false; appsNext = 0; await refresh(); };
-$('typer').onsubmit = async e => {
-  e.preventDefault(); const value = $('typed').value;
-  if (!value || !canUseRemote()) return;
-  const tv = st.selected, result = await act('text', {text:value}, 'remotemsg');
-  if (result && tv === st.selected && $('typed').value === value) $('typed').value = '';
-};
 $('tvoff').onclick = () => {
   if (!powerArmed) { powerArmed = true; powerTimer = setTimeout(() => { powerArmed = false; renderRemote(); }, 4000); renderRemote(); return; }
   clearTimeout(powerTimer); powerArmed = false; remoteKey('KEY_POWER'); renderRemote();
 };
 document.addEventListener('keydown', e => {
-  if (!isTV() || document.querySelector('dialog[open]') || e.metaKey || e.ctrlKey || e.altKey || e.repeat || e.target.closest('input, select, textarea, [contenteditable=true]')) return;
+  if (!isTV() || document.querySelector('dialog[open]') || e.metaKey || e.ctrlKey || e.altKey || e.repeat || e.target.closest('input, select, textarea, [contenteditable=true], [role=combobox]')) return;
   const navigation = {ArrowUp:'KEY_UP', ArrowDown:'KEY_DOWN', ArrowLeft:'KEY_LEFT', ArrowRight:'KEY_RIGHT'};
   if (e.target.closest('#remote') && navigation[e.key]) { e.preventDefault(); remoteKey(navigation[e.key]); }
   else if (e.key.toLowerCase() === 'm') { e.preventDefault(); $('mute').click(); }
@@ -1310,12 +1648,14 @@ function movieAttention(movie) {
   if (movie.tmdb_id && !movie.poster) reasons.push('Poster missing');
   return reasons;
 }
-function selectMovies(movies, {query = '', sort = 'title', descending = defaultSortDescending(sort), genre = '', person = '', watched = 'all', attention = false} = {}) {
+function selectMovies(movies, {query = '', sort = 'title', descending = defaultSortDescending(sort), genre = '', person = '', language = '', collection = '', watched = 'all', attention = false} = {}) {
   const normalize = value => String(value || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase();
   query = normalize(query).trim();
   return movies.filter(m => (!query || normalize([m.title, m.file_title, m.original_title, m.year].join(' ')).includes(query))
     && (!genre || (m.genres || []).includes(genre))
     && (!person || [...(m.directors || []), ...(m.cast || [])].some(name => normalize(name).includes(normalize(person).trim())))
+    && (!language || (m.languages || []).some(item => item.code === language))
+    && (!collection || (collection === 'none' ? !m.collection : String(m.collection?.id) === String(collection)))
     && (!attention || movieAttention(m).length)
     && (watched === 'all' || m.watched === (watched === 'watched'))).sort((a, b) => {
       const x = a[sort], y = b[sort];
@@ -1324,10 +1664,10 @@ function selectMovies(movies, {query = '', sort = 'title', descending = defaultS
       return order * (descending ? -1 : 1) || a.title.localeCompare(b.title) || a.id.localeCompare(b.id);
     });
 }
-function browseCollection(movies, folders, {folder = '', recursive = false, query = '', attention = false} = {}) {
+function browseCollection(movies, folders, {folder = '', recursive = false, query = '', attention = false, collection = ''} = {}) {
   const inside = (path, parent) => path === parent || path.startsWith(parent.replace(/\/$/, '') + '/');
   const scoped = movies.filter(m => !folder || inside(m.collection_path, folder));
-  if (recursive || query.trim() || attention) return {movies:scoped, folders:[]};
+  if (recursive || query.trim() || attention || collection) return {movies:scoped, folders:[]};
   const children = folders.filter(f => folder ? f.parent === folder : f.parent === f.root)
     .map(f => ({...f, movies:scoped.filter(m => inside(m.collection_path, f.id))}))
     .filter(f => f.movies.length).sort((a, b) => a.name.localeCompare(b.name));
@@ -1344,6 +1684,8 @@ function movieLinks(movie) {
     {site:'imdb', label:imdb ? 'IMDb' : 'Search IMDb', href:imdb ? `https://www.imdb.com/title/${imdb}/` : `https://www.imdb.com/find/?q=${query}`},
     {site:'letterboxd', label:tmdb || imdb ? 'Letterboxd' : 'Search Letterboxd', href:tmdb ? `https://letterboxd.com/tmdb/${tmdb}/` : imdb ? `https://letterboxd.com/imdb/${imdb}/` : `https://letterboxd.com/search/films/${query}/`},
     {site:'tmdb', label:tmdb ? 'TMDB' : 'Search TMDB', href:tmdb ? `https://www.themoviedb.org/movie/${tmdb}` : `https://www.themoviedb.org/search/movie?query=${query}`},
+    ...(typeof movie.wikipedia_url === 'string' && /^https:\/\/en\.wikipedia\.org\/wiki\/[^\s?#]+$/.test(movie.wikipedia_url)
+      ? [{site:'wikipedia', label:'Wikipedia', href:movie.wikipedia_url}] : []),
   ];
 }
 if (typeof module !== 'undefined') module.exports = {selectMovies, defaultSortDescending, browseCollection, playHistory, movieLinks, movieAttention};
@@ -1529,182 +1871,6 @@ class PeoplePicker {
   }
 }
 </script>
-<script>/* Select-only comboboxes retain keyboard focus while the list announces its active option. */
-class ThemedSelect {
-  constructor(button, list, onChange) {
-    this.button = button;
-    this.list = list;
-    this.onChange = onChange;
-    this.options = [];
-    this.optionsKey = '';
-    this.active = -1;
-    this.typeahead = '';
-    this.typedAt = 0;
-    button.type = 'button';
-    button.setAttribute('role', 'combobox');
-    button.setAttribute('aria-haspopup', 'listbox');
-    button.setAttribute('aria-controls', list.id);
-    button.setAttribute('aria-expanded', 'false');
-    this.label = document.createElement('span');
-    this.label.className = 'themed-select-label';
-    button.replaceChildren(this.label, ThemedSelect.icon('chevron-down'));
-    list.classList.add('themed-select-options');
-    list.setAttribute('role', 'listbox');
-    list.setAttribute('aria-label', button.getAttribute('aria-label') + ' options');
-    list.hidden = true;
-    button.addEventListener('click', () => list.hidden ? this.open() : this.close());
-    button.addEventListener('keydown', event => this.keydown(event));
-    button.addEventListener('blur', () => this.close());
-    list.addEventListener('pointerdown', event => {
-      if (event.target.closest('[data-choice-index]')) event.preventDefault();
-    });
-    list.addEventListener('click', event => {
-      const option = event.target.closest('[data-choice-index]');
-      if (option) this.choose(Number(option.dataset.choiceIndex));
-    });
-    list.addEventListener('pointermove', event => {
-      const option = event.target.closest('[data-choice-index]');
-      if (option) this.activate(Number(option.dataset.choiceIndex), false);
-    });
-    document.addEventListener('pointerdown', event => {
-      if (!button.parentElement.contains(event.target)) this.close();
-    });
-    document.addEventListener('scroll', event => {
-      if (!list.hidden && !list.contains(event.target)) this.close();
-    }, true);
-    window.addEventListener('resize', () => this.close());
-    window.addEventListener('hashchange', () => this.close());
-  }
-
-  static icon(name) {
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('viewBox', '0 0 24 24');
-    svg.setAttribute('aria-hidden', 'true');
-    const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
-    use.setAttribute('href', '#' + name);
-    svg.append(use);
-    return svg;
-  }
-
-  setOptions(entries, value) {
-    const options = entries.map(([key, label]) => [String(key), String(label)]);
-    const key = JSON.stringify(options);
-    if (key !== this.optionsKey) {
-      const activeValue = this.options[this.active]?.[0];
-      this.options = options;
-      this.optionsKey = key;
-      const fragment = document.createDocumentFragment();
-      options.forEach(([, label], index) => {
-        const option = document.createElement('li');
-        option.id = this.list.id + '-option-' + index;
-        option.dataset.choiceIndex = String(index);
-        option.setAttribute('role', 'option');
-        option.setAttribute('aria-selected', 'false');
-        const text = document.createElement('span');
-        text.textContent = label;
-        option.append(ThemedSelect.icon('check'), text);
-        fragment.append(option);
-      });
-      this.list.replaceChildren(fragment);
-      this.active = options.findIndex(([key]) => key === activeValue);
-    }
-    this.setValue(value);
-  }
-
-  setValue(value) {
-    value = String(value ?? '');
-    const changed = this.button.value !== value;
-    this.button.value = value;
-    this.label.textContent = this.options.find(([key]) => key === value)?.[1] ?? value;
-    for (const [index, option] of [...this.list.children].entries()) {
-      option.setAttribute('aria-selected', String(this.options[index][0] === value));
-    }
-    if (!this.list.hidden) {
-      this.activate(changed ? this.options.findIndex(([key]) => key === value) : this.active, false);
-      this.position();
-    }
-  }
-
-  position() {
-    const rect = this.button.getBoundingClientRect();
-    const width = Math.min(innerWidth - 16, Math.max(rect.width, 210));
-    const below = innerHeight - rect.bottom - 14, above = rect.top - 14;
-    const upwards = below < 240 && above > below;
-    this.list.style.width = width + 'px';
-    this.list.style.left = Math.max(8, Math.min(innerWidth - width - 8, rect.left)) + 'px';
-    this.list.style.maxHeight = Math.max(44, Math.min(320, upwards ? above : below)) + 'px';
-    this.list.style.top = upwards ? 'auto' : rect.bottom + 6 + 'px';
-    this.list.style.bottom = upwards ? innerHeight - rect.top + 6 + 'px' : 'auto';
-  }
-
-  open() {
-    if (this.button.disabled || !this.options.length) return;
-    this.list.hidden = false;
-    this.button.setAttribute('aria-expanded', 'true');
-    this.position();
-    this.activate(Math.max(0, this.options.findIndex(([key]) => key === this.button.value)));
-  }
-
-  close() {
-    this.list.hidden = true;
-    this.button.setAttribute('aria-expanded', 'false');
-    this.button.removeAttribute('aria-activedescendant');
-    this.active = -1;
-    this.typeahead = '';
-  }
-
-  activate(index, scroll = true) {
-    this.active = index >= 0 && index < this.options.length ? index : -1;
-    for (const [i, option] of [...this.list.children].entries()) option.classList.toggle('is-active', i === this.active);
-    if (this.active < 0) {
-      this.button.removeAttribute('aria-activedescendant');
-      return;
-    }
-    const option = this.list.children[this.active];
-    this.button.setAttribute('aria-activedescendant', option.id);
-    if (scroll) option.scrollIntoView({block:'nearest'});
-  }
-
-  choose(index) {
-    if (!this.options[index]) return;
-    const value = this.options[index][0], changed = this.button.value !== value;
-    this.setValue(value);
-    this.close();
-    if (changed) this.onChange(value);
-  }
-
-  keydown(event) {
-    if (event.isComposing || event.ctrlKey || event.altKey || event.metaKey) return;
-    const key = event.key;
-    if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(key)) {
-      event.preventDefault();
-      const closed = this.list.hidden;
-      if (closed) this.open();
-      if (key === 'Home') this.activate(0);
-      else if (key === 'End') this.activate(this.options.length - 1);
-      else if (!closed) this.activate(Math.max(0, Math.min(this.options.length - 1, this.active + (key === 'ArrowDown' ? 1 : -1))));
-    } else if (key === 'Enter' || key === ' ') {
-      event.preventDefault();
-      if (this.list.hidden) this.open(); else this.choose(this.active);
-    } else if (key === 'Escape' && !this.list.hidden) {
-      event.preventDefault(); event.stopPropagation(); this.close();
-    } else if (key === 'Tab') this.close();
-    else if (key.length === 1) {
-      event.preventDefault();
-      if (this.list.hidden) this.open();
-      const now = performance.now(), character = key.toLocaleLowerCase();
-      this.typeahead = now - this.typedAt < 700 ? this.typeahead + character : character;
-      this.typedAt = now;
-      const query = [...this.typeahead].every(c => c === character) ? character : this.typeahead;
-      const start = query.length === 1 ? this.active + 1 : this.active;
-      for (let offset = 0; offset < this.options.length; offset++) {
-        const index = (Math.max(0, start) + offset) % this.options.length;
-        if (this.options[index][1].toLocaleLowerCase().startsWith(query)) { this.activate(index); break; }
-      }
-    }
-  }
-}
-</script>
 <script>/* Shared catalogue and navigation. TV playback stays in the existing panel controller. */
 let catalogue = null, catalogueSig = '', folderSig = '', detailSig = '', detailMovie = null;
 let localOnline = false, libraryRequest = 0, detailRequest = 0, currentRoute = '';
@@ -1716,7 +1882,7 @@ function stored(storage, key, fallback = '') {
 function remember(storage, key, value) {
   try { storage.setItem(key, value); } catch { /* Navigation still works without persisted preferences. */ }
 }
-let browse = {query:'', sort:stored(localStorage, 'library.sort', 'title'), descending:stored(localStorage, 'library.descending') === 'true', genre:'', person:'', watched:'all', attention:false, folder:'', recursive:stored(localStorage, 'library.recursive', 'false') === 'true'};
+let browse = {query:'', sort:stored(localStorage, 'library.sort', 'title'), descending:stored(localStorage, 'library.descending') === 'true', genre:'', person:'', language:'', collection:'', watched:'all', attention:false, folder:'', recursive:stored(localStorage, 'library.recursive', 'false') === 'true'};
 let libraryView = stored(localStorage, 'library.view', 'grid');
 let libraryHref = stored(sessionStorage, 'library.href', '#/library');
 const isTV = () => location.hash.split('?')[0] === '#/tv';
@@ -1726,6 +1892,8 @@ const glyph = kind => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor
 const peoplePicker = new PeoplePicker($('person'), $('peopleOptions'), () => changeBrowsing());
 const sortPicker = new ThemedSelect($('sort'), $('sortOptions'), () => { browse.descending = defaultSortDescending($('sort').value); changeBrowsing(); });
 const genrePicker = new ThemedSelect($('genre'), $('genreOptions'), () => changeBrowsing());
+const languagePicker = new ThemedSelect($('language'), $('languageOptions'), () => changeBrowsing());
+const collectionPicker = new ThemedSelect($('collection'), $('collectionOptions'), () => changeBrowsing());
 const watchedPicker = new ThemedSelect($('filter'), $('watchedOptions'), () => changeBrowsing());
 sortPicker.setOptions([['title','Title'], ['file_runtime_s','Runtime'], ['year','Year'], ['score','IMDb rating']], browse.sort);
 watchedPicker.setOptions([['all','All movies'], ['unwatched','Unwatched'], ['watched','Watched']], browse.watched);
@@ -1746,7 +1914,7 @@ applyTheme();
 for (const [id, icon] of [['listView','list'],['gridView','grid'],['settingsButton','settings']]) $(id).innerHTML = glyph(icon);
 const poster = m => `<span class="poster">${m.poster ? `<img src="${esc(m.poster)}" alt="" loading="lazy">` : `<span class="poster-placeholder" aria-hidden="true">${esc(m.title.slice(0, 1))}</span>`}</span>`;
 const watchedCorner = (m, disabled = false) => `<button class="poster-status poster-watched ${m.watched ? 'is-watched' : 'is-unwatched'}" data-watched="${esc(m.id)}" aria-label="Mark ${esc(m.title)} ${m.watched ? 'unwatched' : 'watched'}" aria-pressed="${!!m.watched}" data-tooltip="${m.watched ? 'Mark unwatched' : 'Mark watched'}" ${disabled ? 'disabled' : ''}>${glyph(m.watched ? 'check' : 'circle')}</button>`;
-const movieMeta = m => `<div class="movie-meta"><span>${m.year || 'Year unknown'}</span><span>${m.file_runtime_s ? runtime(m.file_runtime_s) : 'Runtime unknown'}</span>${m.score != null ? `<span>IMDb ${Number(m.score).toFixed(1)}</span>` : ''}</div>`;
+const movieMeta = (m, details = false) => `<div class="movie-meta"><span>${m.year || 'Year unknown'}</span><span>${m.file_runtime_s ? runtime(m.file_runtime_s) : 'Runtime unknown'}</span>${m.score != null ? `<span>IMDb ${Number(m.score).toFixed(1)}${details && Number.isFinite(m.vote_count) && m.vote_count > 0 ? ` (${m.vote_count.toLocaleString()} votes)` : ''}</span>` : ''}${details && m.languages?.length ? `<span class="movie-languages">${m.languages.length === 1 ? 'Language' : 'Languages'}: ${m.languages.map(language => `<button class="metadata-link" data-browse-language="${esc(language.code)}" data-tooltip="${esc(language.name)}" aria-label="Show films in ${esc(language.name)}">${esc(language.code.toUpperCase())}</button>`).join('<span aria-hidden="true">·</span>')}</span>` : ''}</div>`;
 
 const iconTooltip = document.createElement('div');
 iconTooltip.id = 'iconTooltip'; iconTooltip.className = 'icon-tooltip';
@@ -1807,11 +1975,22 @@ function renderLibrary() {
   const genres = [['', 'All genres'], ...[...new Set(catalogue.library.flatMap(m => m.genres || []))].sort().map(g => [g, g])];
   if (browse.genre && !genres.some(([value]) => value === browse.genre)) genres.push([browse.genre, browse.genre + ' (unavailable)']);
   genrePicker.setOptions(genres, browse.genre);
+  const languages = new Map();
+  for (const language of catalogue.library.flatMap(m => m.languages || [])) {
+    if (!languages.has(language.code) || language.name !== language.code.toUpperCase()) languages.set(language.code, language.name);
+  }
+  const languageOptions = [['', 'All languages'], ...[...languages].sort((a, b) => a[1].localeCompare(b[1])).map(([code, name]) => [code, name === code.toUpperCase() ? name : `${name} (${code.toUpperCase()})`])];
+  if (browse.language && !languages.has(browse.language)) languageOptions.push([browse.language, browse.language.toUpperCase() + ' (unavailable)']);
+  languagePicker.setOptions(languageOptions, browse.language);
+  const collections = new Map(catalogue.library.filter(m => m.collection).map(m => [String(m.collection.id), m.collection.name]));
+  const collectionOptions = [['', 'All collections'], ['none', 'No collection'], ...[...collections].sort((a, b) => a[1].localeCompare(b[1]))];
+  if (browse.collection && browse.collection !== 'none' && !collections.has(browse.collection)) collectionOptions.push([browse.collection, 'Collection unavailable']);
+  collectionPicker.setOptions(collectionOptions, browse.collection);
   sortPicker.setValue(browse.sort); watchedPicker.setValue(browse.watched);
   $('clearPerson').hidden = !browse.person;
   const people = catalogue.library.flatMap(m => [...(m.directors || []), ...(m.cast || [])]);
   peoplePicker.setOptions(people);
-  $('clearFilters').hidden = !browse.genre && !browse.person && browse.watched === 'all' && !browse.attention;
+  $('clearFilters').hidden = !browse.genre && !browse.person && !browse.language && !browse.collection && browse.watched === 'all' && !browse.attention;
   const visible = browseCollection(selectMovies(catalogue.library, browse), catalogue.folders, browse);
   const movies = visible.movies;
   const attentionCount = browseCollection(catalogue.library, catalogue.folders, {...browse, query:'', recursive:true}).movies.filter(m => movieAttention(m).length).length;
@@ -1890,8 +2069,12 @@ function renderFolders(folders) {
   const ancestors = [];
   let folder = catalogue.folders.find(f => f.id === browse.folder);
   while (folder) { ancestors.unshift(folder); folder = catalogue.folders.find(f => f.id === folder.parent); }
-  const crumbs = [{id:'', name:'Library'}, ...ancestors];
-  const breadcrumbHTML = crumbs.map((f, i) => `${i ? glyph('next') : ''}<a data-folder href="${esc(listHash({...browse, folder:f.id}))}" ${i === crumbs.length - 1 ? 'aria-current="page"' : ''}>${esc(f.name)}</a>`).join('');
+  const crumbs = [{name:'Library', href:listHash({...browse, folder:'', collection:''})}, ...ancestors.map(f => ({name:f.name, href:listHash({...browse, folder:f.id})}))];
+  if (browse.collection) {
+    const collection = catalogue.library.find(m => String(m.collection?.id) === browse.collection)?.collection;
+    crumbs.push({name:browse.collection === 'none' ? 'No collection' : collection?.name || 'Collection unavailable', href:listHash()});
+  }
+  const breadcrumbHTML = crumbs.map((f, i) => `${i ? glyph('next') : ''}<a data-folder href="${esc(f.href)}" ${i === crumbs.length - 1 ? 'aria-current="page"' : ''}>${esc(f.name)}</a>`).join('');
   if ($('breadcrumbs').innerHTML !== breadcrumbHTML) $('breadcrumbs').innerHTML = breadcrumbHTML;
   const html = folders.length ? '<ul class="collection-list">' + folders.map(f => `<li><a data-folder href="${esc(listHash({...browse, folder:f.id}))}"><span class="collection-art">${f.movies.slice(0, 3).map(poster).join('')}</span><span class="collection-copy"><strong>${glyph('folder')}${esc(f.name)}</strong><span>${f.movies.length} ${f.movies.length === 1 ? 'movie' : 'movies'}</span></span>${glyph('next')}</a></li>`).join('') + '</ul>' : '';
   if ($('folderbody')._html !== html) { $('folderbody').innerHTML = html; $('folderbody')._html = html; }
@@ -1924,11 +2107,13 @@ function renderMovie(m) {
   const sig = JSON.stringify(m);
   if (detailSig === sig) return;
   const focusedToggle = $('movieContent').querySelector('[data-watched]:focus');
-  const watchedFocused = focusedToggle?.classList.contains('poster-watched') ? '.poster-watched' : focusedToggle ? '.watched-toggle' : null;
+  const watchedFocused = focusedToggle ? '.poster-watched' : null;
   detailSig = sig;
   const matched = !!m.tmdb_id;
+  const collection = m.collection ? `<dt>Collection</dt><dd><button class="metadata-link" data-browse-collection="${esc(m.collection.id)}">${esc(m.collection.name)} →</button></dd>` : '';
+  const cast = (m.cast || []).map(name => `<span class="cast-credit">${browseLinks([name], 'person')}${m.characters?.[name] ? ` <span class="cast-character">— ${esc(m.characters[name])}</span>` : ''}</span>`).join('') || '—';
   const websites = `<nav class="movie-websites" aria-label="Movie websites">${movieLinks(m).map(link => `<a href="${esc(link.href)}" data-tooltip="${esc(link.label)}" aria-label="${esc(link.label)}" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true"><use ${link.site === 'letterboxd' ? 'class="brand-logo-light"' : ''} href="#brand-${link.site}"></use>${link.site === 'letterboxd' ? '<use class="brand-logo-dark" href="#brand-letterboxd-dark"></use>' : ''}</svg></a>`).join('')}</nav>`;
-  $('movieContent').innerHTML = `<article class="movie-detail"><div class="poster-cover">${poster(m)}${watchedCorner(m)}</div><div class="detail-copy"><div class="detail-heading"><h2 tabindex="-1">${esc(m.title)}</h2>${movieMeta(m)}</div><div class="detail-body"><div class="detail-buttons"><button class="primary" data-local="${esc(m.id)}">Open in default player</button><button data-cast="${esc(m.id)}">Play on TV</button><button class="watched-toggle" data-watched="${esc(m.id)}" aria-pressed="${!!m.watched}" data-tooltip="${m.watched ? 'Mark unwatched' : 'Mark watched'}">${glyph(m.watched ? 'check' : 'circle')}<span>${m.watched ? 'Watched' : 'Unwatched'}</span></button></div>${websites}${m.position >= RESUME_MIN ? `<p class="note">TV resume point: ${clock(m.position)}. <button class="link-button" data-cast="${esc(m.id)}" data-from-start="true">Start over on TV</button></p>` : ''}<p class="synopsis">${esc(m.overview || (matched ? 'No synopsis available.' : m.match?.reason || 'Movie information is not available yet. Use Correct match to identify this film.'))}</p><dl><dt>Genres</dt><dd>${browseLinks(m.genres, 'genre')}</dd><dt>Director</dt><dd>${browseLinks(m.directors, 'person')}</dd><dt>Cast</dt><dd>${browseLinks(m.cast, 'person')}</dd>${m.score != null ? `<dt>Rating</dt><dd>IMDb ${Number(m.score).toFixed(1)} / 10 (${Number(m.vote_count).toLocaleString()} votes)</dd>` : ''}</dl><p class="file">${esc(m.filename)}</p>${m.problem ? `<p class="note warn">TV compatibility: ${esc(m.problem)}</p>` : ''}${m.match?.error ? `<p class="msg">${esc(m.match.error)}</p>` : ''}<div class="detail-secondary"><button class="link-button" data-add-queue="${esc(m.id)}">Add to TV queue</button><button class="link-button" data-reveal="${esc(m.id)}">Reveal in Finder</button><button class="link-button" data-correct="${esc(m.id)}">Correct match</button><button class="link-button" data-refresh="${esc(m.id)}">Refresh metadata</button></div></div></div></article>`;
+  $('movieContent').innerHTML = `<article class="movie-detail"><div class="poster-cover">${poster(m)}${watchedCorner(m)}</div><div class="detail-copy"><div class="detail-heading"><h2 tabindex="-1">${esc(m.title)}</h2>${movieMeta(m, true)}</div><div class="detail-body"><div class="detail-buttons"><button class="primary" data-local="${esc(m.id)}">Open in default player</button><button data-cast="${esc(m.id)}">Play on TV</button><button data-add-queue="${esc(m.id)}">Add to TV queue</button></div>${websites}<p class="synopsis">${esc(m.overview || (matched ? 'No synopsis available.' : m.match?.reason || 'Movie information is not available yet. Use Correct match to identify this film.'))}</p><dl>${collection}<dt>Genres</dt><dd>${browseLinks(m.genres, 'genre')}</dd><dt>Director</dt><dd>${browseLinks(m.directors, 'person')}</dd><dt>Cast</dt><dd>${cast}</dd></dl><p class="file">${esc(m.filename)}</p>${m.problem ? `<p class="note warn">TV compatibility: ${esc(m.problem)}</p>` : ''}${m.match?.error ? `<p class="msg">${esc(m.match.error)}</p>` : ''}<div class="detail-secondary"><button class="link-button" data-reveal="${esc(m.id)}">Reveal in Finder</button><button class="link-button" data-correct="${esc(m.id)}">Correct match</button><button class="link-button" data-refresh="${esc(m.id)}">Refresh metadata</button></div></div></div></article>`;
   if (watchedFocused) $('movieContent').querySelector(watchedFocused).focus({preventScroll:true});
 }
 async function loadMovie(id) {
@@ -1956,7 +2141,7 @@ function route() {
   document.title = currentRoute === 'tv' ? 'TV — TV Cast' : 'Library — TV Cast';
   if (currentRoute === 'library') {
     const params = new URLSearchParams(location.hash.split('?')[1] || '');
-    browse = {...browse, query:params.get('query') || '', genre:params.get('genre') || '', person:params.get('person') || '', watched:params.get('watched') || 'all', attention:params.get('attention') === 'true', folder:params.get('folder') || '', recursive:params.has('sort') ? params.get('recursive') === 'true' : browse.recursive, sort:params.get('sort') || browse.sort, descending:params.has('sort') ? params.get('descending') === 'true' : browse.descending};
+    browse = {...browse, query:params.get('query') || '', genre:params.get('genre') || '', person:params.get('person') || '', language:params.get('language') || '', collection:params.get('collection') || '', watched:params.get('watched') || 'all', attention:params.get('attention') === 'true', folder:params.get('folder') || '', recursive:params.has('sort') ? params.get('recursive') === 'true' : browse.recursive, sort:params.get('sort') || browse.sort, descending:params.has('sort') ? params.get('descending') === 'true' : browse.descending};
     if (!['title', 'file_runtime_s', 'year', 'score'].includes(browse.sort)) browse.sort = 'title';
     $('search').value = browse.query; sortPicker.setValue(browse.sort); watchedPicker.setValue(browse.watched); peoplePicker.setValue(browse.person);
     libraryHref = listHash(); updateLibraryLinks(); renderLibrary();
@@ -2062,13 +2247,14 @@ $('cancelCast').onclick = () => { pendingCast = null; renderCastRequest(); };
 function changeBrowsing() {
   browse.query = $('search').value; browse.sort = $('sort').value; browse.genre = $('genre').value;
   browse.watched = $('filter').value; browse.person = $('person').value;
+  browse.language = $('language').value; browse.collection = $('collection').value;
   remember(localStorage, 'library.sort', browse.sort); remember(localStorage, 'library.descending', String(browse.descending));
   saveBrowsing(); renderLibrary();
 }
 $('search').oninput = changeBrowsing;
 $('sortDirection').onclick = () => { browse.descending = !browse.descending; changeBrowsing(); };
 for (const view of ['list', 'grid']) $(view + 'View').onclick = () => { libraryView = view; remember(localStorage, 'library.view', view); renderLibrary(); };
-$('clearFilters').onclick = () => { genrePicker.setValue(''); peoplePicker.setValue(''); watchedPicker.setValue('all'); browse.attention = false; changeBrowsing(); };
+$('clearFilters').onclick = () => { genrePicker.setValue(''); peoplePicker.setValue(''); languagePicker.setValue(''); collectionPicker.setValue(''); watchedPicker.setValue('all'); browse.attention = false; changeBrowsing(); };
 $('attentionFilter').onclick = () => { browse.attention = !browse.attention; changeBrowsing(); };
 $('clearPerson').onclick = () => { peoplePicker.setValue(''); changeBrowsing(); $('person').focus(); peoplePicker.close(); };
 $('rescan').onclick = () => localAction('rescan', {});
@@ -2119,9 +2305,9 @@ document.addEventListener('click', e => {
   if (a?.hasAttribute('data-folder')) remember(sessionStorage, 'library.scroll', '0');
   const b = e.target.closest('button'); if (!b) return;
   if (b.dataset.close) $(b.dataset.close).close();
-  if (b.dataset.browseGenre || b.dataset.browsePerson) {
+  if (b.dataset.browseGenre || b.dataset.browsePerson || b.dataset.browseLanguage || b.dataset.browseCollection) {
     // Start a fresh facet browse so an earlier title query cannot hide related movies.
-    browse = {...browse, query:'', genre:b.dataset.browseGenre || '', person:b.dataset.browsePerson || '', watched:'all', attention:false, folder:'', recursive:true};
+    browse = {...browse, query:'', genre:b.dataset.browseGenre || '', person:b.dataset.browsePerson || '', language:b.dataset.browseLanguage || '', collection:b.dataset.browseCollection || '', watched:'all', attention:false, folder:'', recursive:true};
     libraryHref = listHash(); remember(sessionStorage, 'library.scroll', '0');
     location.hash = libraryHref; return;
   }

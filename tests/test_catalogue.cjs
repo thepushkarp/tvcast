@@ -29,6 +29,15 @@ test('runtime and score sorts place unknown values last in either direction', ()
     assert.deepEqual(selectMovies(movies, {sort, descending:true}).map(m => m.id), ['a','b','c']);
   }
 });
+test('Wikipedia appears only for a verified English article URL', () => {
+  const url = 'https://en.wikipedia.org/wiki/Example_(film)';
+  assert.deepEqual(movieLinks({wikipedia_url:url}).at(-1), {site:'wikipedia', label:'Wikipedia', href:url});
+  for (const wikipedia_url of [null, '', 'javascript:alert(1)', 'http://en.wikipedia.org/wiki/Film',
+    'https://en.wikipedia.org.evil/wiki/Film', 'https://en.wikipedia.org@evil.test/wiki/Film',
+    'https://en.wikipedia.org/wiki/', 'https://en.wikipedia.org/wiki/Film\n']) {
+    assert.equal(movieLinks({wikipedia_url}).some(link => link.site === 'wikipedia'), false);
+  }
+});
 test('sort defaults use shorter runtimes, newer releases and higher ratings', () => {
   assert.equal(defaultSortDescending('title'), false);
   assert.equal(defaultSortDescending('file_runtime_s'), false);
@@ -44,6 +53,24 @@ test('people filtering includes directors and cast and combines with genres', ()
   assert.equal(selectMovies(items, {person:'lea seydoux', genre:'Drama'})[0].id, 'a');
   assert.equal(selectMovies(items, {person:'fukunaga'})[0].id, 'a');
   assert.equal(selectMovies(items, {person:'Daniel Craig', genre:'Drama'}).length, 1);
+});
+test('film collections filter by provider ID across folders and combine with other filters', () => {
+  const entries = [
+    {...movies[0], languages:[{code:'en',name:'English'},{code:'hi',name:'Hindi'}], collection:{id:42,name:'Example Collection'}, root:'/movies', collection_path:'/movies/Part One'},
+    {...movies[1], languages:[{code:'en',name:'English'}], collection:{id:42,name:'Example Collection'}, root:'/movies', collection_path:'/movies/Part Two'},
+    {...movies[2], collection:{id:43,name:'Example Collection'}, root:'/movies', collection_path:'/movies'},
+    {...movies[2], id:'d', collection:null, root:'/movies', collection_path:'/movies'},
+    {...movies[2], id:'e', root:'/movies', collection_path:'/movies'},
+  ];
+  const matched = selectMovies(entries, {collection:'42'});
+  assert.deepEqual(matched.map(m => m.id), ['b', 'a']);
+  assert.deepEqual(browseCollection(matched, [], {collection:'42'}), {movies:matched, folders:[]});
+  assert.deepEqual(selectMovies(entries, {collection:'42', genre:'Drama', watched:'unwatched'}).map(m => m.id), ['a']);
+  assert.deepEqual(selectMovies(entries, {collection:'missing'}), []);
+  assert.deepEqual(selectMovies(entries, {collection:'none'}).map(m => m.id), ['d', 'e']);
+  assert.deepEqual(selectMovies(entries, {language:'hi'}).map(m => m.id), ['a']);
+  assert.deepEqual(selectMovies(entries, {language:'en', collection:'42', watched:'watched'}).map(m => m.id), ['b']);
+  assert.deepEqual(selectMovies(entries, {language:'en', collection:'none'}), []);
 });
 test('filters intersect, search includes original names, and separate editions remain separate', () => {
   assert.deepEqual(selectMovies(movies, {query:'example', genre:'Drama', watched:'unwatched'}).map(m => m.id), ['a','c']);

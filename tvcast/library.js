@@ -9,7 +9,7 @@ function stored(storage, key, fallback = '') {
 function remember(storage, key, value) {
   try { storage.setItem(key, value); } catch { /* Navigation still works without persisted preferences. */ }
 }
-let browse = {query:'', sort:stored(localStorage, 'library.sort', 'title'), descending:stored(localStorage, 'library.descending') === 'true', genre:'', person:'', watched:'all', attention:false, folder:'', recursive:stored(localStorage, 'library.recursive', 'false') === 'true'};
+let browse = {query:'', sort:stored(localStorage, 'library.sort', 'title'), descending:stored(localStorage, 'library.descending') === 'true', genre:'', person:'', language:'', collection:'', watched:'all', attention:false, folder:'', recursive:stored(localStorage, 'library.recursive', 'false') === 'true'};
 let libraryView = stored(localStorage, 'library.view', 'grid');
 let libraryHref = stored(sessionStorage, 'library.href', '#/library');
 const isTV = () => location.hash.split('?')[0] === '#/tv';
@@ -19,6 +19,8 @@ const glyph = kind => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor
 const peoplePicker = new PeoplePicker($('person'), $('peopleOptions'), () => changeBrowsing());
 const sortPicker = new ThemedSelect($('sort'), $('sortOptions'), () => { browse.descending = defaultSortDescending($('sort').value); changeBrowsing(); });
 const genrePicker = new ThemedSelect($('genre'), $('genreOptions'), () => changeBrowsing());
+const languagePicker = new ThemedSelect($('language'), $('languageOptions'), () => changeBrowsing());
+const collectionPicker = new ThemedSelect($('collection'), $('collectionOptions'), () => changeBrowsing());
 const watchedPicker = new ThemedSelect($('filter'), $('watchedOptions'), () => changeBrowsing());
 sortPicker.setOptions([['title','Title'], ['file_runtime_s','Runtime'], ['year','Year'], ['score','IMDb rating']], browse.sort);
 watchedPicker.setOptions([['all','All movies'], ['unwatched','Unwatched'], ['watched','Watched']], browse.watched);
@@ -39,7 +41,7 @@ applyTheme();
 for (const [id, icon] of [['listView','list'],['gridView','grid'],['settingsButton','settings']]) $(id).innerHTML = glyph(icon);
 const poster = m => `<span class="poster">${m.poster ? `<img src="${esc(m.poster)}" alt="" loading="lazy">` : `<span class="poster-placeholder" aria-hidden="true">${esc(m.title.slice(0, 1))}</span>`}</span>`;
 const watchedCorner = (m, disabled = false) => `<button class="poster-status poster-watched ${m.watched ? 'is-watched' : 'is-unwatched'}" data-watched="${esc(m.id)}" aria-label="Mark ${esc(m.title)} ${m.watched ? 'unwatched' : 'watched'}" aria-pressed="${!!m.watched}" data-tooltip="${m.watched ? 'Mark unwatched' : 'Mark watched'}" ${disabled ? 'disabled' : ''}>${glyph(m.watched ? 'check' : 'circle')}</button>`;
-const movieMeta = m => `<div class="movie-meta"><span>${m.year || 'Year unknown'}</span><span>${m.file_runtime_s ? runtime(m.file_runtime_s) : 'Runtime unknown'}</span>${m.score != null ? `<span>IMDb ${Number(m.score).toFixed(1)}</span>` : ''}</div>`;
+const movieMeta = (m, details = false) => `<div class="movie-meta"><span>${m.year || 'Year unknown'}</span><span>${m.file_runtime_s ? runtime(m.file_runtime_s) : 'Runtime unknown'}</span>${m.score != null ? `<span>IMDb ${Number(m.score).toFixed(1)}${details && Number.isFinite(m.vote_count) && m.vote_count > 0 ? ` (${m.vote_count.toLocaleString()} votes)` : ''}</span>` : ''}${details && m.languages?.length ? `<span class="movie-languages">${m.languages.length === 1 ? 'Language' : 'Languages'}: ${m.languages.map(language => `<button class="metadata-link" data-browse-language="${esc(language.code)}" data-tooltip="${esc(language.name)}" aria-label="Show films in ${esc(language.name)}">${esc(language.code.toUpperCase())}</button>`).join('<span aria-hidden="true">·</span>')}</span>` : ''}</div>`;
 
 const iconTooltip = document.createElement('div');
 iconTooltip.id = 'iconTooltip'; iconTooltip.className = 'icon-tooltip';
@@ -100,11 +102,22 @@ function renderLibrary() {
   const genres = [['', 'All genres'], ...[...new Set(catalogue.library.flatMap(m => m.genres || []))].sort().map(g => [g, g])];
   if (browse.genre && !genres.some(([value]) => value === browse.genre)) genres.push([browse.genre, browse.genre + ' (unavailable)']);
   genrePicker.setOptions(genres, browse.genre);
+  const languages = new Map();
+  for (const language of catalogue.library.flatMap(m => m.languages || [])) {
+    if (!languages.has(language.code) || language.name !== language.code.toUpperCase()) languages.set(language.code, language.name);
+  }
+  const languageOptions = [['', 'All languages'], ...[...languages].sort((a, b) => a[1].localeCompare(b[1])).map(([code, name]) => [code, name === code.toUpperCase() ? name : `${name} (${code.toUpperCase()})`])];
+  if (browse.language && !languages.has(browse.language)) languageOptions.push([browse.language, browse.language.toUpperCase() + ' (unavailable)']);
+  languagePicker.setOptions(languageOptions, browse.language);
+  const collections = new Map(catalogue.library.filter(m => m.collection).map(m => [String(m.collection.id), m.collection.name]));
+  const collectionOptions = [['', 'All collections'], ['none', 'No collection'], ...[...collections].sort((a, b) => a[1].localeCompare(b[1]))];
+  if (browse.collection && browse.collection !== 'none' && !collections.has(browse.collection)) collectionOptions.push([browse.collection, 'Collection unavailable']);
+  collectionPicker.setOptions(collectionOptions, browse.collection);
   sortPicker.setValue(browse.sort); watchedPicker.setValue(browse.watched);
   $('clearPerson').hidden = !browse.person;
   const people = catalogue.library.flatMap(m => [...(m.directors || []), ...(m.cast || [])]);
   peoplePicker.setOptions(people);
-  $('clearFilters').hidden = !browse.genre && !browse.person && browse.watched === 'all' && !browse.attention;
+  $('clearFilters').hidden = !browse.genre && !browse.person && !browse.language && !browse.collection && browse.watched === 'all' && !browse.attention;
   const visible = browseCollection(selectMovies(catalogue.library, browse), catalogue.folders, browse);
   const movies = visible.movies;
   const attentionCount = browseCollection(catalogue.library, catalogue.folders, {...browse, query:'', recursive:true}).movies.filter(m => movieAttention(m).length).length;
@@ -183,8 +196,12 @@ function renderFolders(folders) {
   const ancestors = [];
   let folder = catalogue.folders.find(f => f.id === browse.folder);
   while (folder) { ancestors.unshift(folder); folder = catalogue.folders.find(f => f.id === folder.parent); }
-  const crumbs = [{id:'', name:'Library'}, ...ancestors];
-  const breadcrumbHTML = crumbs.map((f, i) => `${i ? glyph('next') : ''}<a data-folder href="${esc(listHash({...browse, folder:f.id}))}" ${i === crumbs.length - 1 ? 'aria-current="page"' : ''}>${esc(f.name)}</a>`).join('');
+  const crumbs = [{name:'Library', href:listHash({...browse, folder:'', collection:''})}, ...ancestors.map(f => ({name:f.name, href:listHash({...browse, folder:f.id})}))];
+  if (browse.collection) {
+    const collection = catalogue.library.find(m => String(m.collection?.id) === browse.collection)?.collection;
+    crumbs.push({name:browse.collection === 'none' ? 'No collection' : collection?.name || 'Collection unavailable', href:listHash()});
+  }
+  const breadcrumbHTML = crumbs.map((f, i) => `${i ? glyph('next') : ''}<a data-folder href="${esc(f.href)}" ${i === crumbs.length - 1 ? 'aria-current="page"' : ''}>${esc(f.name)}</a>`).join('');
   if ($('breadcrumbs').innerHTML !== breadcrumbHTML) $('breadcrumbs').innerHTML = breadcrumbHTML;
   const html = folders.length ? '<ul class="collection-list">' + folders.map(f => `<li><a data-folder href="${esc(listHash({...browse, folder:f.id}))}"><span class="collection-art">${f.movies.slice(0, 3).map(poster).join('')}</span><span class="collection-copy"><strong>${glyph('folder')}${esc(f.name)}</strong><span>${f.movies.length} ${f.movies.length === 1 ? 'movie' : 'movies'}</span></span>${glyph('next')}</a></li>`).join('') + '</ul>' : '';
   if ($('folderbody')._html !== html) { $('folderbody').innerHTML = html; $('folderbody')._html = html; }
@@ -220,8 +237,10 @@ function renderMovie(m) {
   const watchedFocused = focusedToggle ? '.poster-watched' : null;
   detailSig = sig;
   const matched = !!m.tmdb_id;
+  const collection = m.collection ? `<dt>Collection</dt><dd><button class="metadata-link" data-browse-collection="${esc(m.collection.id)}">${esc(m.collection.name)} →</button></dd>` : '';
+  const cast = (m.cast || []).map(name => `<span class="cast-credit">${browseLinks([name], 'person')}${m.characters?.[name] ? ` <span class="cast-character">— ${esc(m.characters[name])}</span>` : ''}</span>`).join('') || '—';
   const websites = `<nav class="movie-websites" aria-label="Movie websites">${movieLinks(m).map(link => `<a href="${esc(link.href)}" data-tooltip="${esc(link.label)}" aria-label="${esc(link.label)}" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true"><use ${link.site === 'letterboxd' ? 'class="brand-logo-light"' : ''} href="/icons.svg#brand-${link.site}"></use>${link.site === 'letterboxd' ? '<use class="brand-logo-dark" href="/icons.svg#brand-letterboxd-dark"></use>' : ''}</svg></a>`).join('')}</nav>`;
-  $('movieContent').innerHTML = `<article class="movie-detail"><div class="poster-cover">${poster(m)}${watchedCorner(m)}</div><div class="detail-copy"><div class="detail-heading"><h2 tabindex="-1">${esc(m.title)}</h2>${movieMeta(m)}</div><div class="detail-body"><div class="detail-buttons"><button class="primary" data-local="${esc(m.id)}">Open in default player</button><button data-cast="${esc(m.id)}">Play on TV</button><button data-add-queue="${esc(m.id)}">Add to TV queue</button></div>${websites}${m.position >= RESUME_MIN ? `<p class="note">TV resume point: ${clock(m.position)}. <button class="link-button" data-cast="${esc(m.id)}" data-from-start="true">Start over on TV</button></p>` : ''}<p class="synopsis">${esc(m.overview || (matched ? 'No synopsis available.' : m.match?.reason || 'Movie information is not available yet. Use Correct match to identify this film.'))}</p><dl><dt>Genres</dt><dd>${browseLinks(m.genres, 'genre')}</dd><dt>Director</dt><dd>${browseLinks(m.directors, 'person')}</dd><dt>Cast</dt><dd>${browseLinks(m.cast, 'person')}</dd>${m.score != null ? `<dt>Rating</dt><dd>IMDb ${Number(m.score).toFixed(1)} / 10 (${Number(m.vote_count).toLocaleString()} votes)</dd>` : ''}</dl><p class="file">${esc(m.filename)}</p>${m.problem ? `<p class="note warn">TV compatibility: ${esc(m.problem)}</p>` : ''}${m.match?.error ? `<p class="msg">${esc(m.match.error)}</p>` : ''}<div class="detail-secondary"><button class="link-button" data-reveal="${esc(m.id)}">Reveal in Finder</button><button class="link-button" data-correct="${esc(m.id)}">Correct match</button><button class="link-button" data-refresh="${esc(m.id)}">Refresh metadata</button></div></div></div></article>`;
+  $('movieContent').innerHTML = `<article class="movie-detail"><div class="poster-cover">${poster(m)}${watchedCorner(m)}</div><div class="detail-copy"><div class="detail-heading"><h2 tabindex="-1">${esc(m.title)}</h2>${movieMeta(m, true)}</div><div class="detail-body"><div class="detail-buttons"><button class="primary" data-local="${esc(m.id)}">Open in default player</button><button data-cast="${esc(m.id)}">Play on TV</button><button data-add-queue="${esc(m.id)}">Add to TV queue</button></div>${websites}<p class="synopsis">${esc(m.overview || (matched ? 'No synopsis available.' : m.match?.reason || 'Movie information is not available yet. Use Correct match to identify this film.'))}</p><dl>${collection}<dt>Genres</dt><dd>${browseLinks(m.genres, 'genre')}</dd><dt>Director</dt><dd>${browseLinks(m.directors, 'person')}</dd><dt>Cast</dt><dd>${cast}</dd></dl><p class="file">${esc(m.filename)}</p>${m.problem ? `<p class="note warn">TV compatibility: ${esc(m.problem)}</p>` : ''}${m.match?.error ? `<p class="msg">${esc(m.match.error)}</p>` : ''}<div class="detail-secondary"><button class="link-button" data-reveal="${esc(m.id)}">Reveal in Finder</button><button class="link-button" data-correct="${esc(m.id)}">Correct match</button><button class="link-button" data-refresh="${esc(m.id)}">Refresh metadata</button></div></div></div></article>`;
   if (watchedFocused) $('movieContent').querySelector(watchedFocused).focus({preventScroll:true});
 }
 async function loadMovie(id) {
@@ -249,7 +268,7 @@ function route() {
   document.title = currentRoute === 'tv' ? 'TV — TV Cast' : 'Library — TV Cast';
   if (currentRoute === 'library') {
     const params = new URLSearchParams(location.hash.split('?')[1] || '');
-    browse = {...browse, query:params.get('query') || '', genre:params.get('genre') || '', person:params.get('person') || '', watched:params.get('watched') || 'all', attention:params.get('attention') === 'true', folder:params.get('folder') || '', recursive:params.has('sort') ? params.get('recursive') === 'true' : browse.recursive, sort:params.get('sort') || browse.sort, descending:params.has('sort') ? params.get('descending') === 'true' : browse.descending};
+    browse = {...browse, query:params.get('query') || '', genre:params.get('genre') || '', person:params.get('person') || '', language:params.get('language') || '', collection:params.get('collection') || '', watched:params.get('watched') || 'all', attention:params.get('attention') === 'true', folder:params.get('folder') || '', recursive:params.has('sort') ? params.get('recursive') === 'true' : browse.recursive, sort:params.get('sort') || browse.sort, descending:params.has('sort') ? params.get('descending') === 'true' : browse.descending};
     if (!['title', 'file_runtime_s', 'year', 'score'].includes(browse.sort)) browse.sort = 'title';
     $('search').value = browse.query; sortPicker.setValue(browse.sort); watchedPicker.setValue(browse.watched); peoplePicker.setValue(browse.person);
     libraryHref = listHash(); updateLibraryLinks(); renderLibrary();
@@ -355,13 +374,14 @@ $('cancelCast').onclick = () => { pendingCast = null; renderCastRequest(); };
 function changeBrowsing() {
   browse.query = $('search').value; browse.sort = $('sort').value; browse.genre = $('genre').value;
   browse.watched = $('filter').value; browse.person = $('person').value;
+  browse.language = $('language').value; browse.collection = $('collection').value;
   remember(localStorage, 'library.sort', browse.sort); remember(localStorage, 'library.descending', String(browse.descending));
   saveBrowsing(); renderLibrary();
 }
 $('search').oninput = changeBrowsing;
 $('sortDirection').onclick = () => { browse.descending = !browse.descending; changeBrowsing(); };
 for (const view of ['list', 'grid']) $(view + 'View').onclick = () => { libraryView = view; remember(localStorage, 'library.view', view); renderLibrary(); };
-$('clearFilters').onclick = () => { genrePicker.setValue(''); peoplePicker.setValue(''); watchedPicker.setValue('all'); browse.attention = false; changeBrowsing(); };
+$('clearFilters').onclick = () => { genrePicker.setValue(''); peoplePicker.setValue(''); languagePicker.setValue(''); collectionPicker.setValue(''); watchedPicker.setValue('all'); browse.attention = false; changeBrowsing(); };
 $('attentionFilter').onclick = () => { browse.attention = !browse.attention; changeBrowsing(); };
 $('clearPerson').onclick = () => { peoplePicker.setValue(''); changeBrowsing(); $('person').focus(); peoplePicker.close(); };
 $('rescan').onclick = () => localAction('rescan', {});
@@ -412,9 +432,9 @@ document.addEventListener('click', e => {
   if (a?.hasAttribute('data-folder')) remember(sessionStorage, 'library.scroll', '0');
   const b = e.target.closest('button'); if (!b) return;
   if (b.dataset.close) $(b.dataset.close).close();
-  if (b.dataset.browseGenre || b.dataset.browsePerson) {
+  if (b.dataset.browseGenre || b.dataset.browsePerson || b.dataset.browseLanguage || b.dataset.browseCollection) {
     // Start a fresh facet browse so an earlier title query cannot hide related movies.
-    browse = {...browse, query:'', genre:b.dataset.browseGenre || '', person:b.dataset.browsePerson || '', watched:'all', attention:false, folder:'', recursive:true};
+    browse = {...browse, query:'', genre:b.dataset.browseGenre || '', person:b.dataset.browsePerson || '', language:b.dataset.browseLanguage || '', collection:b.dataset.browseCollection || '', watched:'all', attention:false, folder:'', recursive:true};
     libraryHref = listHash(); remember(sessionStorage, 'library.scroll', '0');
     location.hash = libraryHref; return;
   }
