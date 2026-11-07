@@ -3,7 +3,7 @@
 Browse your movie library, open files in your default Mac player, or cast to DLNA TVs.
 TV casting includes web and CLI controls, resume, and queues.
 Samsung TVs also support remote buttons, text input, and app launching.
-No app on the TV. Optional TMDB metadata adds posters, synopses, cast, and ratings.
+No app on the TV. Optional TMDB metadata adds posters, synopses and cast. Ratings come from IMDb without an additional API key.
 
 ![TV Cast with playback controls, a queue and removable folder tags](https://raw.githubusercontent.com/thepushkarp/tvcast/main/docs/images/demo-dark.jpg)
 
@@ -48,7 +48,7 @@ there. To use `tv` from any folder, symlink it into a directory on your `PATH`.
 
 The panel opens to **Library** in grid view. Browse collection folders or turn off
 **Show subfolders as collections** to see their movies together. Search, switch to list view, and sort by title,
-runtime, year or TMDB score. Genre and actor/director filters are available above the movies;
+runtime, year or IMDb rating. Genre and actor/director filters are available above the movies;
 select a person or genre on a movie's detail page to browse related films in your library. New
 files and due metadata retries are checked automatically every minute.
 

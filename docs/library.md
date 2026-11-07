@@ -7,7 +7,7 @@ outside the dialog. New files are found
 automatically within a minute. **Rescan** or `tv open` checks immediately.
 
 **Grid** is the default view; the list/grid icons switch views. Search by title or year and choose
-a sort: title starts A–Z, runtime shortest first, year newest first, and TMDB score highest first.
+a sort: title starts A–Z, runtime shortest first, year newest first, and IMDb rating highest first.
 Search shows matching movies directly, including those in collections beneath the current location.
 Those results show their collection name; clearing the search restores the chosen folder view.
 The direction arrow reverses that order; unknown values remain last. View and sorting preferences
@@ -67,8 +67,7 @@ a labelled title/year search. Finishing a later TV playback can mark it watched 
 Separate editions are separate entries; renaming or moving a
 file gives it a new identity and does not migrate its personal state or manual match.
 
-**Runtime** is measured from the file with `ffprobe` (`brew install ffmpeg`). TMDB runtime is a
-separate reference on the detail page: extended cuts may differ. Missing file durations stay
+**Runtime** is measured from the file with `ffprobe` (`brew install ffmpeg`). Missing file durations stay
 unknown rather than borrowing the database or TV playback duration.
 
 ### Movie information
@@ -96,10 +95,17 @@ Provider outages and rate limits pause fetching and retry automatically after a 
 fetch failures retry after five minutes; unmatched titles are checked again daily and when the
 matching rules change. Cached information stays available throughout. **Refresh metadata** retries
 immediately, subject to provider rate limits. Replace an invalid token in Settings. Successfully
-cached information has no automatic expiry.
+cached TMDB information has no automatic expiry.
 
-Genres, synopsis, director, leading cast and scores come from TMDB. Scores are labelled TMDB;
-vote counts appear in the detail view. Without a token, files remain searchable and playable
+Genres, synopsis, director and leading cast come from TMDB. Ratings and vote counts come from
+[IMDb's non-commercial datasets](https://data.imdb.com/non-commercial-datasets/), for personal and
+non-commercial use under IMDb's terms. No additional API key is needed: movie matches supply the
+IMDb IDs. A separate background worker downloads the compressed ratings dataset when needed,
+at most once per day after a successful download, and caches scores for matched films. New
+matches reuse the local dataset. Browsing reads only cached ratings; download failures preserve
+existing scores, appear in the Library, and retry after five minutes. Missing IMDb ratings stay
+blank and sort last, with no TMDB fallback. Vote counts appear in the detail view. Runtime is
+measured from the local file. Without a token, files remain searchable and playable
 using their filename titles and locally measured runtime.
 
 **Skipped Movies/TV — macOS restricted access** means that subfolder could not be read.

@@ -1,4 +1,4 @@
-"""Bounded background TMDB enrichment; catalogue reads use only local cached data."""
+"""Bounded background movie enrichment; catalogue reads use only local cached data."""
 import json
 import os
 import queue
@@ -9,6 +9,8 @@ import unicodedata
 import urllib.error
 import urllib.parse
 import urllib.request
+
+from .ratings import Ratings
 
 MATCH_VERSION = 2  # Increment when matching rules change so cached negative results are rechecked.
 MATCH_RETRY_SECONDS = 24 * 60 * 60
@@ -49,6 +51,7 @@ class Metadata:
     def __init__(self, state):
         self.state = state
         self.directory = os.path.join(os.path.dirname(os.path.abspath(state.path)), "metadata")
+        self.ratings = Ratings(self.directory)
         self.credentials = os.path.join(self.directory, "credentials.json")
         self.token = ""
         self.lock = threading.RLock()
@@ -81,7 +84,8 @@ class Metadata:
 
     def status(self):
         with self.lock:
-            return {"configured": bool(self.token), "pending": len(self.pending), "error": self.error}
+            return {"configured": bool(self.token), "pending": len(self.pending), "error": self.error,
+                    "ratings": self.ratings.status()}
 
     def configure(self, token):
         if not isinstance(token, str) or len(token) > 4096 or any(c.isspace() for c in token):
@@ -219,11 +223,15 @@ class Metadata:
         with self.lock:
             match = self.state.movie(movie.path).get("match", {})
             data = dict(self.cache.get(match.get("tmdb_id"), {}))
+            if data:
+                # Older TMDB caches contain scores. Only IMDb may populate the catalogue rating.
+                data["score"], data["vote_count"] = self.ratings.get(data.get("imdb_id"))
             return match, data
 
     def enqueue(self, movie, refresh=False):
         with self.lock:
             match, data = self.info(movie)
+            self.ratings.enqueue(data.get("imdb_id"))
             if not self.token or self.auth_failed or movie.path in self.pending or match.get("source") == "none":
                 return
             now = time.time()
@@ -285,14 +293,13 @@ class Metadata:
                   "original_title": data.get("original_title") or "", "overview": data.get("overview") or "",
                   "genres": [g["name"] for g in (data.get("genres") or []) if isinstance(g, dict) and isinstance(g.get("name"), str)],
                   "directors": [p["name"] for p in (credits.get("crew") or []) if isinstance(p, dict) and p.get("job") == "Director" and isinstance(p.get("name"), str)],
-                  "cast": [p["name"] for p in (credits.get("cast") or [])[:8] if isinstance(p, dict) and isinstance(p.get("name"), str)],
-                  "tmdb_runtime_min": data.get("runtime"), "vote_count": data.get("vote_count", 0),
-                  "score": data.get("vote_average") if data.get("vote_count") else None}
+                  "cast": [p["name"] for p in (credits.get("cast") or [])[:8] if isinstance(p, dict) and isinstance(p.get("name"), str)]}
         # Persist useful text even when downloading artwork fails. The worker exposes that error
         # and a manual refresh retries it without losing the cached movie information.
         with self.lock:
             atomic_json(os.path.join(self.directory, "%d.json" % tmdb_id), result)
             self.cache[tmdb_id] = result
+        self.ratings.enqueue(imdb_id)
         poster = data.get("poster_path")
         if poster:
             if not re.fullmatch(r"/[A-Za-z0-9_-]+\.jpg", poster):

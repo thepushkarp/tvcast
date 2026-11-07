@@ -230,6 +230,7 @@ class App:
             t.start()
         threading.Thread(target=self.monitor, daemon=True).start()
         threading.Thread(target=self.discover_at_start, daemon=True).start()
+        threading.Thread(target=self.metadata.ratings.run, daemon=True).start()
         for _ in range(3):
             threading.Thread(target=self.metadata.run, daemon=True).start()
         if FFPROBE:

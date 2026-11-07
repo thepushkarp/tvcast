@@ -35,7 +35,7 @@ class MetadataTest(unittest.TestCase):
         match, data = self.metadata.info(self.movie)
         self.assertEqual(match['tmdb_id'], 1)
         self.assertEqual(data['imdb_id'], 'tt1234567')
-        self.assertEqual((data['directors'], data['genres'], data['tmdb_runtime_min']), (['Director'], ['Drama'], 120))
+        self.assertEqual((data['directors'], data['genres']), (['Director'], ['Drama']))
         reloaded = Metadata(State(self.state.path))
         with mock.patch.object(reloaded, 'request', side_effect=AssertionError('offline')):
             self.assertEqual(reloaded.info(self.movie)[1], data)

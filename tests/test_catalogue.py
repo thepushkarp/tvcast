@@ -36,14 +36,31 @@ class CatalogueTest(unittest.TestCase):
                                    match={'tmdb_id': 1, 'source': 'manual'})
         self.app.state.set_probe(self.file, {'size': self.movie.size, 'mtime': self.movie.mtime,
             'info': {'duration': 3600, 'subtitles': [], 'video': ['h264'], 'audio': ['aac']}})
-        self.app.metadata.cache[1] = {'tmdb_id': 1, 'title': 'Matched title', 'year': 2001,
-                                      'tmdb_runtime_min': 120}
+        self.app.metadata.cache[1] = {'tmdb_id': 1, 'imdb_id': 'tt0000001', 'title': 'Matched title',
+                                      'year': 2001, 'score': 9.9, 'vote_count': 10}
+        self.app.metadata.ratings.values['tt0000001'] = [7.4, 123]
         with mock.patch.object(appmod, 'tv_status', side_effect=AssertionError('TV queried')), \
              mock.patch.object(appmod, 'probe', side_effect=AssertionError('probed in request')), \
-             mock.patch.object(self.app.metadata, 'request', side_effect=AssertionError('TMDB queried')):
+             mock.patch.object(self.app.metadata, 'request', side_effect=AssertionError('TMDB queried')), \
+             mock.patch('urllib.request.urlopen', side_effect=AssertionError('network in catalogue')):
             m = self.app.catalogue()['library'][0]
-        self.assertEqual((m['file_runtime_s'], m['saved_duration'], m['tmdb_runtime_min']), (3600, 9000, 120))
+        self.assertEqual((m['file_runtime_s'], m['saved_duration']), (3600, 9000))
+        self.assertEqual((m['score'], m['vote_count']), (7.4, 123))
         self.assertEqual((m['title'], m['file_title'], m['position']), ('Matched title', 'Example', 75))
+
+    def test_missing_imdb_rating_never_falls_back_to_cached_tmdb_score(self):
+        self.app.state.update_movie(self.file, match={'tmdb_id': 1, 'source': 'manual'})
+        for imdb_id in ('tt0000001', None):
+            self.app.metadata.cache[1] = {'tmdb_id': 1, 'imdb_id': imdb_id, 'score': 9.9, 'vote_count': 10}
+            m = self.app.catalogue()['library'][0]
+            self.assertEqual((m['score'], m['vote_count']), (None, 0))
+
+    def test_cached_imdb_match_enqueues_ratings_without_a_tmdb_token(self):
+        self.app.state.update_movie(self.file, match={'tmdb_id': 1, 'source': 'manual'})
+        self.app.metadata.cache[1] = {'tmdb_id': 1, 'imdb_id': 'tt0000001'}
+        self.app.metadata.enqueue(self.movie)
+        self.assertTrue(self.app.metadata.ratings.status()['pending'])
+        self.assertTrue(self.app.metadata.jobs.empty())
 
     def test_local_open_and_reveal_use_known_files_and_preserve_state(self):
         self.app.state.update_movie(self.file, position=500, watched=False)
