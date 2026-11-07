@@ -109,6 +109,9 @@ try { const theme = localStorage.getItem('tvcast.theme.v1'); if (theme === 'ligh
   .now { border-bottom: 1px solid var(--line); padding-bottom: 24px; margin-bottom: 26px; }
   .now h2 { margin: 0 0 18px; }
   .now h2 { overflow-wrap: anywhere; }
+  .now h2 a { color: inherit; text-decoration: none; }
+  .now h2 a:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .now h2 a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
   #stop { grid-column: 3; justify-self: end; border-color: transparent; color: var(--muted); display: inline-flex; gap: 7px; width: auto; padding: 10px 12px; white-space: nowrap; font-size: 12px; }
   #stop svg { width: 16px; height: 16px; }
   .playback-bar { container-type: inline-size; padding: 14px 18px 18px; background: var(--surface); border-radius: 16px; }
@@ -146,6 +149,8 @@ try { const theme = localStorage.getItem('tvcast.theme.v1'); if (theme === 'ligh
   #subctl { flex-wrap: nowrap; }
   #subctl .themed-select { flex: 1; }
   #subctl .remote-icon { min-height: 44px; padding: 0; }
+  #subnote { margin-top: 12px; }
+  #subnote:empty { display: none; }
   .actions { display: flex; gap: 6px; flex: none; }
   .actions button { min-width: 58px; }
   .empty { color: var(--muted); padding: 30px 0; }
@@ -312,6 +317,8 @@ SOFTWARE.
     </div>
     <div class="discovery-tools">
       <div class="themed-select genre-picker"><button type="button" id="genre" aria-label="Genre">All genres</button><ul id="genreOptions" hidden></ul></div>
+      <div class="themed-select language-picker"><button type="button" id="language" aria-label="Language">All languages</button><ul id="languageOptions" hidden></ul></div>
+      <div class="themed-select collection-picker"><button type="button" id="collection" aria-label="Film collection">All collections</button><ul id="collectionOptions" hidden></ul></div>
       <div id="personPicker"><input type="text" id="person" aria-label="Filter by actor or director" placeholder="Actor or director"><button type="button" id="clearPerson" class="person-clear" data-tooltip="Clear person filter" aria-label="Clear person filter" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><use href="/icons.svg#x"></use></svg></button><ul id="peopleOptions" hidden></ul></div>
       <div class="themed-select watched-picker"><button type="button" id="filter" aria-label="Watched status">All movies</button><ul id="watchedOptions" hidden></ul></div>
       <label class="collections-toggle"><input type="checkbox" id="showCollections" checked>Show subfolders as collections</label>
@@ -521,7 +528,14 @@ function renderStatus() {
   setControlIcon('mute', muted === true ? 'volume-x' : 'volume-2', muted == null ? 'Sound unavailable' : muted ? 'Unmute TV' : 'Mute TV');
   $('mute').setAttribute('aria-pressed', String(muted === true));
   $('stop').hidden = $('now').hidden = !st.now && !opening;
-  $('title').textContent = opening ? 'Opening ' + (st.library.find(m => m.id === opening)?.title || 'movie') + '…' : st.now?.title || '';
+  const title = $('title'), entry = st.library.find(m => m.id === (opening || st.now?.id));
+  const titleText = opening ? 'Opening ' + (entry?.title || 'movie') + '…' : st.now?.title || '';
+  if (entry) {
+    let link = title.querySelector('a');
+    if (!link) { link = document.createElement('a'); title.replaceChildren(link); }
+    link.href = '#/movie/' + encodeURIComponent(entry.id);
+    link.textContent = titleText;
+  } else title.textContent = titleText;
   for (const el of [$('seek'), $('toggle'), $('stop'), ...document.querySelectorAll('[data-skip]')]) el.disabled = !ours || !!opening;
   $('seek').disabled ||= !tv?.duration;
   if ($('seek').disabled) $('seekPreview').hidden = true;
@@ -589,7 +603,7 @@ function renderSubtitleMode() {
     : (tv.subtitle_mode === 'auto' ? 'Subtitle files go to the TV, which draws them.' : '');
 }
 function showTimes(pos, dur) {
-  $('pos').textContent = clock(pos);
+  $('pos').textContent = `${clock(pos)} / ${clock(dur || null)}`;
   $('left').textContent = dur && pos != null ? `−${clock(dur - pos)}` : '—';
   $('left').setAttribute('aria-label', dur && pos != null ? `${clock(dur - pos)} remaining` : 'Remaining time unavailable');
   $('seek').setAttribute('aria-valuetext', `${clock(pos)} of ${clock(dur)}`);

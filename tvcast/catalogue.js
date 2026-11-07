@@ -9,12 +9,14 @@ function movieAttention(movie) {
   if (movie.tmdb_id && !movie.poster) reasons.push('Poster missing');
   return reasons;
 }
-function selectMovies(movies, {query = '', sort = 'title', descending = defaultSortDescending(sort), genre = '', person = '', watched = 'all', attention = false} = {}) {
+function selectMovies(movies, {query = '', sort = 'title', descending = defaultSortDescending(sort), genre = '', person = '', language = '', collection = '', watched = 'all', attention = false} = {}) {
   const normalize = value => String(value || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase();
   query = normalize(query).trim();
   return movies.filter(m => (!query || normalize([m.title, m.file_title, m.original_title, m.year].join(' ')).includes(query))
     && (!genre || (m.genres || []).includes(genre))
     && (!person || [...(m.directors || []), ...(m.cast || [])].some(name => normalize(name).includes(normalize(person).trim())))
+    && (!language || (m.languages || []).some(item => item.code === language))
+    && (!collection || (collection === 'none' ? !m.collection : String(m.collection?.id) === String(collection)))
     && (!attention || movieAttention(m).length)
     && (watched === 'all' || m.watched === (watched === 'watched'))).sort((a, b) => {
       const x = a[sort], y = b[sort];
@@ -23,10 +25,10 @@ function selectMovies(movies, {query = '', sort = 'title', descending = defaultS
       return order * (descending ? -1 : 1) || a.title.localeCompare(b.title) || a.id.localeCompare(b.id);
     });
 }
-function browseCollection(movies, folders, {folder = '', recursive = false, query = '', attention = false} = {}) {
+function browseCollection(movies, folders, {folder = '', recursive = false, query = '', attention = false, collection = ''} = {}) {
   const inside = (path, parent) => path === parent || path.startsWith(parent.replace(/\/$/, '') + '/');
   const scoped = movies.filter(m => !folder || inside(m.collection_path, folder));
-  if (recursive || query.trim() || attention) return {movies:scoped, folders:[]};
+  if (recursive || query.trim() || attention || collection) return {movies:scoped, folders:[]};
   const children = folders.filter(f => folder ? f.parent === folder : f.parent === f.root)
     .map(f => ({...f, movies:scoped.filter(m => inside(m.collection_path, f.id))}))
     .filter(f => f.movies.length).sort((a, b) => a.name.localeCompare(b.name));
@@ -43,6 +45,8 @@ function movieLinks(movie) {
     {site:'imdb', label:imdb ? 'IMDb' : 'Search IMDb', href:imdb ? `https://www.imdb.com/title/${imdb}/` : `https://www.imdb.com/find/?q=${query}`},
     {site:'letterboxd', label:tmdb || imdb ? 'Letterboxd' : 'Search Letterboxd', href:tmdb ? `https://letterboxd.com/tmdb/${tmdb}/` : imdb ? `https://letterboxd.com/imdb/${imdb}/` : `https://letterboxd.com/search/films/${query}/`},
     {site:'tmdb', label:tmdb ? 'TMDB' : 'Search TMDB', href:tmdb ? `https://www.themoviedb.org/movie/${tmdb}` : `https://www.themoviedb.org/search/movie?query=${query}`},
+    ...(typeof movie.wikipedia_url === 'string' && /^https:\/\/en\.wikipedia\.org\/wiki\/[^\s?#]+$/.test(movie.wikipedia_url)
+      ? [{site:'wikipedia', label:'Wikipedia', href:movie.wikipedia_url}] : []),
   ];
 }
 if (typeof module !== 'undefined') module.exports = {selectMovies, defaultSortDescending, browseCollection, playHistory, movieLinks, movieAttention};

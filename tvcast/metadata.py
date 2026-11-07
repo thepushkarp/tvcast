@@ -16,6 +16,7 @@ MATCH_VERSION = 2  # Increment when matching rules change so cached negative res
 MATCH_RETRY_SECONDS = 24 * 60 * 60
 ERROR_RETRY_SECONDS = 5 * 60
 MAX_SEARCH_PAGES = 25
+CACHE_FIELDS = {"imdb_id", "wikidata_id", "wikipedia_url", "languages", "collection", "characters"}
 EDITION_SUFFIX = re.compile(
     r"[\s\[(\-:]+(?:(?:extended|unrated|uncut|remastered)(?:\s+(?:edition|cut|version))?"
     r"|director['’]?s\s+cut|theatrical\s+cut)(?:\s*(?:and|&|\+)\s*(?:unrated|uncut))?[\s\])]*$", re.I)
@@ -239,7 +240,7 @@ class Metadata:
                 if now < self.pause_until:
                     return
                 self.paused = False
-            incomplete_cache = bool(data and "imdb_id" not in data)
+            incomplete_cache = bool(data and not CACHE_FIELDS.issubset(data))
             if not refresh:
                 status = match.get("status")
                 if data and status != "error" and not incomplete_cache:
@@ -249,7 +250,7 @@ class Metadata:
                 if status in ("unmatched", "error") and match.get("matcher_version") == MATCH_VERSION \
                         and now < retry_at:
                     return
-                refresh = incomplete_cache or status == "error"
+                refresh = status == "error"
             self.pending.add(movie.path)
             self.jobs.put((movie, dict(match), refresh))
 
@@ -275,12 +276,36 @@ class Metadata:
         with self.lock:
             lock = self.fetch_locks.setdefault(tmdb_id, threading.Lock())
         with lock:
-            if not refresh and tmdb_id in self.cache:
+            if not refresh and CACHE_FIELDS.issubset(self.cache.get(tmdb_id, {})):
                 return self.cache[tmdb_id]
             return self._fetch(tmdb_id)
 
+    @staticmethod
+    def wikipedia(wikidata_id):
+        params = {"action": "wbgetentities", "ids": wikidata_id, "props": "sitelinks/urls",
+                  "sitefilter": "enwiki", "format": "json"}
+        req = urllib.request.Request("https://www.wikidata.org/w/api.php?" + urllib.parse.urlencode(params),
+            headers={"Accept": "application/json",
+                     "User-Agent": "TV-Cast (https://github.com/thepushkarp/tvcast)"})
+        try:
+            with urllib.request.urlopen(req, timeout=10) as response:
+                data = response.read(1024 * 1024 + 1)
+            if len(data) > 1024 * 1024:
+                raise ValueError("Oversized Wikidata response")
+            entity = json.loads(data)["entities"][wikidata_id]
+            link = entity.get("sitelinks", {}).get("enwiki")
+            if link is None:
+                return None
+            url = link["url"]
+            if not isinstance(url, str) or not re.fullmatch(r"https://en\.wikipedia\.org/wiki/[^\s?#]+", url):
+                raise ValueError("Invalid English Wikipedia article URL")
+            return url
+        except (OSError, ValueError, KeyError, TypeError, AttributeError) as e:
+            raise RuntimeError("Cannot fetch the Wikipedia link for %s; check your connection or try Refresh metadata. Retrying in five minutes."
+                               % wikidata_id) from e
+
     def _fetch(self, tmdb_id):
-        data = self.request("movie/%d" % tmdb_id, {"append_to_response": "credits", "language": "en-US"})
+        data = self.request("movie/%d" % tmdb_id, {"append_to_response": "credits,external_ids", "language": "en-US"})
         if data.get("id") != tmdb_id or not isinstance(data.get("title"), str):
             raise RuntimeError("TMDB returned invalid movie details; try Refresh metadata")
         credits = data.get("credits") or {}
@@ -289,14 +314,45 @@ class Metadata:
         imdb_id = data.get("imdb_id")
         if not isinstance(imdb_id, str) or not re.fullmatch(r"tt\d+", imdb_id):
             imdb_id = None
-        result = {"tmdb_id": tmdb_id, "imdb_id": imdb_id, "title": data["title"], "year": self.year(data),
+        external_ids = data.get("external_ids") or {}
+        if not isinstance(external_ids, dict):
+            raise RuntimeError("TMDB returned invalid external IDs; try Refresh metadata")
+        wikidata_id = external_ids.get("wikidata_id")
+        if not isinstance(wikidata_id, str) or not re.fullmatch(r"Q[1-9]\d*", wikidata_id):
+            wikidata_id = None
+        languages = {}
+        for language in data.get("spoken_languages") or []:
+            if isinstance(language, dict) and isinstance(language.get("iso_639_1"), str) \
+                    and re.fullmatch(r"[a-z]{2}", language["iso_639_1"]):
+                code = language["iso_639_1"]
+                name = language.get("english_name") or language.get("name")
+                languages[code] = {"code": code, "name": name if isinstance(name, str) and name else code.upper()}
+        original_language = data.get("original_language")
+        if not languages and isinstance(original_language, str) and re.fullmatch(r"[a-z]{2}", original_language):
+            languages[original_language] = {"code": original_language, "name": original_language.upper()}
+        collection = data.get("belongs_to_collection")
+        collection = {"id": collection["id"], "name": collection["name"]} \
+            if isinstance(collection, dict) and type(collection.get("id")) is int and collection["id"] > 0 \
+            and isinstance(collection.get("name"), str) and collection["name"].strip() else None
+        cast = [p for p in (credits.get("cast") or [])[:8] if isinstance(p, dict) and isinstance(p.get("name"), str)]
+        result = {"tmdb_id": tmdb_id, "imdb_id": imdb_id, "wikidata_id": wikidata_id,
+                  "title": data["title"], "year": self.year(data),
                   "original_title": data.get("original_title") or "", "overview": data.get("overview") or "",
+                  "languages": list(languages.values()), "collection": collection,
+                  "characters": {p["name"]: p["character"] for p in cast if isinstance(p.get("character"), str) and p["character"]},
                   "genres": [g["name"] for g in (data.get("genres") or []) if isinstance(g, dict) and isinstance(g.get("name"), str)],
                   "directors": [p["name"] for p in (credits.get("crew") or []) if isinstance(p, dict) and p.get("job") == "Director" and isinstance(p.get("name"), str)],
-                  "cast": [p["name"] for p in (credits.get("cast") or [])[:8] if isinstance(p, dict) and isinstance(p.get("name"), str)]}
-        # Persist useful text even when downloading artwork fails. The worker exposes that error
-        # and a manual refresh retries it without losing the cached movie information.
+                  "cast": [p["name"] for p in cast]}
+        # An absent Wikipedia URL means the lookup still needs to run; null means no article.
+        # Retain a verified link during outages only while the film's Wikidata ID is unchanged.
         with self.lock:
+            previous = self.cache.get(tmdb_id, {})
+            if not wikidata_id:
+                result["wikipedia_url"] = None
+            elif previous.get("wikidata_id") == wikidata_id and "wikipedia_url" in previous:
+                result["wikipedia_url"] = previous["wikipedia_url"]
+            # Text remains available when artwork or Wikipedia fails. The worker records the
+            # error and retries enrichment without blocking catalogue reads.
             atomic_json(os.path.join(self.directory, "%d.json" % tmdb_id), result)
             self.cache[tmdb_id] = result
         self.ratings.enqueue(imdb_id)
@@ -319,6 +375,12 @@ class Metadata:
             path = self.poster(tmdb_id)
             if path:
                 os.unlink(path)
+        if wikidata_id:
+            url = self.wikipedia(wikidata_id)
+            with self.lock:
+                result = dict(result, wikipedia_url=url)
+                atomic_json(os.path.join(self.directory, "%d.json" % tmdb_id), result)
+                self.cache[tmdb_id] = result
         return result
 
     def enrich(self, movie, expected, refresh):
@@ -342,7 +404,7 @@ class Metadata:
                     return
                 self.state.update_movie(movie.path, match=match)
                 expected = match
-            if tmdb_id and (refresh or tmdb_id not in self.cache):
+            if tmdb_id and (refresh or not CACHE_FIELDS.issubset(self.cache.get(tmdb_id, {}))):
                 self.fetch(tmdb_id, refresh=refresh)
         except ProviderUnavailable as e:
             self._record_failure(movie, expected, str(e), max(self.retry_at, time.time() + 60))

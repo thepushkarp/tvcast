@@ -43,6 +43,8 @@ a { color: var(--accent); }
 .view-toggle button[aria-pressed=true] { background: var(--control); color: var(--text); }
 .discovery-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 16px; }
 .discovery-tools > .genre-picker { flex: 0 0 160px; }
+.discovery-tools > .language-picker { flex: 0 0 160px; }
+.discovery-tools > .collection-picker { flex: 0 1 240px; min-width: 160px; }
 .discovery-tools > .watched-picker { flex: 0 0 145px; }
 #libraryNote:not(:empty) { margin-bottom: 18px; }
 .movie-list { list-style: none; padding: 0; margin: 0; }
@@ -93,10 +95,14 @@ a { color: var(--accent); }
 .movie-detail { display: grid; grid-template-columns: minmax(160px, 260px) minmax(0, 1fr); gap: 42px; align-items: start; }
 .movie-detail h2 { font-size: 32px; line-height: 1.2; letter-spacing: -.7px; font-weight: 600; }
 .movie-detail .movie-meta { margin: 14px 0 22px; font-size: 14px; }
+.movie-languages { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: baseline; }
+.movie-languages .metadata-link { font: inherit; min-height: 24px; padding: 0; }
 .movie-detail .synopsis { max-width: 65ch; line-height: 1.75; margin: 24px 0; }
 .movie-detail dl { display: grid; grid-template-columns: 85px minmax(0, 1fr); align-items: first baseline; gap: 12px 18px; font-size: 13px; line-height: 1.6; }
 .movie-detail dt { color: var(--muted); }
 .movie-detail dd { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.cast-credit { flex-basis: 100%; }
+.cast-character { color: var(--muted); }
 .metadata-link { border: 0; padding: 4px 0; min-height: 32px; font-size: 13px; font-weight: 400; color: var(--accent); text-align: left; }
 .metadata-link:hover { text-decoration: underline; background: none !important; }
 .metadata-link[data-browse-genre] { color: var(--text); background: var(--control); padding-inline: 10px; border-radius: 6px; }
@@ -126,6 +132,7 @@ dialog .row button { border: 0; font-size: 22px; }
 dialog form label { display: block; font-size: 13px; margin: 16px 0 6px; }
 input[type=password], input[type=number] { box-sizing: border-box; width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--text); font: inherit; }
 #metadataSetup .controls { display: flex; }
+#metadataSetup + .note { margin-top: 12px; }
 #metadataStatus { margin-top: 16px; }
 .attribution { margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 11px; color: var(--muted); line-height: 1.6; }
 .attribution img { margin-bottom: 8px; }

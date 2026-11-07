@@ -6,6 +6,7 @@ import threading
 import tempfile
 import unittest
 import urllib.error
+import urllib.parse
 from types import SimpleNamespace
 from unittest import mock
 from concurrent.futures import ThreadPoolExecutor
@@ -55,8 +56,115 @@ class MetadataTest(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 self.metadata.run()
         self.assertIsNone(self.metadata.info(self.movie)[1]['imdb_id'])
+        self.assertIsNone(self.metadata.info(self.movie)[1]['wikipedia_url'])
         self.metadata.enqueue(self.movie)
         self.assertTrue(self.metadata.jobs.empty())
+
+    def test_languages_collection_and_characters_are_cached_without_changing_name_filters(self):
+        details = dict(self.details, spoken_languages=[None, {'iso_639_1': 'en', 'english_name': 'English'},
+            {'iso_639_1': 'hi', 'name': 'हिन्दी'}, {'iso_639_1': 'en', 'english_name': 'English'}, {'iso_639_1': 'bad'}],
+            belongs_to_collection={'id': 42, 'name': 'Example Collection'},
+            credits={'cast': [{'name': 'Actor', 'character': 'The Hero'}, {'name': 'Another', 'character': None}]})
+        with mock.patch.object(self.metadata, 'request', return_value=details):
+            data = self.metadata.fetch(1)
+        self.assertEqual(data['languages'], [{'code': 'en', 'name': 'English'}, {'code': 'hi', 'name': 'हिन्दी'}])
+        self.assertEqual(data['collection'], {'id': 42, 'name': 'Example Collection'})
+        self.assertEqual(data['cast'], ['Actor', 'Another'])
+        self.assertEqual(data['characters'], {'Actor': 'The Hero'})
+        reloaded = Metadata(State(self.state.path))
+        self.assertEqual(reloaded.cache[1], data)
+        with mock.patch.object(self.metadata, 'request', return_value=dict(self.details, original_language='en',
+                spoken_languages=None, belongs_to_collection={'id': -1, 'name': 'Invalid'})):
+            data = self.metadata.fetch(1)
+        self.assertEqual(data['languages'], [{'code': 'en', 'name': 'EN'}])
+        self.assertIsNone(data['collection'])
+        self.assertEqual(data['characters'], {})
+
+    def test_wikipedia_uses_english_sitelink_and_persists_offline(self):
+        url = 'https://en.wikipedia.org/wiki/Example_(film)'
+        details = dict(self.details, external_ids={'wikidata_id': 'Q123'})
+        response = {'entities': {'Q123': {'sitelinks': {'enwiki': {'url': url}}}}}
+        self.state.update_movie(self.movie.path, match={'tmdb_id': 1, 'source': 'manual', 'status': 'matched'})
+        with mock.patch.object(self.metadata, 'request', return_value=details) as tmdb, \
+             mock.patch('urllib.request.urlopen', return_value=io.BytesIO(json.dumps(response).encode())) as wikidata:
+            self.metadata.enrich(self.movie, self.state.movie(self.movie.path)['match'], False)
+        tmdb.assert_called_once_with('movie/1', {'append_to_response': 'credits,external_ids', 'language': 'en-US'})
+        request = wikidata.call_args.args[0]
+        self.assertEqual(urllib.parse.parse_qs(urllib.parse.urlsplit(request.full_url).query), {
+            'action': ['wbgetentities'], 'ids': ['Q123'], 'props': ['sitelinks/urls'],
+            'sitefilter': ['enwiki'], 'format': ['json']})
+        self.assertIsNone(request.get_header('Authorization'))
+        self.assertIn('TV-Cast', request.get_header('User-agent'))
+        self.assertEqual(wikidata.call_args.kwargs['timeout'], 10)
+        reloaded = Metadata(State(self.state.path))
+        with mock.patch('urllib.request.urlopen', side_effect=AssertionError('offline')):
+            data = reloaded.info(self.movie)[1]
+            self.assertEqual((data['wikidata_id'], data['wikipedia_url']), ('Q123', url))
+            reloaded.enqueue(self.movie)
+            self.assertTrue(reloaded.jobs.empty())
+
+    def test_missing_wikipedia_article_and_invalid_ids_are_cached_without_repeated_lookups(self):
+        self.state.update_movie(self.movie.path, match={'tmdb_id': 1, 'source': 'manual', 'status': 'matched'})
+        for qid in (None, 'Q0', 'Q123/../../bad', 'Q123'):
+            with self.subTest(qid=qid), \
+                 mock.patch.object(self.metadata, 'request', return_value=dict(self.details, external_ids={'wikidata_id': qid})), \
+                 mock.patch('urllib.request.urlopen', return_value=io.BytesIO(b'{"entities":{"Q123":{"sitelinks":{}}}}')) as request:
+                data = self.metadata.fetch(1)
+                self.assertIsNone(data['wikipedia_url'])
+                self.assertEqual(request.call_count, int(qid == 'Q123'))
+                self.metadata.enqueue(self.movie)
+                self.assertTrue(self.metadata.jobs.empty())
+
+    def test_wikipedia_rejects_unsafe_links_and_malformed_or_oversized_replies(self):
+        replies = [b'{broken', b'{}', b'x' * (1024 * 1024 + 1)]
+        for url in ('http://en.wikipedia.org/wiki/Film', 'https://en.wikipedia.org.evil/wiki/Film',
+                    'https://en.wikipedia.org@evil.test/wiki/Film', 'javascript:alert(1)',
+                    'https://en.wikipedia.org/wiki/', 'https://en.wikipedia.org/wiki/Film\n'):
+            replies.append(json.dumps({'entities': {'Q123': {'sitelinks': {'enwiki': {'url': url}}}}}).encode())
+        for reply in replies:
+            with self.subTest(reply=reply[:100]), \
+                 mock.patch('urllib.request.urlopen', return_value=io.BytesIO(reply)), \
+                 self.assertRaisesRegex(RuntimeError, 'Wikipedia link for Q123.*Refresh metadata'):
+                self.metadata.wikipedia('Q123')
+
+    def test_wikipedia_outage_keeps_text_posters_and_links_for_the_same_identity_and_retries(self):
+        now = 1_000_000
+        old_url = 'https://en.wikipedia.org/wiki/Example_(film)'
+        for qid in ('Q123', 'Q456'):
+            with self.subTest(qid=qid):
+                expected = {'tmdb_id': 1, 'source': 'manual', 'status': 'matched'}
+                self.state.update_movie(self.movie.path, match=expected)
+                self.metadata.cache[1] = dict(self.details, wikidata_id='Q123', wikipedia_url=old_url)
+                details = dict(self.details, poster_path='/poster.jpg', external_ids={'wikidata_id': qid})
+                def provider(request, **kwargs):
+                    if isinstance(request, str) and request.startswith('https://image.tmdb.org/'):
+                        return io.BytesIO(b'\xff\xd8\xffposter')
+                    raise OSError('offline')
+                with mock.patch.object(metadatamod.time, 'time', return_value=now), \
+                     mock.patch.object(self.metadata, 'request', return_value=details), \
+                     mock.patch('urllib.request.urlopen', side_effect=provider):
+                    with self.assertRaisesRegex(RuntimeError, 'Wikipedia link for ' + qid):
+                        self.metadata.enrich(self.movie, expected, True)
+                failed, cached = Metadata(State(self.state.path)).info(self.movie)
+                self.assertEqual((failed['status'], cached['title']), ('error', 'Example'))
+                self.assertTrue(os.path.isfile(self.metadata.poster(1)))
+                self.assertEqual(cached.get('wikipedia_url'), old_url if qid == 'Q123' else None)
+                self.assertEqual('wikipedia_url' in cached, qid == 'Q123')
+                with mock.patch.object(metadatamod.time, 'time', return_value=now + 299):
+                    self.metadata.enqueue(self.movie)
+                    self.assertTrue(self.metadata.jobs.empty())
+                with mock.patch.object(metadatamod.time, 'time', return_value=now + 301):
+                    self.metadata.enqueue(self.movie)
+                    job = self.metadata.jobs.get_nowait()
+                    response = {'entities': {qid: {'sitelinks': {}}}}
+                    with mock.patch.object(self.metadata.jobs, 'get', side_effect=[job, SystemExit]), \
+                         mock.patch.object(self.metadata, 'request', return_value=dict(details, poster_path=None)), \
+                         mock.patch('urllib.request.urlopen', return_value=io.BytesIO(json.dumps(response).encode())):
+                        with self.assertRaises(SystemExit):
+                            self.metadata.run()
+                recovered, cached = self.metadata.info(self.movie)
+                self.assertEqual(recovered['status'], 'matched')
+                self.assertIsNone(cached['wikipedia_url'])
 
     def test_ambiguous_wrong_year_and_missing_year_stay_unmatched(self):
         for results, more, year in [([self.candidate, dict(self.candidate, id=2)], False, 2001),
@@ -209,13 +317,18 @@ class MetadataTest(unittest.TestCase):
 
     def test_concurrent_editions_share_a_single_fetch(self):
         gate = threading.Barrier(3)
+        self.metadata.cache[1] = {'tmdb_id': 1, 'imdb_id': 'tt1234567', 'title': 'Older cache'}
         def get():
             gate.wait(timeout=3)
             return self.metadata.fetch(1, refresh=False)
-        with mock.patch.object(self.metadata, 'request', return_value=self.details) as request:
+        details = dict(self.details, external_ids={'wikidata_id': 'Q123'})
+        response = b'{"entities":{"Q123":{"sitelinks":{"enwiki":{"url":"https://en.wikipedia.org/wiki/Example"}}}}}'
+        with mock.patch.object(self.metadata, 'request', return_value=details) as request, \
+             mock.patch('urllib.request.urlopen', return_value=io.BytesIO(response)) as wikidata:
             with ThreadPoolExecutor(max_workers=3) as pool:
                 results = list(pool.map(lambda _: get(), range(3)))
             self.assertEqual(request.call_count, 1)
+            self.assertEqual(wikidata.call_count, 1)
             self.assertEqual(results[0], results[2])
 
     def test_provider_outage_keeps_match_retryable_and_cached_correction_is_ready(self):
@@ -339,7 +452,8 @@ class MetadataTest(unittest.TestCase):
                         self.metadata.jobs.get_nowait()
                         self.metadata.jobs.task_done()
                         self.metadata.pending.clear()
-            self.metadata.cache[1] = {'tmdb_id': 1, 'imdb_id': None, 'title': 'Example'}
+            self.metadata.cache[1] = {'tmdb_id': 1, 'imdb_id': None, 'wikidata_id': None, 'wikipedia_url': None,
+                                      'languages': [], 'collection': None, 'characters': {}, 'title': 'Example'}
             self.state.update_movie(self.movie.path, match={'tmdb_id': 1, 'source': 'manual', 'status': 'matched'})
             self.metadata.enqueue(self.movie)
             self.assertTrue(self.metadata.jobs.empty())

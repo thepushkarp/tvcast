@@ -15,18 +15,20 @@ are remembered in this browser. The theme button cycles through **Auto**, **Ligh
 Auto follows the Mac's appearance setting, and the chosen mode is remembered.
 Icon labels appear on hover or keyboard focus; Escape dismisses the label.
 
-The genre menu and searchable actor/director picker filter the movies at the current location.
-Sort, genre and watched menus follow the chosen appearance. Clear a person filter with the single
+The genre, language and film-collection menus and searchable actor/director picker filter movies
+at the current location. **No collection** finds entries without a TMDB film collection, including
+unmatched files. Language matches any listed film language. Sort and filter menus follow the
+chosen appearance. Clear a person filter with the single
 clear button inside its field. Watched status and **Show subfolders as collections** sit beside the
 actor/director picker; all controls stay visible as the toolbar wraps in narrow windows. Each
-single-select menu shows its current selection without a separate filter chip. Choose All genres
-or All movies to clear that selection, or use **Clear filters** to reset all filters.
+single-select menu shows its current selection without a separate filter chip. Choose its All
+option to clear that selection, or use **Clear filters** to reset all filters.
 **Needs attention**
 groups unmatched or ambiguous films, metadata errors and matched films without posters. Its count
 covers the current location and its subfolders; deliberate **Leave unmatched** choices are excluded.
 The control stays hidden when no issues remain unless the filter is active. In narrow windows,
 collection cards form a compact horizontal strip so movie artwork remains near the top.
-On a movie's detail page, selecting a genre, director or cast member opens a fresh Library browse
+On a movie's detail page, selecting a genre, language code, director, cast member or film collection opens a fresh Library browse
 for that selection, without retaining a title search that could hide related films. Returning
 from details or TV controls otherwise restores the search, filters and scroll position.
 
@@ -52,8 +54,10 @@ not update TV Cast’s watched status or TV resume point, and does not interrupt
 The cast icon switches to **TV** and starts the movie. With no selected TV, choose one or use
 **Find TVs**; the requested movie stays pending until selection or cancellation. Failed casts
 show **Retry**. The TV tab contains the playback controls and queue, not another catalogue.
+The playing title opens its Library detail page. The seek bar shows elapsed / total time on the
+left and remaining time on the right.
 
-The watched/unwatched toggle sits beside **Play on TV** on the detail page. Covers show a green
+The watched/unwatched toggle sits on the poster on the detail page. Covers show a green
 check corner for watched films and a blue circle corner for unwatched films, with hover labels.
 In Library and on movie pages, the corner is a keyboard-accessible button that toggles watched status.
 **Undo** appears
@@ -61,11 +65,15 @@ for eight seconds after a change and remains available while it has keyboard foc
 (Ctrl+Z) outside a text field to undo the change. Toggling or
 undoing watched status preserves the TV resume point.
 Open a movie’s detail page to reveal its file in Finder, correct its
-metadata match, or add it to the TV queue. IMDb and Letterboxd icons open in new tabs and
+metadata match, or add it to the TV queue. IMDb, Letterboxd and TMDB icons open in new tabs and
 show their names on hover. Known identifiers link to the film directly; missing identifiers use
-a labelled title/year search. Finishing a later TV playback can mark it watched again.
+a labelled title/year search. A Wikipedia icon appears when the matched film has a verified
+English article. Finishing a later TV playback can mark it watched again.
 Separate editions are separate entries; renaming or moving a
 file gives it a new identity and does not migrate its personal state or manual match.
+Film collections from TMDB are independent of folders: their detail-page links show only the
+matching movies already in your library, across folders. The breadcrumb names the collection;
+use **Library** in the breadcrumb or **Clear filters** to leave it.
 
 **Runtime** is measured from the file with `ffprobe` (`brew install ffmpeg`). Missing file durations stay
 unknown rather than borrowing the database or TV playback duration.
@@ -91,22 +99,31 @@ information and posters without replacing manual matches or explicit Leave unmat
 Leave unmatched choice through Correct match first.
 
 Downloads use three background workers and share cached results for editions of the same film.
-Provider outages and rate limits pause fetching and retry automatically after a delay. Other
+TMDB outages and rate limits pause fetching and retry automatically after a delay. Other
 fetch failures retry after five minutes; unmatched titles are checked again daily and when the
 matching rules change. Cached information stays available throughout. **Refresh metadata** retries
 immediately, subject to provider rate limits. Replace an invalid token in Settings. Successfully
 cached TMDB information has no automatic expiry.
 
-Genres, synopsis, director and leading cast come from TMDB. Ratings and vote counts come from
+Genres, synopsis, film languages, collections, director and leading cast with character names
+come from TMDB. Film language codes appear beneath the year, runtime and rating on the detail
+page; hover or focus a code for its name, or select it to filter the library. These describe the film, not the audio tracks in your
+local file. Actor names still open an actor filter. Ratings and vote counts come from
 [IMDb's non-commercial datasets](https://data.imdb.com/non-commercial-datasets/), for personal and
 non-commercial use under IMDb's terms. No additional API key is needed: movie matches supply the
 IMDb IDs. A separate background worker downloads the compressed ratings dataset when needed,
 at most once per day after a successful download, and caches scores for matched films. New
 matches reuse the local dataset. Browsing reads only cached ratings; download failures preserve
 existing scores, appear in the Library, and retry after five minutes. Missing IMDb ratings stay
-blank and sort last, with no TMDB fallback. Vote counts appear in the detail view. Runtime is
+blank and sort last, with no TMDB fallback. Vote counts appear beside the rating in the detail heading. Runtime is
 measured from the local file. Without a token, files remain searchable and playable
 using their filename titles and locally measured runtime.
+
+Wikipedia links use TMDB's Wikidata ID and Wikidata's English Wikipedia sitelink, without title
+searches or another API key. Only that ID is sent to Wikidata, without the TMDB token. Background
+lookups cache both article links and missing articles; older caches are filled automatically.
+Failed lookups keep cached information and verified links available, report an error, and retry
+after five minutes. **Refresh metadata** checks the link again.
 
 **Skipped Movies/TV — macOS restricted access** means that subfolder could not be read.
 Other folders are still scanned. Keep ordinary video files in a separate readable folder.
@@ -216,8 +233,8 @@ In the panel, **Make copy** and **Delete copy** sit under the subtitles while a 
 
 ## Resume and queue
 
-- A movie resumes a few seconds before where you stopped. Use **Start over on TV** on the detail
-  page or `tv open … --from-start` to begin again.
+- **Play on TV** resumes a few seconds before where you stopped. Use **Start over** in the TV tab
+  or `tv open … --from-start` to begin again.
 - While nothing is casting, the TV tab shows the last played movie with **Resume** and
   **Start over**. **History** under the queue lists the other recently played movies, one row each.
 - Use the cross beside a history entry to remove it, or **Clear history** to clear all entries.
