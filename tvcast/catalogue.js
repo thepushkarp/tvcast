@@ -42,6 +42,7 @@ function movieLinks(movie) {
   return [
     {site:'imdb', label:imdb ? 'IMDb' : 'Search IMDb', href:imdb ? `https://www.imdb.com/title/${imdb}/` : `https://www.imdb.com/find/?q=${query}`},
     {site:'letterboxd', label:tmdb || imdb ? 'Letterboxd' : 'Search Letterboxd', href:tmdb ? `https://letterboxd.com/tmdb/${tmdb}/` : imdb ? `https://letterboxd.com/imdb/${imdb}/` : `https://letterboxd.com/search/films/${query}/`},
+    {site:'tmdb', label:tmdb ? 'TMDB' : 'Search TMDB', href:tmdb ? `https://www.themoviedb.org/movie/${tmdb}` : `https://www.themoviedb.org/search/movie?query=${query}`},
   ];
 }
 if (typeof module !== 'undefined') module.exports = {selectMovies, defaultSortDescending, browseCollection, playHistory, movieLinks, movieAttention};
