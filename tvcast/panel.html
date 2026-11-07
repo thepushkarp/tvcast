@@ -405,9 +405,10 @@ SOFTWARE.
   <dialog id="librarySettings" aria-labelledby="settingsTitle">
     <div class="row"><h2 id="settingsTitle">Library settings</h2><button data-close="librarySettings" data-tooltip="Close settings" aria-label="Close settings">×</button></div>
     <div class="settings-folder-heading"><h3>Folders</h3><button id="addFolder">Add folder</button></div><div class="folders settings-folder-list" id="folders" role="region" aria-label="Added folders" tabindex="0"></div><div class="folder-notes" id="folderNotes"></div>
-    <h3>Movie information</h3><p class="note">Connect TMDB for posters, synopses, cast and ratings. Only movie titles and years are sent for matching.</p>
+    <h3>Movie information</h3><p class="note">Connect TMDB for posters, synopses and cast. Only movie titles and years are sent for matching. IMDb ratings update daily without an additional API key.</p>
     <p class="note"><a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noreferrer">Get a TMDB API Read Access Token</a></p>
     <form id="metadataSetup"><label for="tmdbToken">API Read Access Token</label><input type="password" id="tmdbToken" autocomplete="off" spellcheck="false" placeholder="Paste your token"><div class="controls"><button type="submit" id="saveToken">Save token</button><button type="button" id="cancelTokenEdit" hidden>Cancel</button><button type="button" id="removeToken">Remove token</button></div></form>
+    <p class="note">Ratings from <a href="https://data.imdb.com/non-commercial-datasets/" target="_blank" rel="noreferrer">IMDb non-commercial datasets</a>. Cached ratings stay available offline.</p>
     <p id="metadataStatus" class="note"></p><p id="settingsmsg" class="msg" role="status"></p>
     <div class="attribution"><a href="https://www.themoviedb.org" target="_blank" rel="noreferrer"><img src="/tmdb.svg" alt="TMDB" width="90" height="12"></a><p>This product uses the TMDB API but is not endorsed or certified by TMDB.</p></div>
   </dialog>
