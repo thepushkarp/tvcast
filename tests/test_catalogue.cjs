@@ -11,6 +11,7 @@ test('movie websites use exact identifiers and safely encoded searches when unma
   assert.deepEqual(direct, [
     {site:'imdb', label:'IMDb', href:'https://www.imdb.com/title/tt1234567/'},
     {site:'letterboxd', label:'Letterboxd', href:'https://letterboxd.com/tmdb/42/'},
+    {site:'tmdb', label:'TMDB', href:'https://www.themoviedb.org/movie/42'},
   ]);
   assert.equal(movieLinks({imdb_id:'tt1234567'})[1].href, 'https://letterboxd.com/imdb/tt1234567/');
   const fallback = movieLinks({title:'A & B / 名', year:2001, imdb_id:'tt1/../../bad', tmdb_id:-1});
@@ -18,6 +19,9 @@ test('movie websites use exact identifiers and safely encoded searches when unma
   assert.equal(new URL(fallback[0].href).searchParams.get('q'), 'A & B / 名 2001');
   assert.equal(fallback[1].label, 'Search Letterboxd');
   assert.equal(decodeURIComponent(new URL(fallback[1].href).pathname.slice('/search/films/'.length, -1)), 'A & B / 名 2001');
+  assert.equal(fallback[2].label, 'Search TMDB');
+  assert.equal(new URL(fallback[2].href).searchParams.get('query'), 'A & B / 名 2001');
+  assert.equal(movieLinks({file_title:'Example'})[2].href, 'https://www.themoviedb.org/search/movie?query=Example');
 });
 test('runtime and score sorts place unknown values last in either direction', () => {
   for (const sort of ['file_runtime_s', 'score']) {

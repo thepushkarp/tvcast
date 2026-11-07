@@ -59,6 +59,10 @@ Brand assets and usage terms: https://letterboxd.com/about/brand/
 Letterboxd supplies these assets for links to its platform and editorial content. Its trademarks
 must not imply affiliation, and commercial uses require its express consent.
 
+TMDB primary logo, © The Movie Database.
+Source: https://www.themoviedb.org/assets/v4/logos/v2/blue_square_2-d537fb228cf3ded904ef09b136fe3fec72548ebc1fea3fbbd1ad9e36364db38b.svg
+Brand assets and usage terms: https://www.themoviedb.org/about/logos-attribution
+
 These brand assets identify links to the respective platforms. They retain their supplied
 colours and geometry and are subject to the owners' brand terms, rather than the code licenses
 above. SVG element IDs are namespaced for embedding in a shared sprite.
