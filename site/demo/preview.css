@@ -30,7 +30,7 @@ footer { font-size:11px;margin-top:20px; }
   .catalogue-heading .count { display:inline;font-size:12px; }
   .catalogue-tools { margin-top:10px; }
   input { font-size:16px; }
-  .sort-control { min-width:0; }
+  .sort-control { flex: 1 1 100%; width: auto; min-width: 0; }
   .mobile-filter-toggle { display:block;margin-bottom:12px; }
   .mobile-filter-toggle[aria-expanded=false] + .discovery-tools { display:none; }
   .workspace { display:flex;flex-direction:column;gap:24px; }
