@@ -151,6 +151,16 @@ test('grouping follows the sorted order for letters, digits, symbols, and unknow
   const labels = (sort, descending, yearSpan) => groupMovies(selectMovies(titles, {sort, descending}), sort, {yearSpan}).map(group => [group.label, group.movies.map(m => m.id)]);
   assert.deepEqual(labels('title', false), [['!', ['bang']], ['#', ['hash']], ['0–9', ['ten', 'two']], ['A', ['amelie', 'another']], ['E', ['example']], ['Z', ['zoo']], ['Л', ['cyr']]]);
   assert.deepEqual(labels('title', true).map(([label]) => label), ['Л', 'Z', 'E', 'A', '0–9', '#', '!']);
+  const ligatures = [
+    {id:'aardvark', title:'Aardvark', year:2001},
+    {id:'aeon', title:'Æon', year:2001},
+    {id:'apple', title:'Apple', year:2001},
+    {id:'open', title:'Open', year:2001},
+    {id:'oeuvre', title:'Œuvre', year:2001},
+  ];
+  const ligatureGroups = (descending) => groupMovies(selectMovies(ligatures, {sort:'title', descending}), 'title').map(group => [group.label, group.movies.map(movie => movie.id)]);
+  assert.deepEqual(ligatureGroups(false), [['A', ['aardvark', 'aeon', 'apple']], ['O', ['oeuvre', 'open']]]);
+  assert.deepEqual(ligatureGroups(true), [['O', ['open', 'oeuvre']], ['A', ['apple', 'aeon', 'aardvark']]]);
   const measured = [
     {id:'short', title:'Short', file_runtime_s:29 * 60, year:1999, score:7},
     {id:'half', title:'Half', file_runtime_s:30 * 60, year:1990, score:7.49},

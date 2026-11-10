@@ -1688,13 +1688,23 @@ function spanLabel(minutes) {
   const hours = Math.floor(minutes / 60), rest = minutes % 60;
   return rest ? `${hours}h ${rest}m` : `${hours}h`;
 }
+function titleLetter(character) {
+  // Ligatures such as Æ sort among the letters they expand to, so the heading has to use that
+  // same span. Otherwise one letter is split into repeated sections.
+  const letters = 'abcdefghijklmnopqrstuvwxyz';
+  for (let i = 0; i < letters.length - 1; i++) {
+    if (character.localeCompare(letters[i]) >= 0 && character.localeCompare(letters[i + 1]) < 0) return letters[i].toLocaleUpperCase();
+  }
+  if (character.localeCompare('z', undefined, {sensitivity:'base'}) === 0) return 'Z';
+  return [...character.toLocaleUpperCase()][0] || character;
+}
 function movieGroup(movie, sort, yearSpan) {
   if (sort === 'title') {
     const character = [...normalize(movie.title).trim()][0] || '';
     if (!character) return {key:'title:', label:'…'};
     if (/\p{N}/u.test(character)) return {key:'title:0-9', label:'0–9'};
     if (/\p{L}/u.test(character)) {
-      const letter = character.toLocaleUpperCase();
+      const letter = titleLetter(character);
       return {key:'title:' + letter, label:letter};
     }
     return {key:'title:' + character, label:character};
