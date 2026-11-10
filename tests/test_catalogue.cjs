@@ -1,6 +1,6 @@
 const assert = require('node:assert/strict');
 const {test} = require('node:test');
-const {selectMovies, defaultSortDescending, browseCollection, playHistory, movieLinks, movieAttention} = require('../tvcast/catalogue.js');
+const {selectMovies, defaultSortDescending, groupMovies, browseCollection, playHistory, movieLinks, movieAttention} = require('../tvcast/catalogue.js');
 const movies = [
   {id:'a', title:'Éxample', file_title:'Original title', year:2001, file_runtime_s:7200, score:8, genres:['Drama'], watched:false},
   {id:'b', title:'Another', year:2002, file_runtime_s:5400, score:7, genres:['Comedy'], watched:true},
@@ -135,6 +135,37 @@ test('attention combines actionable metadata issues with filters and respects ex
   assert.deepEqual(attention.map(m => m.id), ['b', 'a', 'c']);
   assert.deepEqual(browseCollection(attention, [], {attention:true}).movies, attention);
   assert.deepEqual(selectMovies(entries, {attention:true, genre:'Drama', watched:'unwatched', person:'Actor', query:'original'}).map(m => m.id), ['a']);
+});
+test('grouping follows the sorted order for letters, digits, symbols, and unknown values', () => {
+  const titles = [
+    {id:'bang', title:'!Bang'},
+    {id:'hash', title:'#Hash'},
+    {id:'two', title:'2 Fast'},
+    {id:'ten', title:'10 Things'},
+    {id:'amelie', title:'Amélie'},
+    {id:'another', title:'another'},
+    {id:'example', title:'Éxample'},
+    {id:'zoo', title:'Zoo'},
+    {id:'cyr', title:'Лето'},
+  ].map(movie => ({...movie, year:2001}));
+  const labels = (sort, descending, yearSpan) => groupMovies(selectMovies(titles, {sort, descending}), sort, {yearSpan}).map(group => [group.label, group.movies.map(m => m.id)]);
+  assert.deepEqual(labels('title', false), [['!', ['bang']], ['#', ['hash']], ['0–9', ['ten', 'two']], ['A', ['amelie', 'another']], ['E', ['example']], ['Z', ['zoo']], ['Л', ['cyr']]]);
+  assert.deepEqual(labels('title', true).map(([label]) => label), ['Л', 'Z', 'E', 'A', '0–9', '#', '!']);
+  const measured = [
+    {id:'short', title:'Short', file_runtime_s:29 * 60, year:1999, score:7},
+    {id:'half', title:'Half', file_runtime_s:30 * 60, year:1990, score:7.49},
+    {id:'feature', title:'Feature', file_runtime_s:90 * 60, year:2001, score:7.5},
+    {id:'long', title:'Long', file_runtime_s:120 * 60, year:2014, score:10},
+    {id:'unknown', title:'Unknown', file_runtime_s:null, year:null, score:null},
+  ];
+  const sections = (sort, descending, yearSpan) => groupMovies(selectMovies(measured, {sort, descending}), sort, {yearSpan}).map(group => [group.label, group.movies.map(m => m.id)]);
+  assert.deepEqual(sections('file_runtime_s', false), [['0–30 min', ['short']], ['30 min–1h', ['half']], ['1h 30m–2h', ['feature']], ['2h–2h 30m', ['long']], ['Runtime unknown', ['unknown']]]);
+  assert.deepEqual(sections('file_runtime_s', true).at(-1), ['Runtime unknown', ['unknown']]);
+  assert.deepEqual(sections('year', false), [['1990', ['half']], ['1999', ['short']], ['2001', ['feature']], ['2014', ['long']], ['Year unknown', ['unknown']]]);
+  assert.deepEqual(sections('year', true, 'decade'), [['2010s', ['long']], ['2000s', ['feature']], ['1990s', ['short', 'half']], ['Year unknown', ['unknown']]]);
+  assert.deepEqual(sections('score', false), [['7.0–7.5', ['short', 'half']], ['7.5–8.0', ['feature']], ['9.5–10.0', ['long']], ['Unrated', ['unknown']]]);
+  assert.deepEqual(sections('score', true)[0][0], '9.5–10.0');
+  assert.deepEqual(sections('score', true).at(-1)[0], 'Unrated');
 });
 test('play history lists played movies newest first, without the one playing', () => {
   const played = [{id:'a', updated:10}, {id:'b', updated:30}, {id:'c', updated:20}, {id:'d', updated:null}];

@@ -1,4 +1,7 @@
 /* Catalogue ordering is independent of TV state and of the rendered view. */
+function normalize(value) {
+  return String(value || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase();
+}
 function defaultSortDescending(sort) { return sort === 'year' || sort === 'score'; }
 function movieAttention(movie) {
   const match = movie.match || {};
@@ -10,7 +13,6 @@ function movieAttention(movie) {
   return reasons;
 }
 function selectMovies(movies, {query = '', sort = 'title', descending = defaultSortDescending(sort), genre = '', person = '', language = '', collection = '', watched = 'all', attention = false} = {}) {
-  const normalize = value => String(value || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase();
   query = normalize(query).trim();
   return movies.filter(m => (!query || normalize([m.title, m.file_title, m.original_title, m.year].join(' ')).includes(query))
     && (!genre || (m.genres || []).includes(genre))
@@ -24,6 +26,51 @@ function selectMovies(movies, {query = '', sort = 'title', descending = defaultS
       const order = sort === 'title' ? normalize(x).localeCompare(normalize(y)) : x - y;
       return order * (descending ? -1 : 1) || a.title.localeCompare(b.title) || a.id.localeCompare(b.id);
     });
+}
+function spanLabel(minutes) {
+  if (!minutes) return '0';
+  if (minutes < 60) return `${minutes} min`;
+  const hours = Math.floor(minutes / 60), rest = minutes % 60;
+  return rest ? `${hours}h ${rest}m` : `${hours}h`;
+}
+function movieGroup(movie, sort, yearSpan) {
+  if (sort === 'title') {
+    const character = [...normalize(movie.title).trim()][0] || '';
+    if (!character) return {key:'title:', label:'…'};
+    if (/\p{N}/u.test(character)) return {key:'title:0-9', label:'0–9'};
+    if (/\p{L}/u.test(character)) {
+      const letter = character.toLocaleUpperCase();
+      return {key:'title:' + letter, label:letter};
+    }
+    return {key:'title:' + character, label:character};
+  }
+  if (sort === 'file_runtime_s') {
+    if (movie.file_runtime_s == null) return {key:'runtime:unknown', label:'Runtime unknown'};
+    const start = Math.floor(movie.file_runtime_s / 1800) * 30;
+    return {key:'runtime:' + start, label:start ? `${spanLabel(start)}–${spanLabel(start + 30)}` : '0–30 min'};
+  }
+  if (sort === 'year') {
+    if (!movie.year) return {key:'year:unknown', label:'Year unknown'};
+    if (yearSpan === 'decade') {
+      const start = Math.floor(movie.year / 10) * 10;
+      return {key:'decade:' + start, label:`${start}s`};
+    }
+    return {key:'year:' + movie.year, label:String(movie.year)};
+  }
+  if (movie.score == null) return {key:'score:unknown', label:'Unrated'};
+  const tenths = Math.floor(Number(movie.score) * 10 + 1e-6);
+  const start = Math.min(9.5, Math.floor(tenths / 5) * 0.5);
+  return {key:'score:' + start, label:`${start.toFixed(1)}–${(start + 0.5).toFixed(1)}`};
+}
+function groupMovies(movies, sort, {yearSpan = 'year'} = {}) {
+  const groups = [];
+  for (const movie of movies) {
+    const group = movieGroup(movie, sort, yearSpan);
+    const last = groups.at(-1);
+    if (!last || last.key !== group.key) groups.push({...group, movies:[movie]});
+    else last.movies.push(movie);
+  }
+  return groups;
 }
 function browseCollection(movies, folders, {folder = '', recursive = false, query = '', attention = false, collection = ''} = {}) {
   const inside = (path, parent) => path === parent || path.startsWith(parent.replace(/\/$/, '') + '/');
@@ -49,4 +96,4 @@ function movieLinks(movie) {
       ? [{site:'wikipedia', label:'Wikipedia', href:movie.wikipedia_url}] : []),
   ];
 }
-if (typeof module !== 'undefined') module.exports = {selectMovies, defaultSortDescending, browseCollection, playHistory, movieLinks, movieAttention};
+if (typeof module !== 'undefined') module.exports = {selectMovies, defaultSortDescending, groupMovies, browseCollection, playHistory, movieLinks, movieAttention};
