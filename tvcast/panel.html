@@ -651,7 +651,7 @@ function lastPlayedCard(m, off, onlyHistory) {
   const left = resumable(m) && m.duration > m.position ? runtime(m.duration - m.position) + ' left' : '';
   const bar = resumable(m) && m.duration ? `<progress max="${m.duration}" value="${m.position}" aria-label="Watched so far"></progress>` : '';
   const start = resumable(m) ? `<button data-cast="${esc(m.id)}" data-from-start="true"${off}>Start over</button>` : '';
-  return `<div class="row"><span class="caption">Last played ${esc(playedOn(m))}</span><div class="history-actions">${onlyHistory ? `<button class="link-button" data-history-clear${off}>Clear history</button>` : ''}${removeHistoryButton(m, off)}</div></div><h2>${esc(m.title)}${yearTag(m)}</h2>${bar}<div class="times"><span>${esc(playedSoFar(m))}</span><span>${esc(left)}</span></div><div class="controls"><button class="primary" data-cast="${esc(m.id)}"${off}>${resumable(m) ? 'Resume' : 'Play again'}</button>${start}</div>`;
+  return `<div class="row"><span class="caption">Last played ${esc(playedOn(m))}</span><div class="history-actions">${onlyHistory ? `<button class="link-button" data-history-clear${off}>Clear history</button>` : ''}${removeHistoryButton(m, off)}</div></div><h2><a href="#/movie/${esc(encodeURIComponent(m.id))}">${esc(m.title)}</a>${yearTag(m)}</h2>${bar}<div class="times"><span>${esc(playedSoFar(m))}</span><span>${esc(left)}</span></div><div class="controls"><button class="primary" data-cast="${esc(m.id)}"${off}>${resumable(m) ? 'Resume' : 'Play again'}</button>${start}</div>`;
 }
 // While nothing casts, the newest played movie takes the Now Playing slot.
 function renderHistory() {
