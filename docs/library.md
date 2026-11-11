@@ -15,9 +15,14 @@ are remembered in this browser. The theme button cycles through **Auto**, **Ligh
 Auto follows the Mac's appearance setting, and the chosen mode is remembered.
 Icon labels appear on hover or keyboard focus; Escape dismisses the label.
 
-The genre, language and film-collection menus and searchable actor/director picker filter movies
-at the current location. **No collection** finds entries without a TMDB film collection, including
-unmatched files. Language matches any listed film language. Sort and filter menus follow the
+The genre, language, age-rating and film-collection menus and searchable actor/director picker
+filter movies at the current location. **No collection** finds entries without a TMDB film
+collection, including unmatched files. Language matches any listed film language. Age ratings are
+TMDB's US certifications (G, PG, PG-13, R, NC-17), listed from least to most restrictive and shown
+beside the year and runtime on cards and detail pages. The theatrical rating is preferred over
+other releases. **No age rating** finds films that are unmatched, unrated (NR) or have no US
+certification on TMDB. Cached movie information that lacks an age-rating check refreshes in the
+background to add one. Sort and filter menus follow the
 chosen appearance. Clear a person filter with the single
 clear button inside its field. Watched status and **Show subfolders as collections** sit beside the
 actor/director picker; all controls stay visible as the toolbar wraps in narrow windows. Each

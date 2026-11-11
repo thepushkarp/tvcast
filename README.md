@@ -48,7 +48,8 @@ there. To use `tv` from any folder, symlink it into a directory on your `PATH`.
 
 The panel opens to **Library** in grid view. Browse collection folders or turn off
 **Show subfolders as collections** to see their movies together. Search, switch to list view, and sort by title,
-runtime, year or IMDb rating. Genre and actor/director filters are available above the movies;
+runtime, year or IMDb rating. Cards show the US age rating (G to NC-17) from TMDB. Genre, age rating
+and actor/director filters are available above the movies;
 select a person or genre on a movie's detail page to browse related films in your library. New
 files and due metadata retries are checked automatically every minute.
 

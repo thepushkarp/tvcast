@@ -55,6 +55,7 @@ a { color: var(--accent); }
 .discovery-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 16px; }
 .discovery-tools > .genre-picker { flex: 0 0 160px; }
 .discovery-tools > .language-picker { flex: 0 0 160px; }
+.discovery-tools > .certification-picker { flex: 0 0 150px; }
 .discovery-tools > .collection-picker { flex: 0 1 240px; min-width: 160px; }
 .discovery-tools > .watched-picker { flex: 0 0 145px; }
 #libraryNote:not(:empty) { margin-bottom: 18px; }
@@ -110,6 +111,7 @@ a { color: var(--accent); }
 .movie-detail .movie-meta { margin: 14px 0 22px; font-size: 14px; }
 .movie-languages { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: baseline; }
 .movie-languages .metadata-link { font: inherit; min-height: 24px; padding: 0; }
+.movie-meta .certification { padding: 0 4px; border: 1px solid var(--line); border-radius: 3px; font-size: 0.85em; font-weight: 600; line-height: 1.5; }
 .movie-detail .synopsis { max-width: 65ch; line-height: 1.75; margin: 24px 0; }
 .movie-detail dl { display: grid; grid-template-columns: 85px minmax(0, 1fr); align-items: first baseline; gap: 12px 18px; font-size: 13px; line-height: 1.6; }
 .movie-detail dt { color: var(--muted); }

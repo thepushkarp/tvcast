@@ -54,6 +54,14 @@ test('people filtering includes directors and cast and combines with genres', ()
   assert.equal(selectMovies(items, {person:'fukunaga'})[0].id, 'a');
   assert.equal(selectMovies(items, {person:'Daniel Craig', genre:'Drama'}).length, 1);
 });
+test('age ratings filter by exact US certification or its absence and combine with genres', () => {
+  const entries = [{...movies[0], certification:'PG-13'}, {...movies[1], certification:'R'}, {...movies[2], certification:null}, {...movies[2], id:'d'}];
+  assert.deepEqual(selectMovies(entries, {certification:'PG-13'}).map(m => m.id), ['a']);
+  assert.deepEqual(selectMovies(entries, {certification:'PG'}), []);
+  assert.deepEqual(selectMovies(entries, {certification:'none'}).map(m => m.id), ['c', 'd']);
+  assert.deepEqual(selectMovies(entries, {certification:'R', genre:'Drama'}), []);
+  assert.deepEqual(selectMovies(entries, {certification:'none', genre:'Drama'}).map(m => m.id), ['c', 'd']);
+});
 test('film collections filter by provider ID across folders and combine with other filters', () => {
   const entries = [
     {...movies[0], languages:[{code:'en',name:'English'},{code:'hi',name:'Hindi'}], collection:{id:42,name:'Example Collection'}, root:'/movies', collection_path:'/movies/Part One'},

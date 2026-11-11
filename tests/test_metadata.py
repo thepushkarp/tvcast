@@ -80,6 +80,26 @@ class MetadataTest(unittest.TestCase):
         self.assertIsNone(data['collection'])
         self.assertEqual(data['characters'], {})
 
+    def test_us_certification_prefers_theatrical_and_ignores_unrated_or_other_regions(self):
+        def releases(*regions):
+            return dict(self.details, release_dates={'results': [
+                {'iso_3166_1': code, 'release_dates': entries} for code, entries in regions]})
+        cases = [
+            (releases(('GB', [{'type': 3, 'certification': '15'}]),
+                      ('US', [{'type': 4, 'certification': 'PG'}, {'type': 3, 'certification': 'NR'},
+                              {'type': 3, 'certification': ' pg-13 '}, {'type': 2, 'certification': 'R'}])), 'PG-13'),
+            (releases(('US', [None, {'type': 3, 'certification': ''}, {'type': 6, 'certification': 'R'}])), 'R'),
+            (releases(('GB', [{'type': 3, 'certification': 'PG'}]), ('US', [{'type': 3, 'certification': 'NR'}])), None),
+            (self.details, None),
+        ]
+        for details, expected in cases:
+            with self.subTest(expected=expected), mock.patch.object(self.metadata, 'request', return_value=details):
+                self.assertEqual(self.metadata.fetch(1)['certification'], expected)
+        self.assertIsNone(Metadata(State(self.state.path)).cache[1]['certification'])
+        with mock.patch.object(self.metadata, 'request', return_value=dict(self.details, release_dates=['invalid'])), \
+             self.assertRaisesRegex(RuntimeError, 'invalid release dates'):
+            self.metadata.fetch(1)
+
     def test_wikipedia_uses_english_sitelink_and_persists_offline(self):
         url = 'https://en.wikipedia.org/wiki/Example_(film)'
         details = dict(self.details, external_ids={'wikidata_id': 'Q123'})
@@ -88,7 +108,7 @@ class MetadataTest(unittest.TestCase):
         with mock.patch.object(self.metadata, 'request', return_value=details) as tmdb, \
              mock.patch('urllib.request.urlopen', return_value=io.BytesIO(json.dumps(response).encode())) as wikidata:
             self.metadata.enrich(self.movie, self.state.movie(self.movie.path)['match'], False)
-        tmdb.assert_called_once_with('movie/1', {'append_to_response': 'credits,external_ids', 'language': 'en-US'})
+        tmdb.assert_called_once_with('movie/1', {'append_to_response': 'credits,external_ids,release_dates', 'language': 'en-US'})
         request = wikidata.call_args.args[0]
         self.assertEqual(urllib.parse.parse_qs(urllib.parse.urlsplit(request.full_url).query), {
             'action': ['wbgetentities'], 'ids': ['Q123'], 'props': ['sitelinks/urls'],
@@ -453,7 +473,8 @@ class MetadataTest(unittest.TestCase):
                         self.metadata.jobs.task_done()
                         self.metadata.pending.clear()
             self.metadata.cache[1] = {'tmdb_id': 1, 'imdb_id': None, 'wikidata_id': None, 'wikipedia_url': None,
-                                      'languages': [], 'collection': None, 'characters': {}, 'title': 'Example'}
+                                      'languages': [], 'collection': None, 'characters': {}, 'certification': None,
+                                      'title': 'Example'}
             self.state.update_movie(self.movie.path, match={'tmdb_id': 1, 'source': 'manual', 'status': 'matched'})
             self.metadata.enqueue(self.movie)
             self.assertTrue(self.metadata.jobs.empty())
