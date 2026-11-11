@@ -9,7 +9,7 @@ function stored(storage, key, fallback = '') {
 function remember(storage, key, value) {
   try { storage.setItem(key, value); } catch { /* Navigation still works without persisted preferences. */ }
 }
-let browse = {query:'', sort:stored(localStorage, 'library.sort', 'title'), descending:stored(localStorage, 'library.descending') === 'true', group:stored(localStorage, 'library.group') === 'true', yearGroup:stored(localStorage, 'library.yearGroup') === 'decade' ? 'decade' : 'year', genre:'', person:'', language:'', collection:'', watched:'all', attention:false, folder:'', recursive:stored(localStorage, 'library.recursive', 'false') === 'true'};
+let browse = {query:'', sort:stored(localStorage, 'library.sort', 'title'), descending:stored(localStorage, 'library.descending') === 'true', group:stored(localStorage, 'library.group') === 'true', yearGroup:stored(localStorage, 'library.yearGroup') === 'decade' ? 'decade' : 'year', genre:'', person:'', language:'', certification:'', collection:'', watched:'all', attention:false, folder:'', recursive:stored(localStorage, 'library.recursive', 'false') === 'true'};
 let libraryView = stored(localStorage, 'library.view', 'grid');
 let libraryHref = stored(sessionStorage, 'library.href', '#/library');
 const isTV = () => location.hash.split('?')[0] === '#/tv';
@@ -20,6 +20,7 @@ const peoplePicker = new PeoplePicker($('person'), $('peopleOptions'), () => cha
 const sortPicker = new ThemedSelect($('sort'), $('sortOptions'), () => { browse.descending = defaultSortDescending($('sort').value); changeBrowsing(); });
 const genrePicker = new ThemedSelect($('genre'), $('genreOptions'), () => changeBrowsing());
 const languagePicker = new ThemedSelect($('language'), $('languageOptions'), () => changeBrowsing());
+const certificationPicker = new ThemedSelect($('certification'), $('certificationOptions'), () => changeBrowsing());
 const collectionPicker = new ThemedSelect($('collection'), $('collectionOptions'), () => changeBrowsing());
 const watchedPicker = new ThemedSelect($('filter'), $('watchedOptions'), () => changeBrowsing());
 sortPicker.setOptions([['title','Title'], ['file_runtime_s','Runtime'], ['year','Year'], ['score','IMDb rating']], browse.sort);
@@ -41,7 +42,7 @@ applyTheme();
 for (const [id, icon] of [['listView','list'],['gridView','grid'],['settingsButton','settings']]) $(id).innerHTML = glyph(icon);
 const poster = m => `<span class="poster">${m.poster ? `<img src="${esc(m.poster)}" alt="" loading="lazy">` : `<span class="poster-placeholder" aria-hidden="true">${esc(m.title.slice(0, 1))}</span>`}</span>`;
 const watchedCorner = (m, disabled = false) => `<button class="poster-status poster-watched ${m.watched ? 'is-watched' : 'is-unwatched'}" data-watched="${esc(m.id)}" aria-label="Mark ${esc(m.title)} ${m.watched ? 'unwatched' : 'watched'}" aria-pressed="${!!m.watched}" data-tooltip="${m.watched ? 'Mark unwatched' : 'Mark watched'}" ${disabled ? 'disabled' : ''}>${glyph(m.watched ? 'check' : 'circle')}</button>`;
-const movieMeta = (m, details = false) => `<div class="movie-meta"><span>${m.year || 'Year unknown'}</span><span>${m.file_runtime_s ? runtime(m.file_runtime_s) : 'Runtime unknown'}</span>${m.score != null ? `<span>IMDb ${Number(m.score).toFixed(1)}${details && Number.isFinite(m.vote_count) && m.vote_count > 0 ? ` (${m.vote_count.toLocaleString()} votes)` : ''}</span>` : ''}${details && m.languages?.length ? `<span class="movie-languages">${m.languages.length === 1 ? 'Language' : 'Languages'}: ${m.languages.map(language => `<button class="metadata-link" data-browse-language="${esc(language.code)}" data-tooltip="${esc(language.name)}" aria-label="Show films in ${esc(language.name)}">${esc(language.code.toUpperCase())}</button>`).join('<span aria-hidden="true">·</span>')}</span>` : ''}</div>`;
+const movieMeta = (m, details = false) => `<div class="movie-meta"><span>${m.year || 'Year unknown'}</span><span>${m.file_runtime_s ? runtime(m.file_runtime_s) : 'Runtime unknown'}</span>${m.certification ? `<span class="certification" role="img" aria-label="Rated ${esc(m.certification)}">${esc(m.certification)}</span>` : ''}${m.score != null ? `<span>IMDb ${Number(m.score).toFixed(1)}${details && Number.isFinite(m.vote_count) && m.vote_count > 0 ? ` (${m.vote_count.toLocaleString()} votes)` : ''}</span>` : ''}${details && m.languages?.length ? `<span class="movie-languages">${m.languages.length === 1 ? 'Language' : 'Languages'}: ${m.languages.map(language => `<button class="metadata-link" data-browse-language="${esc(language.code)}" data-tooltip="${esc(language.name)}" aria-label="Show films in ${esc(language.name)}">${esc(language.code.toUpperCase())}</button>`).join('<span aria-hidden="true">·</span>')}</span>` : ''}</div>`;
 
 const iconTooltip = document.createElement('div');
 iconTooltip.id = 'iconTooltip'; iconTooltip.className = 'icon-tooltip';
@@ -112,6 +113,10 @@ function renderLibrary() {
   const languageOptions = [['', 'All languages'], ...[...languages].sort((a, b) => a[1].localeCompare(b[1])).map(([code, name]) => [code, name === code.toUpperCase() ? name : `${name} (${code.toUpperCase()})`])];
   if (browse.language && !languages.has(browse.language)) languageOptions.push([browse.language, browse.language.toUpperCase() + ' (unavailable)']);
   languagePicker.setOptions(languageOptions, browse.language);
+  const certifications = new Set(catalogue.library.map(m => m.certification));
+  const certificationOptions = [['', 'All age ratings'], ...CERTIFICATIONS.filter(value => certifications.has(value)).map(value => [value, value]), ...(certifications.has(undefined) || certifications.has(null) ? [['none', 'No age rating']] : [])];
+  if (browse.certification && !certificationOptions.some(([value]) => value === browse.certification)) certificationOptions.push([browse.certification, (browse.certification === 'none' ? 'No age rating' : browse.certification) + ' (unavailable)']);
+  certificationPicker.setOptions(certificationOptions, browse.certification);
   const collections = new Map(catalogue.library.filter(m => m.collection).map(m => [String(m.collection.id), m.collection.name]));
   const collectionOptions = [['', 'All collections'], ['none', 'No collection'], ...[...collections].sort((a, b) => a[1].localeCompare(b[1]))];
   if (browse.collection && browse.collection !== 'none' && !collections.has(browse.collection)) collectionOptions.push([browse.collection, 'Collection unavailable']);
@@ -120,7 +125,7 @@ function renderLibrary() {
   $('clearPerson').hidden = !browse.person;
   const people = catalogue.library.flatMap(m => [...(m.directors || []), ...(m.cast || [])]);
   peoplePicker.setOptions(people);
-  $('clearFilters').hidden = !browse.genre && !browse.person && !browse.language && !browse.collection && browse.watched === 'all' && !browse.attention;
+  $('clearFilters').hidden = !browse.genre && !browse.person && !browse.language && !browse.certification && !browse.collection && browse.watched === 'all' && !browse.attention;
   const visible = browseCollection(selectMovies(catalogue.library, browse), catalogue.folders, browse);
   const movies = visible.movies;
   const attentionCount = browseCollection(catalogue.library, catalogue.folders, {...browse, query:'', recursive:true}).movies.filter(m => movieAttention(m).length).length;
@@ -304,7 +309,7 @@ function route() {
   document.title = currentRoute === 'tv' ? 'TV — TV Cast' : 'Library — TV Cast';
   if (currentRoute === 'library') {
     const params = new URLSearchParams(location.hash.split('?')[1] || '');
-    browse = {...browse, query:params.get('query') || '', genre:params.get('genre') || '', person:params.get('person') || '', language:params.get('language') || '', collection:params.get('collection') || '', watched:params.get('watched') || 'all', attention:params.get('attention') === 'true', folder:params.get('folder') || '', recursive:params.has('sort') ? params.get('recursive') === 'true' : browse.recursive, sort:params.get('sort') || browse.sort, descending:params.has('sort') ? params.get('descending') === 'true' : browse.descending, group:params.has('sort') ? params.get('group') === 'true' : browse.group, yearGroup:params.has('sort') ? (params.get('yearGroup') === 'decade' ? 'decade' : 'year') : browse.yearGroup};
+    browse = {...browse, query:params.get('query') || '', genre:params.get('genre') || '', person:params.get('person') || '', language:params.get('language') || '', certification:params.get('certification') || '', collection:params.get('collection') || '', watched:params.get('watched') || 'all', attention:params.get('attention') === 'true', folder:params.get('folder') || '', recursive:params.has('sort') ? params.get('recursive') === 'true' : browse.recursive, sort:params.get('sort') || browse.sort, descending:params.has('sort') ? params.get('descending') === 'true' : browse.descending, group:params.has('sort') ? params.get('group') === 'true' : browse.group, yearGroup:params.has('sort') ? (params.get('yearGroup') === 'decade' ? 'decade' : 'year') : browse.yearGroup};
     if (!['title', 'file_runtime_s', 'year', 'score'].includes(browse.sort)) browse.sort = 'title';
     $('search').value = browse.query; sortPicker.setValue(browse.sort); watchedPicker.setValue(browse.watched); peoplePicker.setValue(browse.person);
     libraryHref = listHash(); updateLibraryLinks(); renderLibrary();
@@ -410,7 +415,7 @@ $('cancelCast').onclick = () => { pendingCast = null; renderCastRequest(); };
 function changeBrowsing() {
   browse.query = $('search').value; browse.sort = $('sort').value; browse.genre = $('genre').value;
   browse.watched = $('filter').value; browse.person = $('person').value;
-  browse.language = $('language').value; browse.collection = $('collection').value;
+  browse.language = $('language').value; browse.certification = $('certification').value; browse.collection = $('collection').value;
   browse.group = $('groupMovies').checked;
   remember(localStorage, 'library.sort', browse.sort); remember(localStorage, 'library.descending', String(browse.descending));
   remember(localStorage, 'library.group', String(browse.group)); remember(localStorage, 'library.yearGroup', browse.yearGroup);
@@ -425,7 +430,7 @@ $('yearSpan').onclick = event => {
   browse.yearGroup = span; changeBrowsing();
 };
 for (const view of ['list', 'grid']) $(view + 'View').onclick = () => { libraryView = view; remember(localStorage, 'library.view', view); renderLibrary(); };
-$('clearFilters').onclick = () => { genrePicker.setValue(''); peoplePicker.setValue(''); languagePicker.setValue(''); collectionPicker.setValue(''); watchedPicker.setValue('all'); browse.attention = false; changeBrowsing(); };
+$('clearFilters').onclick = () => { genrePicker.setValue(''); peoplePicker.setValue(''); languagePicker.setValue(''); certificationPicker.setValue(''); collectionPicker.setValue(''); watchedPicker.setValue('all'); browse.attention = false; changeBrowsing(); };
 $('attentionFilter').onclick = () => { browse.attention = !browse.attention; changeBrowsing(); };
 $('clearPerson').onclick = () => { peoplePicker.setValue(''); changeBrowsing(); $('person').focus(); peoplePicker.close(); };
 $('rescan').onclick = () => localAction('rescan', {});
@@ -478,7 +483,7 @@ document.addEventListener('click', e => {
   if (b.dataset.close) $(b.dataset.close).close();
   if (b.dataset.browseGenre || b.dataset.browsePerson || b.dataset.browseLanguage || b.dataset.browseCollection) {
     // Start a fresh facet browse so an earlier title query cannot hide related movies.
-    browse = {...browse, query:'', genre:b.dataset.browseGenre || '', person:b.dataset.browsePerson || '', language:b.dataset.browseLanguage || '', collection:b.dataset.browseCollection || '', watched:'all', attention:false, folder:'', recursive:true};
+    browse = {...browse, query:'', genre:b.dataset.browseGenre || '', person:b.dataset.browsePerson || '', language:b.dataset.browseLanguage || '', certification:'', collection:b.dataset.browseCollection || '', watched:'all', attention:false, folder:'', recursive:true};
     libraryHref = listHash(); remember(sessionStorage, 'library.scroll', '0');
     location.hash = libraryHref; return;
   }

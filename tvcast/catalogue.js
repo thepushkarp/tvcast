@@ -2,6 +2,8 @@
 function normalize(value) {
   return String(value || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase();
 }
+// US age ratings in increasing strictness, matching metadata.CERTIFICATIONS.
+const CERTIFICATIONS = ['G', 'PG', 'PG-13', 'R', 'NC-17'];
 function defaultSortDescending(sort) { return sort === 'year' || sort === 'score'; }
 function movieAttention(movie) {
   const match = movie.match || {};
@@ -12,12 +14,13 @@ function movieAttention(movie) {
   if (movie.tmdb_id && !movie.poster) reasons.push('Poster missing');
   return reasons;
 }
-function selectMovies(movies, {query = '', sort = 'title', descending = defaultSortDescending(sort), genre = '', person = '', language = '', collection = '', watched = 'all', attention = false} = {}) {
+function selectMovies(movies, {query = '', sort = 'title', descending = defaultSortDescending(sort), genre = '', person = '', language = '', certification = '', collection = '', watched = 'all', attention = false} = {}) {
   query = normalize(query).trim();
   return movies.filter(m => (!query || normalize([m.title, m.file_title, m.original_title, m.year].join(' ')).includes(query))
     && (!genre || (m.genres || []).includes(genre))
     && (!person || [...(m.directors || []), ...(m.cast || [])].some(name => normalize(name).includes(normalize(person).trim())))
     && (!language || (m.languages || []).some(item => item.code === language))
+    && (!certification || (certification === 'none' ? !m.certification : m.certification === certification))
     && (!collection || (collection === 'none' ? !m.collection : String(m.collection?.id) === String(collection)))
     && (!attention || movieAttention(m).length)
     && (watched === 'all' || m.watched === (watched === 'watched'))).sort((a, b) => {
@@ -106,4 +109,4 @@ function movieLinks(movie) {
       ? [{site:'wikipedia', label:'Wikipedia', href:movie.wikipedia_url}] : []),
   ];
 }
-if (typeof module !== 'undefined') module.exports = {selectMovies, defaultSortDescending, groupMovies, browseCollection, playHistory, movieLinks, movieAttention};
+if (typeof module !== 'undefined') module.exports = {CERTIFICATIONS, selectMovies, defaultSortDescending, groupMovies, browseCollection, playHistory, movieLinks, movieAttention};

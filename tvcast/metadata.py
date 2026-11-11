@@ -16,7 +16,13 @@ MATCH_VERSION = 2  # Increment when matching rules change so cached negative res
 MATCH_RETRY_SECONDS = 24 * 60 * 60
 ERROR_RETRY_SECONDS = 5 * 60
 MAX_SEARCH_PAGES = 25
-CACHE_FIELDS = {"imdb_id", "wikidata_id", "wikipedia_url", "languages", "collection", "characters"}
+CACHE_FIELDS = {"imdb_id", "wikidata_id", "wikipedia_url", "languages", "collection", "characters", "certification"}
+# US MPA ratings in increasing strictness. TMDB also reports "NR" (not rated), which is stored as
+# no certification so it groups with films that have none, rather than appearing as a badge.
+CERTIFICATIONS = ("G", "PG", "PG-13", "R", "NC-17")
+# TMDB release types in preference order: theatrical, then limited theatrical. Other types (digital,
+# physical, TV, premiere) are used only when no theatrical release carries a certification.
+CERTIFICATION_RELEASE_TYPES = (3, 2)
 EDITION_SUFFIX = re.compile(
     r"[\s\[(\-:]+(?:(?:extended|unrated|uncut|remastered)(?:\s+(?:edition|cut|version))?"
     r"|director['’]?s\s+cut|theatrical\s+cut)(?:\s*(?:and|&|\+)\s*(?:unrated|uncut))?[\s\])]*$", re.I)
@@ -281,6 +287,20 @@ class Metadata:
             return self._fetch(tmdb_id)
 
     @staticmethod
+    def certification(release_dates):
+        """The US age rating from TMDB release dates, or None when absent or not rated."""
+        rated = [(release.get("type"), release["certification"].strip().upper())
+                 for region in (release_dates.get("results") or [])
+                 if isinstance(region, dict) and region.get("iso_3166_1") == "US"
+                 for release in (region.get("release_dates") or []) if isinstance(release, dict)
+                 and isinstance(release.get("certification"), str)
+                 and release["certification"].strip().upper() in CERTIFICATIONS]
+        # A stable sort keeps TMDB's order among releases of the same preferred type.
+        rated.sort(key=lambda item: CERTIFICATION_RELEASE_TYPES.index(item[0])
+                   if item[0] in CERTIFICATION_RELEASE_TYPES else len(CERTIFICATION_RELEASE_TYPES))
+        return rated[0][1] if rated else None
+
+    @staticmethod
     def wikipedia(wikidata_id):
         params = {"action": "wbgetentities", "ids": wikidata_id, "props": "sitelinks/urls",
                   "sitefilter": "enwiki", "format": "json"}
@@ -305,7 +325,7 @@ class Metadata:
                                % wikidata_id) from e
 
     def _fetch(self, tmdb_id):
-        data = self.request("movie/%d" % tmdb_id, {"append_to_response": "credits,external_ids", "language": "en-US"})
+        data = self.request("movie/%d" % tmdb_id, {"append_to_response": "credits,external_ids,release_dates", "language": "en-US"})
         if data.get("id") != tmdb_id or not isinstance(data.get("title"), str):
             raise RuntimeError("TMDB returned invalid movie details; try Refresh metadata")
         credits = data.get("credits") or {}
@@ -330,6 +350,9 @@ class Metadata:
         original_language = data.get("original_language")
         if not languages and isinstance(original_language, str) and re.fullmatch(r"[a-z]{2}", original_language):
             languages[original_language] = {"code": original_language, "name": original_language.upper()}
+        release_dates = data.get("release_dates") or {}
+        if not isinstance(release_dates, dict):
+            raise RuntimeError("TMDB returned invalid release dates; try Refresh metadata")
         collection = data.get("belongs_to_collection")
         collection = {"id": collection["id"], "name": collection["name"]} \
             if isinstance(collection, dict) and type(collection.get("id")) is int and collection["id"] > 0 \
@@ -339,6 +362,7 @@ class Metadata:
                   "title": data["title"], "year": self.year(data),
                   "original_title": data.get("original_title") or "", "overview": data.get("overview") or "",
                   "languages": list(languages.values()), "collection": collection,
+                  "certification": self.certification(release_dates),
                   "characters": {p["name"]: p["character"] for p in cast if isinstance(p.get("character"), str) and p["character"]},
                   "genres": [g["name"] for g in (data.get("genres") or []) if isinstance(g, dict) and isinstance(g.get("name"), str)],
                   "directors": [p["name"] for p in (credits.get("crew") or []) if isinstance(p, dict) and p.get("job") == "Director" and isinstance(p.get("name"), str)],
