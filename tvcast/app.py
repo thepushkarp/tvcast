@@ -141,6 +141,7 @@ class Playback:
             self.media_url = "%s/media/%s%s" % (base, movie.id, movie.ext)
         self.previous_subtitle = None  # the file shown before, which "subtitles on" brings back
         self.seen_playing = False  # STOPPED before the first PLAYING is just the TV loading
+        self.last_state = None  # the TV's last logged transport state, to log each change once
         self.stopped_polls = 0
         self.position = None
         self.duration = None
@@ -201,6 +202,7 @@ class App:
         self.playback_lock = threading.RLock()
         self.queue_error = None
         self.current = None
+        self.last_command = (None, 0)  # last transport command sent from here, and when
         self.movies, self.by_id, self.library_problems, self.library_private = [], {}, {}, {}
         self.scanning = self.rescan_pending = False
         self.probe_queue = queue.Queue()
@@ -1085,6 +1087,13 @@ class App:
                 self.finish(pb, advance=False)
             return
         pb.unreachable_since = None
+        if s["state"] != pb.last_state and s["uri"] == pb.media_url:
+            # Say who caused it: a command sent from here in the last few seconds, or the TV
+            # itself (its remote, or its player stalling on the stream).
+            action, when = self.last_command
+            cause = "after %s from here" % action if time.time() - when < 3 * POLL_INTERVAL else "on the TV"
+            log("TV %s at %s (%s)" % (s["state"], hms(s["position"]), cause))
+            pb.last_state = s["state"]
         if s["state"] in ("PLAYING", "PAUSED_PLAYBACK") and s["uri"] == pb.media_url:
             pb.seen_playing = True
             pb.stopped_polls = 0
@@ -1285,6 +1294,14 @@ class App:
         return out
 
     def control(self, action, body):
+        if action in ("open", "stop", "play", "pause", "seek"):
+            self.last_command = (action, time.time())
+        if action in ("play", "pause", "seek"):
+            with self.lock:
+                pb = self.current
+            log("%s%s (was at %s)" % (
+                action, " to %s" % hms(max(0.0, float(body["seconds"]))) if action == "seek" else "",
+                hms(pb.position) if pb is not None and pb.position is not None else "?"))
         if action in ("open_local", "reveal"):
             self.open_local(self.library_movie(str(body["id"]), require_file=True), reveal=action == "reveal")
         elif action == "watched":

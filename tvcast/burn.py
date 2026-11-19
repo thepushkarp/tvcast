@@ -285,6 +285,7 @@ class Hls:
         self.dir = tempfile.mkdtemp(dir=os.path.join(CACHE, "hls"))
         self.lock = threading.Condition()
         self.done, self.busy, self.errors = set(), set(), {}
+        self.started = {}  # segment -> when its encode began, for timeout messages
         self.target = None  # nothing is prepared until the TV asks
         self.stopped = False
         for _ in range(WORKERS):
@@ -301,6 +302,11 @@ class Hls:
         try:
             r = subprocess.run(segment_command(self.movie.path, sup, start, duration, self.info, part),
                                capture_output=True, text=True, timeout=120)
+        except subprocess.TimeoutExpired as e:
+            stderr = e.stderr.decode(errors="replace") if isinstance(e.stderr, bytes) else (e.stderr or "")
+            written = os.path.getsize(part) if os.path.exists(part) else 0
+            raise RuntimeError("ffmpeg hung on segment %d: killed after 120 s with %d bytes written; "
+                               "stderr: %s" % (n, written, stderr.strip()[-300:] or "(empty)"))
         finally:
             os.remove(sup)
         if r.returncode != 0:
@@ -319,6 +325,7 @@ class Hls:
                     if todo:
                         n = todo[0]
                         self.busy.add(n)
+                        self.started[n] = time.time()
                         break
                     self.lock.wait()
             try:
@@ -360,7 +367,15 @@ class Hls:
             deadline = time.time() + timeout
             while n not in self.done and n not in self.errors and not self.stopped:
                 if time.time() > deadline:
-                    raise RuntimeError("segment %d took over %d s" % (n, timeout))
+                    if n in self.busy:
+                        part = self.path(n) + ".part"
+                        detail = "ffmpeg has been encoding it for %d s, %d bytes written" % (
+                            time.time() - self.started.get(n, deadline - timeout),
+                            os.path.getsize(part) if os.path.exists(part) else 0)
+                    else:
+                        detail = "no worker picked it up; busy with %s" % (sorted(self.busy) or "nothing")
+                    raise RuntimeError("segment %d took over %d s (%s; %d segments ready, newest %s)" % (
+                        n, timeout, detail, len(self.done), max(self.done, default=None)))
                 self.lock.wait(1)
             if n in self.errors:
                 raise RuntimeError(self.errors[n])
