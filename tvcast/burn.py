@@ -27,6 +27,7 @@ import time
 
 from .library import BURNED_DIR, COVER_ART_CODECS, FFPROBE
 from .subtitles import decode
+from .upnp import log
 
 FFMPEG = shutil.which("ffmpeg", path=os.environ.get("PATH", "") + ":/opt/homebrew/bin:/usr/local/bin")
 CACHE = os.path.expanduser("~/Library/Caches/tvcast")
@@ -35,6 +36,8 @@ PQ_TEXT = 0.58  # text gray for HDR10 (PQ) video: about 200 nits, where full whi
 QUALITY = 85  # hevc_videotoolbox -q:v; measured SSIM 0.987 against a 4K HDR source at about its bitrate
 SEGMENT = 6.0  # seconds per HLS segment
 AHEAD = 10  # segments prepared beyond the one the TV asked for
+# A segment encodes in a second or two. An ffmpeg that is still running after this long is hung.
+HANG_TIMEOUT = 20
 WORKERS = 2  # segment encodes at a time; the media engine keeps up with two 4K streams
 # Added to every segment's timestamps, so none starts at 0, which ffmpeg treats as "no offset".
 TS_BASE = 10.0
@@ -287,6 +290,7 @@ class Hls:
         self.done, self.busy, self.errors = set(), set(), {}
         self.target = None  # nothing is prepared until the TV asks
         self.stopped = False
+        self.software_decode = False  # set once a hardware-decoded encode hangs
         for _ in range(WORKERS):
             threading.Thread(target=self.work, daemon=True).start()
 
@@ -298,9 +302,24 @@ class Hls:
         duration = min(SEGMENT, self.duration - start)
         sup, part = self.path(n) + ".sup", self.path(n) + ".part"
         segment_sup(self.sets, start, start + duration, sup)
+        command = segment_command(self.movie.path, sup, start, duration, self.info, part)
         try:
-            r = subprocess.run(segment_command(self.movie.path, sup, start, duration, self.info, part),
-                               capture_output=True, text=True, timeout=120)
+            r = None
+            if not self.software_decode:
+                try:
+                    r = subprocess.run(command, capture_output=True, text=True, timeout=HANG_TIMEOUT)
+                except subprocess.TimeoutExpired:
+                    # With VideoToolbox decoding and the subtitle overlay, ffmpeg writes most of
+                    # some segments and then never exits: the same segments of a film every time,
+                    # while the same command with software decoding takes a second. The TV gets
+                    # a 503 for the segment and stalls or starts over, so decode in software for
+                    # the rest of the session rather than hit the next one.
+                    self.software_decode = True
+                    log("ffmpeg hung on segment %d (over %d s); decoding in software from here on"
+                        % (n, HANG_TIMEOUT))
+            if r is None:
+                i = command.index("-hwaccel")
+                r = subprocess.run(command[:i] + command[i + 2:], capture_output=True, text=True, timeout=120)
         finally:
             os.remove(sup)
         if r.returncode != 0:

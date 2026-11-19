@@ -125,6 +125,34 @@ class HlsTest(unittest.TestCase):
         self.assertTrue(set(range(5, 5 + burn.AHEAD + 1)) <= hls.done)
         self.assertNotIn(4, hls.done)
 
+    def test_a_hung_encode_is_retried_with_software_decoding_which_then_stays_on(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        with mock.patch.object(burn, "CACHE", tmp.name), \
+                mock.patch.object(burn, "prepare", return_value=("s.sup", {"duration": 100.0, "ten_bit": False})), \
+                mock.patch.object(burn, "read_sets", return_value=[(0, b"")]), \
+                mock.patch.object(burn, "subs_key", return_value="key"):
+            hls = burn.Hls(mock.Mock(path="film.mp4"), "film.srt")
+        self.addCleanup(hls.stop)
+        calls = []
+
+        def run(cmd, **kwargs):
+            calls.append((("-hwaccel" in cmd), kwargs["timeout"]))
+            if "-hwaccel" in cmd:
+                raise subprocess.TimeoutExpired(cmd, kwargs["timeout"])
+            with open(cmd[-1], "w") as f:
+                f.write("segment")
+            return mock.Mock(returncode=0, stderr="")
+        with mock.patch.object(burn.subprocess, "run", side_effect=run), mock.patch.object(burn, "log") as log:
+            hls.encode(3)
+            hls.encode(4)
+        # Segment 3: the hardware try hangs, the software retry writes it. Segment 4: software only.
+        self.assertEqual(calls, [(True, burn.HANG_TIMEOUT), (False, 120), (False, 120)])
+        self.assertIn("segment 3", log.call_args[0][0])
+        for n in (3, 4):
+            with open(hls.path(n)) as f:
+                self.assertEqual(f.read(), "segment")
+
     def test_a_failed_segment_reports_its_error(self):
         def encode(hls, n):
             raise RuntimeError("ffmpeg failed on segment %d" % n)
